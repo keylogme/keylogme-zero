@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"gokeny/internal"
+	"gokeny/internal/keylogger"
 	"log"
 	"log/slog"
 	"os"
 	"slices"
 	"time"
-
-	"github.com/MarinX/keylogger"
 )
 
 type KeyLog struct {
@@ -34,6 +33,9 @@ func main() {
 	config := Config{
 		Shortcuts: []internal.Shortcut{
 			{ID: 1, Values: []string{"J", "S"}, Type: internal.SequentialShortcutType},
+			{ID: 2, Values: []string{"J", "F"}, Type: internal.SequentialShortcutType},
+			{ID: 3, Values: []string{"J", "G"}, Type: internal.SequentialShortcutType},
+			{ID: 4, Values: []string{"J", "S", "G"}, Type: internal.SequentialShortcutType},
 		},
 	}
 	sender := internal.MustGetNewSender(ORIGIN_ENDPOINT, APIKEY)
@@ -43,7 +45,13 @@ func main() {
 	// keylogger
 	// selectedKb := "/dev/input/event14" // name: foostan Corne , phys: usb-0000:00:14.0-4.3/input0
 	// selectedKb := "/dev/input/event9" // mouse vertical
-	selectedKb := "/dev/input/event18"
+	// TODO: look for kb/mouse based on names?
+	// on reboot eventnumber may change
+	// after sleep may change
+	// selectedKb := "/dev/input/event14"
+	keyboardDevices := []string{"foostan Corne", "MOSART Semi. 2.4G INPUT DEVICE"}
+	selectedKb := "/dev/input/event17"
+	// selectedKb := "/dev/input/event3"
 	// selectedKb := "/dev/input/event11"
 	slog.Info(fmt.Sprintf("Device selected: %s\n", selectedKb))
 	kl, err := keylogger.New(selectedKb)
@@ -53,8 +61,12 @@ func main() {
 	defer kl.Close()
 
 	chIn := kl.Read()
+
+	// connect websocket
 	modifiers := []uint16{29, 97, 42, 54, 56, 100} // ctrl, shft, alt
+
 	slog.Info("Listening...")
+
 	modPress := []uint16{}
 	for i := range chIn {
 		if i.KeyPress() && slices.Contains(modifiers, i.Code) {
@@ -94,7 +106,7 @@ const (
 
 type Payload struct {
 	Type TypePayload
-	Data []byte
+	Data json.RawMessage
 }
 
 func getPayload(typePayload TypePayload, data any) ([]byte, error) {
