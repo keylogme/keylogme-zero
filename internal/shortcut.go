@@ -1,5 +1,7 @@
 package internal
 
+import "time"
+
 type ShortcutType string
 
 const (
@@ -14,9 +16,12 @@ type Shortcut struct {
 }
 
 type ShortcutsDetector struct {
-	indexVal              int
-	currPossibleShortcuts []*Shortcut
-	Shortcuts             []Shortcut
+	indexVal                int
+	currPossibleShortcuts   []*Shortcut
+	prevShortcutIDCompleted int64
+	delayMS                 int64
+	lastKeyTimestamp        time.Time
+	Shortcuts               []Shortcut
 }
 
 func NewShortcutsDetector(s []Shortcut) *ShortcutsDetector {
@@ -37,19 +42,39 @@ func (sd *ShortcutsDetector) Detect(kp string) int64 {
 		}
 	} else {
 		new_ps := []*Shortcut{}
+		foundOnePossibleShortcutCompleted := int64(0)
 		for _, ps := range sd.currPossibleShortcuts {
-			if (*ps).Values[sd.indexVal] == kp {
+			if len((*ps).Values) <= sd.indexVal {
+				continue
+			}
+			nextKeyShortcut := (*ps).Values[sd.indexVal]
+			if nextKeyShortcut == kp {
 				new_ps = append(new_ps, ps)
 			}
-			if (*ps).Values[sd.indexVal] == kp && len((*ps).Values) == sd.indexVal+1 {
-				sd.reset()
-				return ps.ID
+			isLastKeyShortcut := len((*ps).Values) == sd.indexVal+1
+			if nextKeyShortcut == kp && isLastKeyShortcut {
+				foundOnePossibleShortcutCompleted = ps.ID
 			}
 		}
+		if len(new_ps) == 1 && foundOnePossibleShortcutCompleted != 0 {
+			// found only one possible shortcut
+			sd.reset()
+			return foundOnePossibleShortcutCompleted
+
+		}
 		if len(new_ps) == 0 {
+			if sd.prevShortcutIDCompleted != 0 {
+				prevShortcutId := sd.prevShortcutIDCompleted
+				sd.reset()
+				return prevShortcutId
+			}
 			sd.reset()
 		} else {
+			if foundOnePossibleShortcutCompleted != 0 {
+				sd.prevShortcutIDCompleted = foundOnePossibleShortcutCompleted
+			}
 			sd.indexVal += 1
+			sd.currPossibleShortcuts = new_ps
 		}
 	}
 	return 0
@@ -57,5 +82,6 @@ func (sd *ShortcutsDetector) Detect(kp string) int64 {
 
 func (sd *ShortcutsDetector) reset() {
 	sd.indexVal = 0
+	sd.prevShortcutIDCompleted = 0
 	sd.currPossibleShortcuts = []*Shortcut{}
 }
