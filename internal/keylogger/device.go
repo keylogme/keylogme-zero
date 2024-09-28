@@ -22,6 +22,7 @@ func findKeyboardDevice(name string) string {
 		}
 
 		deviceName := string(buff)
+		// fmt.Printf("%#v\n", deviceName)
 		if deviceName == nameToCompare {
 			return fmt.Sprintf(resolved, i)
 		}
@@ -46,14 +47,15 @@ type Device struct {
 	Name      string
 	Connected bool
 	keylogger *KeyLogger
+	sendInput chan InputEvent
 }
 
-func MustGetDevice(name string) *Device {
+func MustGetDevice(name string, inputChan chan InputEvent) *Device {
 	k, err := getKeyLogger(name)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	device := &Device{Name: name, keylogger: k}
+	device := &Device{Name: name, Connected: true, keylogger: k, sendInput: inputChan}
 	go device.handleReconnects(device.start)
 	return device
 }
@@ -63,14 +65,16 @@ func (d *Device) start() {
 		return
 	}
 	for i := range d.keylogger.Read() {
-		fmt.Println(i)
+		d.sendInput <- i
 	}
 }
 
 func (d *Device) handleReconnects(s func()) {
 	if d.keylogger != nil {
 		// blocking call to start reading keylogger
+		d.Connected = true
 		s()
+		d.Connected = false
 		fmt.Printf("Device %s disconnected, reconnecting...\n", d.Name)
 		time.Sleep(1 * time.Second)
 		d.keylogger.Close()
