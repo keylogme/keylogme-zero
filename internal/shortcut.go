@@ -10,7 +10,7 @@ const (
 )
 
 type Shortcut struct {
-	ID     int64        `json:"id"`
+	Id     int64        `json:"id"`
 	Values []string     `json:"values"`
 	Type   ShortcutType `json:"type"`
 }
@@ -53,7 +53,7 @@ func (sd *ShortcutsDetector) Detect(kp string) int64 {
 			}
 			isLastKeyShortcut := len((*ps).Values) == sd.indexVal+1
 			if nextKeyShortcut == kp && isLastKeyShortcut {
-				foundOnePossibleShortcutCompleted = ps.ID
+				foundOnePossibleShortcutCompleted = ps.Id
 			}
 		}
 		if len(new_ps) == 1 && foundOnePossibleShortcutCompleted != 0 {

@@ -7,8 +7,8 @@ import (
 func TestShortcutsDetector_Detect(t *testing.T) {
 	sl := []Shortcut{
 		// {ID: 1, Values: []string{"L_CTRL", "S"}, Type: SequentialShortcutType},
-		{ID: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
-		{ID: 2, Values: []string{"J", "S", "A"}, Type: SequentialShortcutType},
+		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
+		{Id: 2, Values: []string{"J", "S", "A"}, Type: SequentialShortcutType},
 	}
 	ds := NewShortcutsDetector(sl)
 	scId := ds.Detect("A") // rand key
@@ -41,8 +41,8 @@ func TestShortcutsDetector_Detect(t *testing.T) {
 
 func TestShortcutsDetector_Detect_Not_Expected(t *testing.T) {
 	sl := []Shortcut{
-		{ID: 1, Values: []string{"J", "B", "H"}, Type: SequentialShortcutType},
-		{ID: 2, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
+		{Id: 1, Values: []string{"J", "B", "H"}, Type: SequentialShortcutType},
+		{Id: 2, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
 	}
 	ds := NewShortcutsDetector(sl)
 	detected := ds.Detect("J")
@@ -67,9 +67,9 @@ func TestShortcutsDetector_Detect_Not_Expected(t *testing.T) {
 
 func TestShortcutsDetector_Detect_Multiple_Possible(t *testing.T) {
 	sl := []Shortcut{
-		{ID: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
-		{ID: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
-		{ID: 3, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
+		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
+		{Id: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
+		{Id: 3, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
 	}
 	ds := NewShortcutsDetector(sl)
 	detected := ds.Detect("A")
@@ -96,8 +96,8 @@ func TestShortcutsDetector_Detect_Multiple_Possible(t *testing.T) {
 
 func TestShortcutsDetector_Detect_ReAttempt(t *testing.T) {
 	sl := []Shortcut{
-		{ID: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
-		{ID: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
+		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
+		{Id: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
 	}
 	ds := NewShortcutsDetector(sl)
 	detected := ds.Detect("J")
