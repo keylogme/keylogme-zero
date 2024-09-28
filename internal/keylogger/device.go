@@ -44,18 +44,28 @@ func getKeyLogger(name string) (*KeyLogger, error) {
 }
 
 type Device struct {
-	Name      string
+	DeviceInput
 	Connected bool
 	keylogger *KeyLogger
-	sendInput chan InputEvent
+	sendInput chan DeviceEvent
 }
 
-func MustGetDevice(name string, inputChan chan InputEvent) *Device {
-	k, err := getKeyLogger(name)
+type DeviceInput struct {
+	Id   int64
+	Name string
+}
+
+type DeviceEvent struct {
+	InputEvent
+	DeviceId int64
+}
+
+func MustGetDevice(input DeviceInput, inputChan chan DeviceEvent) *Device {
+	k, err := getKeyLogger(input.Name)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	device := &Device{Name: name, Connected: true, keylogger: k, sendInput: inputChan}
+	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
 	go device.handleReconnects(device.start)
 	return device
 }
@@ -65,7 +75,8 @@ func (d *Device) start() {
 		return
 	}
 	for i := range d.keylogger.Read() {
-		d.sendInput <- i
+		de := DeviceEvent{InputEvent: i, DeviceId: d.Id}
+		d.sendInput <- de
 	}
 }
 
