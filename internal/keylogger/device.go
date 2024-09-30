@@ -60,6 +60,12 @@ type DeviceEvent struct {
 	DeviceId int64
 }
 
+func GetDevice(input DeviceInput, inputChan chan DeviceEvent) *Device {
+	device := &Device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
+	go device.handleReconnects(device.start)
+	return device
+}
+
 func MustGetDevice(input DeviceInput, inputChan chan DeviceEvent) *Device {
 	k, err := getKeyLogger(input.Name)
 	if err != nil {

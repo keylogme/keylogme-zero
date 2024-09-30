@@ -34,6 +34,8 @@ func main() {
 		Devices: []keylogger.DeviceInput{
 			{Id: 1, Name: "foostan Corne"},
 			{Id: 2, Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
+			{Id: 2, Name: "Logitech MX Master 2S"},
+			// {Id: 2, Name: "Wacom Intuos BT M Pen"},
 		},
 		Shortcuts: []internal.Shortcut{
 			{Id: 1, Values: []string{"J", "S"}, Type: internal.SequentialShortcutType},
@@ -48,8 +50,9 @@ func main() {
 
 	sd := internal.NewShortcutsDetector(config.Shortcuts)
 
-	keylogger.MustGetDevice(config.Devices[0], chEvt)
-	keylogger.MustGetDevice(config.Devices[1], chEvt)
+	keylogger.GetDevice(config.Devices[0], chEvt)
+	keylogger.GetDevice(config.Devices[1], chEvt)
+	keylogger.GetDevice(config.Devices[2], chEvt)
 
 	modifiers := []uint16{29, 97, 42, 54, 56, 100} // ctrl, shft, alt
 
