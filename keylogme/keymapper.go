@@ -1,4 +1,4 @@
-package keylogger
+package keylogme
 
 // keyCodeMap connects the code with human readable key
 var keyCodeMap = map[uint16]string{

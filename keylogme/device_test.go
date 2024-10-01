@@ -1,4 +1,4 @@
-package keylogger
+package keylogme
 
 // func TestReconnection(t *testing.T) {
 // 	fd, err := os.CreateTemp("", "*")

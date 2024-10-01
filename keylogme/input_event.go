@@ -1,4 +1,4 @@
-package keylogger
+package keylogme
 
 import (
 	"syscall"
