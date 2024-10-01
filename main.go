@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gokeny/internal"
-	"gokeny/internal/keylogger"
 	"log/slog"
 	"os"
 	"slices"
 	"time"
+
+	"github.com/keylogme/zero-trust-logger/internal"
+	"github.com/keylogme/zero-trust-logger/internal/keylogger"
 )
 
 type KeyLog struct {
@@ -45,6 +46,7 @@ func main() {
 		},
 	}
 	chEvt := make(chan keylogger.DeviceEvent)
+	// ffs := storage.NewFileStorage(context.Background(), "test.json")
 	sender := internal.MustGetNewSender(ORIGIN_ENDPOINT, APIKEY)
 	defer sender.Close()
 
@@ -69,12 +71,14 @@ func main() {
 			detectedShortcutID := sd.Detect(i.KeyString())
 			if detectedShortcutID != 0 {
 				sendShortcut(sender, i.DeviceId, detectedShortcutID)
+				// ffs.SaveShortcut(i.DeviceId, detectedShortcutID)
 			}
 			//
 			// FIXME: mod+key is sent, but when mod is released , is sent again
 			// keylogs := []uint16{i.Code}
 			// keylogs = append(keylogs, modPress...)
 			err := sendKeylog(sender, i.DeviceId, i.Code)
+			// err := ffs.SaveKeylog(i.DeviceId, i.Code)
 			if err != nil {
 				fmt.Printf("error %s\n", err.Error())
 			}
