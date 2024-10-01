@@ -1,4 +1,4 @@
-package keylogme
+package keylog
 
 import (
 	"bytes"

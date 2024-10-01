@@ -8,8 +8,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/keylogme/zero-trust-logger/internal"
-	"github.com/keylogme/zero-trust-logger/internal/keylogger"
+	"github.com/keylogme/zero-trust-logger/keylog"
 )
 
 type KeyLog struct {
@@ -17,8 +16,8 @@ type KeyLog struct {
 }
 
 type Config struct {
-	Devices   []keylogger.DeviceInput
-	Shortcuts []internal.Shortcut
+	Devices   []keylog.DeviceInput
+	Shortcuts []keylog.Shortcut
 }
 
 // Use lsinput to see which input to be used
@@ -32,29 +31,29 @@ func main() {
 	ORIGIN_ENDPOINT := os.Args[2]
 	// Get config
 	config := Config{
-		Devices: []keylogger.DeviceInput{
+		Devices: []keylog.DeviceInput{
 			{Id: 1, Name: "foostan Corne"},
 			{Id: 2, Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
 			{Id: 2, Name: "Logitech MX Master 2S"},
 			// {Id: 2, Name: "Wacom Intuos BT M Pen"},
 		},
-		Shortcuts: []internal.Shortcut{
-			{Id: 1, Values: []string{"J", "S"}, Type: internal.SequentialShortcutType},
-			{Id: 2, Values: []string{"J", "F"}, Type: internal.SequentialShortcutType},
-			{Id: 3, Values: []string{"J", "G"}, Type: internal.SequentialShortcutType},
-			{Id: 4, Values: []string{"J", "S", "G"}, Type: internal.SequentialShortcutType},
+		Shortcuts: []keylog.Shortcut{
+			{Id: 1, Values: []string{"J", "S"}, Type: keylog.SequentialShortcutType},
+			{Id: 2, Values: []string{"J", "F"}, Type: keylog.SequentialShortcutType},
+			{Id: 3, Values: []string{"J", "G"}, Type: keylog.SequentialShortcutType},
+			{Id: 4, Values: []string{"J", "S", "G"}, Type: keylog.SequentialShortcutType},
 		},
 	}
-	chEvt := make(chan keylogger.DeviceEvent)
+	chEvt := make(chan keylog.DeviceEvent)
 	// ffs := storage.NewFileStorage(context.Background(), "test.json")
-	sender := internal.MustGetNewSender(ORIGIN_ENDPOINT, APIKEY)
+	sender := keylog.MustGetNewSender(ORIGIN_ENDPOINT, APIKEY)
 	defer sender.Close()
 
-	sd := internal.NewShortcutsDetector(config.Shortcuts)
+	sd := keylog.NewShortcutsDetector(config.Shortcuts)
 
-	keylogger.GetDevice(config.Devices[0], chEvt)
-	keylogger.GetDevice(config.Devices[1], chEvt)
-	keylogger.GetDevice(config.Devices[2], chEvt)
+	keylog.GetDevice(config.Devices[0], chEvt)
+	keylog.GetDevice(config.Devices[1], chEvt)
+	keylog.GetDevice(config.Devices[2], chEvt)
 
 	modifiers := []uint16{29, 97, 42, 54, 56, 100} // ctrl, shft, alt
 
@@ -65,7 +64,7 @@ func main() {
 		if i.KeyPress() && slices.Contains(modifiers, i.Code) {
 			modPress = append(modPress, i.Code)
 		}
-		if i.Type == keylogger.EvKey && i.KeyRelease() {
+		if i.Type == keylog.EvKey && i.KeyRelease() {
 			start := time.Now()
 
 			detectedShortcutID := sd.Detect(i.KeyString())
@@ -131,7 +130,7 @@ func getPayload(typePayload TypePayload, data any) ([]byte, error) {
 	return pb, nil
 }
 
-func sendKeylog(ws *internal.Sender, kId int64, code uint16) error {
+func sendKeylog(ws *keylog.Sender, kId int64, code uint16) error {
 	payloadBytes, err := getPayload(
 		KeyLogPayload,
 		KeylogPayloadV1{KeyboardDeviceId: kId, Code: code},
@@ -142,7 +141,7 @@ func sendKeylog(ws *internal.Sender, kId int64, code uint16) error {
 	return ws.Send(payloadBytes)
 }
 
-func sendShortcut(ws *internal.Sender, kId, scID int64) error {
+func sendShortcut(ws *keylog.Sender, kId, scID int64) error {
 	start := time.Now()
 	defer func() {
 		slog.Info(fmt.Sprintf("| %s | Shortcut %d\n", time.Since(start), scID))
