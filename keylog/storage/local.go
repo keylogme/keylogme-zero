@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -21,8 +22,15 @@ type FileStorage struct {
 }
 
 type DataFile struct {
-	Keylogs   map[int64]map[uint16]int64 `json:"keylogs"`
-	Shortcuts map[int64]map[int64]int64  `json:"shortcuts"`
+	Keylogs   map[int64]map[uint16]int64 `json:"keylogs,omitempty"`
+	Shortcuts map[int64]map[int64]int64  `json:"shortcuts,omitempty"`
+}
+
+func newDataFile() DataFile {
+	return DataFile{
+		Keylogs:   map[int64]map[uint16]int64{},
+		Shortcuts: map[int64]map[int64]int64{},
+	}
 }
 
 func NewFileStorage(ctx context.Context, fname string) *FileStorage {
@@ -61,16 +69,10 @@ func (f *FileStorage) SaveShortcut(deviceId int64, shortcutId int64) error {
 }
 
 func (f *FileStorage) prepareDataToSave() (DataFile, error) {
-	content, err := os.ReadFile(f.fname)
+	dataFile, err := getDataFromFile(f.fname)
 	if err != nil {
-		return DataFile{}, err
+		return dataFile, err
 	}
-	dataFile := new(DataFile)
-	err = json.Unmarshal(content, dataFile)
-	if err != nil {
-		return DataFile{}, err
-	}
-
 	for kId := range f.keylogs {
 		for keycode := range f.keylogs[kId] {
 			if _, ok := dataFile.Keylogs[kId][keycode]; ok {
@@ -99,7 +101,7 @@ func (f *FileStorage) prepareDataToSave() (DataFile, error) {
 			}
 		}
 	}
-	return *dataFile, nil
+	return dataFile, nil
 }
 
 func (f *FileStorage) saveToFile() error {
@@ -119,7 +121,7 @@ func (f *FileStorage) saveToFile() error {
 	if err != nil {
 		return err
 	}
-	slog.Info(fmt.Sprintf("| %s | File updated.\n", time.Since(start)))
+	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.fname))
 	f.keylogs = map[int64]map[uint16]int64{}
 	f.shortcuts = map[int64]map[int64]int64{}
 	return nil
@@ -137,4 +139,24 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func getDataFromFile(fname string) (DataFile, error) {
+	dataFile := newDataFile()
+	if _, err := os.Stat(fname); errors.Is(err, os.ErrNotExist) {
+		slog.Info(fmt.Sprintf("File %s not exist", fname))
+		return dataFile, nil
+	}
+
+	content, err := os.ReadFile(fname)
+	if err != nil {
+		slog.Info(fmt.Sprintf("Could not open file %s\n", fname))
+		return dataFile, err
+	}
+	err = json.Unmarshal(content, &dataFile)
+	if err != nil {
+		slog.Info(fmt.Sprintf("Could not parse file %s, file corrupted\n", fname))
+		return dataFile, err
+	}
+	return dataFile, nil
 }
