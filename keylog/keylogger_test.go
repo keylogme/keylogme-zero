@@ -39,7 +39,7 @@ func TestBufferParser(t *testing.T) {
 		return
 	}
 
-	if input.Type != EvMsc {
+	if input.Type != evMsc {
 		t.Errorf("wrong event type. expected key press but got %v", input.Type)
 		return
 	}
@@ -74,7 +74,7 @@ func writeKeyOnceForTesting(filename string, code uint16) error {
 		return err
 	}
 	for _, i := range []int32{int32(KeyPress), int32(KeyRelease)} {
-		err := binary.Write(fd, binary.LittleEndian, inputEvent{Type: EvKey, Code: code, Value: i})
+		err := binary.Write(fd, binary.LittleEndian, inputEvent{Type: evKey, Code: code, Value: i})
 		if err != nil {
 			return err
 		}
