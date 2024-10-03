@@ -85,13 +85,18 @@ func (f *FileStorage) prepareDataToSave() (DataFile, error) {
 			}
 		}
 	}
-	// FIXME: copy from keylogs to shortcuts
-	for kId := range dataFile.Shortcuts {
-		for scId := range dataFile.Shortcuts[kId] {
-			if _, ok := f.shortcuts[kId][scId]; !ok {
+	for kId := range f.shortcuts {
+		for scId := range f.shortcuts[kId] {
+			if _, ok := dataFile.Shortcuts[kId][scId]; ok {
+				dataFile.Shortcuts[kId][scId] += f.shortcuts[kId][scId]
 				continue
 			}
-			dataFile.Shortcuts[kId][scId] += f.shortcuts[kId][scId]
+			if _, ok := dataFile.Shortcuts[kId]; !ok {
+				dataFile.Shortcuts[kId] = map[int64]int64{}
+			}
+			if _, ok := dataFile.Shortcuts[kId][kId]; !ok {
+				dataFile.Shortcuts[kId][scId] = f.shortcuts[kId][scId]
+			}
 		}
 	}
 	return *dataFile, nil
@@ -124,15 +129,10 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
 		case <-time.After(3 * time.Second):
+			// TODO: And set time to save every 30 s
 			f.saveToFile()
 		case <-ctx.Done():
-			// TODO: gracefull shutdown, make last save . And set time to save every 30 s
-			//
-			// Old idea:save in memory and save to file when process closed?
-			// check if work:
-			// - when ctrl+c
-			// - when closing computer
-			// No taken because user may want to check files during app running
+			// TODO: gracefull shutdown, make last save .
 			slog.Info("Leaving goroutine...")
 			return
 		}
