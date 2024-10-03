@@ -8,15 +8,15 @@ import (
 	"syscall"
 )
 
-// KeyLogger wrapper around file descriptior
-type KeyLogger struct {
+// keyLogger wrapper around file descriptior
+type keyLogger struct {
 	fd *os.File
 }
 
-// NewKeylogger creates a new keylogger for a device path
-func NewKeylogger(devPath string) (*KeyLogger, error) {
+// newKeylogger creates a new keylogger for a device path
+func newKeylogger(devPath string) (*keyLogger, error) {
 	// TODO: input is device name so if keyboard changes  port -> device can be found by name
-	k := &KeyLogger{}
+	k := &keyLogger{}
 	fd, err := os.OpenFile(devPath, os.O_RDONLY, os.ModeCharDevice)
 	if err != nil {
 		if os.IsPermission(err) && !k.IsRoot() {
@@ -31,16 +31,16 @@ func NewKeylogger(devPath string) (*KeyLogger, error) {
 }
 
 // IsRoot checks if the process is run with root permission
-func (k *KeyLogger) IsRoot() bool {
+func (k *keyLogger) IsRoot() bool {
 	return syscall.Getuid() == 0 && syscall.Geteuid() == 0
 }
 
 // Read from file descriptor
 // Blocking call, returns channel
 // Make sure to close channel when finish
-func (k *KeyLogger) Read() chan InputEvent {
-	event := make(chan InputEvent)
-	go func(event chan InputEvent) {
+func (k *keyLogger) Read() chan inputEvent {
+	event := make(chan inputEvent)
+	go func(event chan inputEvent) {
 		for {
 			e, err := k.read()
 			if err != nil {
@@ -57,7 +57,7 @@ func (k *KeyLogger) Read() chan InputEvent {
 }
 
 // read from file description and parse binary into go struct
-func (k *KeyLogger) read() (*InputEvent, error) {
+func (k *keyLogger) read() (*inputEvent, error) {
 	buffer := make([]byte, eventsize)
 	n, err := k.fd.Read(buffer)
 	if err != nil {
@@ -71,14 +71,14 @@ func (k *KeyLogger) read() (*InputEvent, error) {
 }
 
 // eventFromBuffer parser bytes into InputEvent struct
-func (k *KeyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
-	event := &InputEvent{}
+func (k *keyLogger) eventFromBuffer(buffer []byte) (*inputEvent, error) {
+	event := &inputEvent{}
 	err := binary.Read(bytes.NewBuffer(buffer), binary.LittleEndian, event)
 	return event, err
 }
 
 // Close file descriptor
-func (k *KeyLogger) Close() error {
+func (k *keyLogger) Close() error {
 	if k.fd == nil {
 		return nil
 	}

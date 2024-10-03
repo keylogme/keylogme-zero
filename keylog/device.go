@@ -31,12 +31,12 @@ func findKeyboardDevice(name string) string {
 	return ""
 }
 
-func getKeyLogger(name string) (*KeyLogger, error) {
+func getKeyLogger(name string) (*keyLogger, error) {
 	pathDevice := findKeyboardDevice(name)
 	if pathDevice == "" {
 		return nil, fmt.Errorf("Device with name %s not found\n", name)
 	}
-	k, err := NewKeylogger(pathDevice)
+	k, err := newKeylogger(pathDevice)
 	if err != nil {
 		return nil, fmt.Errorf("Could not set keylogger for %s. %s\n", name, err.Error())
 	}
@@ -46,7 +46,7 @@ func getKeyLogger(name string) (*KeyLogger, error) {
 type Device struct {
 	DeviceInput
 	Connected bool
-	keylogger *KeyLogger
+	keylogger *keyLogger
 	sendInput chan DeviceEvent
 }
 
@@ -56,7 +56,7 @@ type DeviceInput struct {
 }
 
 type DeviceEvent struct {
-	InputEvent
+	inputEvent
 	DeviceId int64
 }
 
@@ -81,7 +81,7 @@ func (d *Device) start() {
 		return
 	}
 	for i := range d.keylogger.Read() {
-		de := DeviceEvent{InputEvent: i, DeviceId: d.Id}
+		de := DeviceEvent{inputEvent: i, DeviceId: d.Id}
 		d.sendInput <- de
 	}
 }

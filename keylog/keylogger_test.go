@@ -9,7 +9,7 @@ import (
 )
 
 func TestFileDescriptor(t *testing.T) {
-	k := &KeyLogger{}
+	k := &keyLogger{}
 
 	err := k.Close()
 	if err != nil {
@@ -19,7 +19,7 @@ func TestFileDescriptor(t *testing.T) {
 }
 
 func TestBufferParser(t *testing.T) {
-	k := &KeyLogger{}
+	k := &keyLogger{}
 
 	// keyboard
 	input, err := k.eventFromBuffer(
@@ -51,7 +51,7 @@ func TestWithPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := NewKeylogger(fd.Name())
+	k, err := newKeylogger(fd.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestWithPermission(t *testing.T) {
 	fd.Close()
 
 	// try to create new keylogger with file descriptor which has no permission
-	_, err = NewKeylogger("/dev/tty0")
+	_, err = newKeylogger("/dev/tty0")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -74,7 +74,7 @@ func writeKeyOnceForTesting(filename string, code uint16) error {
 		return err
 	}
 	for _, i := range []int32{int32(KeyPress), int32(KeyRelease)} {
-		err := binary.Write(fd, binary.LittleEndian, InputEvent{Type: EvKey, Code: code, Value: i})
+		err := binary.Write(fd, binary.LittleEndian, inputEvent{Type: EvKey, Code: code, Value: i})
 		if err != nil {
 			return err
 		}
@@ -89,13 +89,13 @@ func TestKeylog(t *testing.T) {
 	}
 	defer fd.Close()
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := NewKeylogger(fd.Name())
+	k, err := newKeylogger(fd.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer k.Close()
 	// run goroutine to receive keypress
-	recEvt := make(chan InputEvent)
+	recEvt := make(chan inputEvent)
 	go func() {
 		// FIXME: I added this sleep to make sure select can receive the channel
 		time.Sleep(1 * time.Second)
@@ -128,7 +128,7 @@ func TestDisconnection(t *testing.T) {
 	}
 	defer fd.Close()
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := NewKeylogger(fd.Name())
+	k, err := newKeylogger(fd.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
