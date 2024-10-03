@@ -1,23 +1,19 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
 	"slices"
 	"time"
 
 	"github.com/keylogme/zero-trust-logger/keylog"
+	"github.com/keylogme/zero-trust-logger/keylog/storage"
 )
 
 type KeyLog struct {
 	Code uint16 `json:"code"`
-}
-
-type Config struct {
-	Devices   []keylog.DeviceInput
-	Shortcuts []keylog.Shortcut
 }
 
 // Use lsinput to see which input to be used
@@ -27,10 +23,8 @@ type Config struct {
 // try with all of them
 
 func main() {
-	APIKEY := os.Args[1]
-	ORIGIN_ENDPOINT := os.Args[2]
 	// Get config
-	config := Config{
+	config := keylog.Config{
 		Devices: []keylog.DeviceInput{
 			{Id: 1, Name: "foostan Corne"},
 			{Id: 2, Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
@@ -45,9 +39,7 @@ func main() {
 		},
 	}
 	chEvt := make(chan keylog.DeviceEvent)
-	// ffs := storage.NewFileStorage(context.Background(), "test.json")
-	sender := keylog.MustGetNewSender(ORIGIN_ENDPOINT, APIKEY)
-	defer sender.Close()
+	ffs := storage.NewFileStorage(context.Background(), "test.json")
 
 	sd := keylog.NewShortcutsDetector(config.Shortcuts)
 
@@ -69,15 +61,15 @@ func main() {
 
 			detectedShortcutID := sd.Detect(i.KeyString())
 			if detectedShortcutID != 0 {
-				sendShortcut(sender, i.DeviceId, detectedShortcutID)
-				// ffs.SaveShortcut(i.DeviceId, detectedShortcutID)
+				// sendShortcut(sender, i.DeviceId, detectedShortcutID)
+				ffs.SaveShortcut(i.DeviceId, detectedShortcutID)
 			}
 			//
 			// FIXME: mod+key is sent, but when mod is released , is sent again
 			// keylogs := []uint16{i.Code}
 			// keylogs = append(keylogs, modPress...)
-			err := sendKeylog(sender, i.DeviceId, i.Code)
-			// err := ffs.SaveKeylog(i.DeviceId, i.Code)
+			// err := sendKeylog(sender, i.DeviceId, i.Code)
+			err := ffs.SaveKeylog(i.DeviceId, i.Code)
 			if err != nil {
 				fmt.Printf("error %s\n", err.Error())
 			}
