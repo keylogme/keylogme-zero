@@ -43,11 +43,11 @@ func getKeyLogger(name string) (*keyLogger, error) {
 	return k, nil
 }
 
-type Device struct {
+type device struct {
 	DeviceInput
 	Connected bool
 	keylogger *keyLogger
-	sendInput chan DeviceEvent
+	sendInput chan deviceEvent
 }
 
 type DeviceInput struct {
@@ -55,38 +55,38 @@ type DeviceInput struct {
 	Name string
 }
 
-type DeviceEvent struct {
+type deviceEvent struct {
 	inputEvent
 	DeviceId int64
 }
 
-func GetDevice(input DeviceInput, inputChan chan DeviceEvent) *Device {
-	device := &Device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
+func getDevice(input DeviceInput, inputChan chan deviceEvent) *device {
+	device := &device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
 	go device.handleReconnects(device.start)
 	return device
 }
 
-func MustGetDevice(input DeviceInput, inputChan chan DeviceEvent) *Device {
+func mustGetDevice(input DeviceInput, inputChan chan deviceEvent) *device {
 	k, err := getKeyLogger(input.Name)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
+	device := &device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
 	go device.handleReconnects(device.start)
 	return device
 }
 
-func (d *Device) start() {
+func (d *device) start() {
 	if d.keylogger == nil {
 		return
 	}
 	for i := range d.keylogger.Read() {
-		de := DeviceEvent{inputEvent: i, DeviceId: d.Id}
+		de := deviceEvent{inputEvent: i, DeviceId: d.Id}
 		d.sendInput <- de
 	}
 }
 
-func (d *Device) handleReconnects(s func()) {
+func (d *device) handleReconnects(s func()) {
 	if d.keylogger != nil {
 		// blocking call to start reading keylogger
 		d.Connected = true

@@ -10,7 +10,7 @@ func TestShortcutsDetector_Detect(t *testing.T) {
 		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
 		{Id: 2, Values: []string{"J", "S", "A"}, Type: SequentialShortcutType},
 	}
-	ds := NewShortcutsDetector(sl)
+	ds := newShortcutsDetector(sl)
 	scId := ds.Detect("A") // rand key
 	if scId != 0 {
 		t.Fatal("Detection not expected")
@@ -44,7 +44,7 @@ func TestShortcutsDetector_Detect_Not_Expected(t *testing.T) {
 		{Id: 1, Values: []string{"J", "B", "H"}, Type: SequentialShortcutType},
 		{Id: 2, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
 	}
-	ds := NewShortcutsDetector(sl)
+	ds := newShortcutsDetector(sl)
 	detected := ds.Detect("J")
 	if detected != 0 {
 		t.Fatal("Detection not expected")
@@ -71,7 +71,7 @@ func TestShortcutsDetector_Detect_Multiple_Possible(t *testing.T) {
 		{Id: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
 		{Id: 3, Values: []string{"J", "S", "G"}, Type: SequentialShortcutType},
 	}
-	ds := NewShortcutsDetector(sl)
+	ds := newShortcutsDetector(sl)
 	detected := ds.Detect("A")
 	if detected != 0 {
 		t.Fatal("Detection not expected")
@@ -99,7 +99,7 @@ func TestShortcutsDetector_Detect_ReAttempt(t *testing.T) {
 		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
 		{Id: 2, Values: []string{"J", "A"}, Type: SequentialShortcutType},
 	}
-	ds := NewShortcutsDetector(sl)
+	ds := newShortcutsDetector(sl)
 	detected := ds.Detect("J")
 	if detected != 0 {
 		t.Fatal("Detection not expected")

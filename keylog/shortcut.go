@@ -15,7 +15,7 @@ type Shortcut struct {
 	Type   ShortcutType `json:"type"`
 }
 
-type ShortcutsDetector struct {
+type shortcutsDetector struct {
 	indexVal                int
 	currPossibleShortcuts   []*Shortcut
 	prevShortcutIDCompleted int64
@@ -24,15 +24,15 @@ type ShortcutsDetector struct {
 	Shortcuts               []Shortcut
 }
 
-func NewShortcutsDetector(s []Shortcut) *ShortcutsDetector {
-	return &ShortcutsDetector{
+func newShortcutsDetector(s []Shortcut) *shortcutsDetector {
+	return &shortcutsDetector{
 		Shortcuts:             s,
 		indexVal:              0,
 		currPossibleShortcuts: []*Shortcut{},
 	}
 }
 
-func (sd *ShortcutsDetector) Detect(kp string) int64 {
+func (sd *shortcutsDetector) Detect(kp string) int64 {
 	if len(sd.currPossibleShortcuts) == 0 {
 		for _, s := range sd.Shortcuts {
 			if s.Values[0] == kp {
@@ -80,7 +80,7 @@ func (sd *ShortcutsDetector) Detect(kp string) int64 {
 	return 0
 }
 
-func (sd *ShortcutsDetector) reset() {
+func (sd *shortcutsDetector) reset() {
 	sd.indexVal = 0
 	sd.prevShortcutIDCompleted = 0
 	sd.currPossibleShortcuts = []*Shortcut{}

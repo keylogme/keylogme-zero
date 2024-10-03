@@ -10,14 +10,14 @@ import (
 	"github.com/keylogme/zero-trust-logger/keylog/storage"
 )
 
-func Start(ctx context.Context, store storage.Storage, config Config) ([]*Device, func()) {
-	chEvt := make(chan DeviceEvent)
+func Start(ctx context.Context, store storage.Storage, config Config) ([]*device, func()) {
+	chEvt := make(chan deviceEvent)
 
-	sd := NewShortcutsDetector(config.Shortcuts)
+	sd := newShortcutsDetector(config.Shortcuts)
 
-	devices := []*Device{}
+	devices := []*device{}
 	for _, dev := range config.Devices {
-		d := GetDevice(dev, chEvt)
+		d := getDevice(dev, chEvt)
 		devices = append(devices, d)
 	}
 
