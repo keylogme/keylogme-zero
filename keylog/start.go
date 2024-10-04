@@ -33,10 +33,17 @@ func Start(ctx context.Context, store storage.Storage, config Config) ([]*device
 		if i.Type == evKey && i.KeyRelease() {
 			start := time.Now()
 
-			detectedShortcutID := sd.Detect(i.KeyString())
-			if detectedShortcutID != 0 {
+			detectedShortcut := sd.Detect(i.DeviceId, i.KeyString())
+			if detectedShortcut.ShortcutId != 0 {
 				// sendShortcut(sender, i.DeviceId, detectedShortcutID)
-				store.SaveShortcut(i.DeviceId, detectedShortcutID)
+				slog.Info(
+					fmt.Sprintf(
+						"Shortcut %d found in device %d\n",
+						detectedShortcut.ShortcutId,
+						detectedShortcut.DeviceId,
+					),
+				)
+				store.SaveShortcut(detectedShortcut.DeviceId, detectedShortcut.ShortcutId)
 			}
 			//
 			// FIXME: mod+key is sent, but when mod is released , is sent again
