@@ -1,6 +1,7 @@
 package keylog
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -95,6 +96,36 @@ func TestShortcutsDetector_diffDevice_after_shortcut_2(t *testing.T) {
 	scDetected = ds.Detect(1, "A") // third  key but no detection
 	if scDetected.ShortcutId != 0 {
 		t.Fatal("Detection not expected")
+	}
+}
+
+func TestShortcutsDetector_diffDevice_after_shortcut_3(t *testing.T) {
+	sl := []Shortcut{
+		// {ID: 1, Values: []string{"L_CTRL", "S"}, Type: SequentialShortcutType},
+		{Id: 1, Values: []string{"J", "S"}, Type: SequentialShortcutType},
+		{Id: 2, Values: []string{"J", "S", "A"}, Type: SequentialShortcutType},
+	}
+	ds := newShortcutsDetector(sl)
+	scDetected := ds.Detect(1, "J") // first key shortcut
+	if scDetected.ShortcutId != 0 {
+		t.Fatal("Detection not expected")
+	}
+	scDetected = ds.Detect(2, "J") // change of keyboard
+	if scDetected.ShortcutId != 0 {
+		t.Fatal("Detection not expected")
+	}
+	scDetected = ds.Detect(2, "S")
+	if scDetected.ShortcutId != 0 {
+		t.Fatal("Detection not expected")
+	}
+	fmt.Println(ds.currPossibleShortcuts)
+	fmt.Printf("%#v\n", ds.prevShortcutDeviceDetected)
+	scDetected = ds.Detect(2, "C") // third  key confirms detection shortcut
+	if scDetected.ShortcutId != 1 {
+		t.Fatal("Detection expected")
+	}
+	if scDetected.DeviceId != 2 {
+		t.Fatal("Device expected")
 	}
 }
 

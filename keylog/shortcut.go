@@ -42,39 +42,69 @@ func newShortcutsDetector(s []Shortcut) *shortcutsDetector {
 	}
 }
 
+func (sd *shortcutsDetector) handleFirstKey(deviceId int64, kp string) {
+	for _, s := range sd.Shortcuts {
+		if s.Values[0] == kp {
+			scd := shortcutDevice{Shortcut: s, DeviceId: deviceId}
+			sd.currPossibleShortcuts = append(sd.currPossibleShortcuts, scd)
+			sd.indexVal = 1
+		}
+	}
+}
+
+func (sd *shortcutsDetector) handleChangeOfDevice(deviceId int64, kp string) ShortcutDetected {
+	if len(sd.currPossibleShortcuts) > 0 && sd.currPossibleShortcuts[0].DeviceId != deviceId {
+		if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
+			output := sd.prevShortcutDeviceDetected
+			sd.reset()
+			sd.handleFirstKey(deviceId, kp)
+			return output
+		}
+		sd.reset()
+	}
+	return *new(ShortcutDetected)
+}
+
+func (sd *shortcutsDetector) checkPossibleShortcuts(
+	deviceId int64,
+	kp string,
+) ([]shortcutDevice, ShortcutDetected) {
+	new_ps := []shortcutDevice{}
+	foundOnePossibleShortcutCompleted := new(ShortcutDetected)
+	for _, ps := range sd.currPossibleShortcuts {
+		if len(ps.Values) <= sd.indexVal {
+			continue
+		}
+		nextKeyShortcut := ps.Values[sd.indexVal]
+		if nextKeyShortcut == kp && ps.DeviceId == deviceId {
+			// if nextKeyShortcut == kp {
+			new_ps = append(new_ps, ps)
+		}
+		isLastKeyShortcut := len((ps).Values) == sd.indexVal+1
+		if nextKeyShortcut == kp && isLastKeyShortcut && ps.DeviceId == deviceId {
+			// if nextKeyShortcut == kp && isLastKeyShortcut {
+			foundOnePossibleShortcutCompleted.DeviceId = ps.DeviceId
+			foundOnePossibleShortcutCompleted.ShortcutId = ps.Id
+		}
+	}
+	return new_ps, *foundOnePossibleShortcutCompleted
+}
+
 func (sd *shortcutsDetector) Detect(deviceId int64, kp string) ShortcutDetected {
+	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != 0 {
+		return sdet
+	}
 	if len(sd.currPossibleShortcuts) == 0 {
-		for _, s := range sd.Shortcuts {
-			if s.Values[0] == kp {
-				scd := shortcutDevice{Shortcut: s, DeviceId: deviceId}
-				sd.currPossibleShortcuts = append(sd.currPossibleShortcuts, scd)
-				sd.indexVal = 1
-			}
-		}
+		sd.handleFirstKey(deviceId, kp)
 	} else {
-		new_ps := []shortcutDevice{}
-		foundOnePossibleShortcutCompleted := new(ShortcutDetected)
-		for _, ps := range sd.currPossibleShortcuts {
-			if len(ps.Values) <= sd.indexVal {
-				continue
-			}
-			nextKeyShortcut := ps.Values[sd.indexVal]
-			if nextKeyShortcut == kp && ps.DeviceId == deviceId {
-				new_ps = append(new_ps, ps)
-			}
-			isLastKeyShortcut := len((ps).Values) == sd.indexVal+1
-			if nextKeyShortcut == kp && isLastKeyShortcut && ps.DeviceId == deviceId {
-				foundOnePossibleShortcutCompleted.DeviceId = ps.DeviceId
-				foundOnePossibleShortcutCompleted.ShortcutId = ps.Id
-			}
-		}
-		if len(new_ps) == 1 && foundOnePossibleShortcutCompleted.ShortcutId != 0 {
+		newPossibleShortcuts, shortcutCompleted := sd.checkPossibleShortcuts(deviceId, kp)
+		if len(newPossibleShortcuts) == 1 && shortcutCompleted.ShortcutId != 0 {
 			// found only one possible shortcut
 			sd.reset()
-			return *foundOnePossibleShortcutCompleted
+			return shortcutCompleted
 
 		}
-		if len(new_ps) == 0 {
+		if len(newPossibleShortcuts) == 0 {
 			if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
 				output := sd.prevShortcutDeviceDetected
 				sd.reset()
@@ -82,11 +112,11 @@ func (sd *shortcutsDetector) Detect(deviceId int64, kp string) ShortcutDetected 
 			}
 			sd.reset()
 		} else {
-			if foundOnePossibleShortcutCompleted.ShortcutId != 0 {
-				sd.prevShortcutDeviceDetected = *foundOnePossibleShortcutCompleted
+			if shortcutCompleted.ShortcutId != 0 {
+				sd.prevShortcutDeviceDetected = shortcutCompleted
 			}
 			sd.indexVal += 1
-			sd.currPossibleShortcuts = new_ps
+			sd.currPossibleShortcuts = newPossibleShortcuts
 		}
 	}
 	return *new(ShortcutDetected)
