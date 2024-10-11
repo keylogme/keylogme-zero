@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"os/signal"
 
 	"github.com/keylogme/zero-trust-logger/keylog"
 	"github.com/keylogme/zero-trust-logger/keylog/storage"
@@ -33,7 +36,23 @@ func main() {
 			{Id: 4, Values: []string{"J", "S", "G"}, Type: keylog.SequentialShortcutType},
 		},
 	}
-	ffs := storage.NewFileStorage(context.Background(), "keylogme.json")
-	_, cleanup := keylog.Start(context.Background(), ffs, config)
-	defer cleanup()
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	// INFO: two different types of cleanup
+	// for storage, the ctx will close
+	// for keylog, a cleanup function is returned
+	ffs := storage.NewFileStorage(ctx, "Oct12.json")
+	_, cleanup := keylog.Start(ffs, config)
+	// defer cleanup()
+
+	// fmt.Println(ds)
+
+	// Graceful shutdown
+	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	<-ctxInt.Done()
+	cancelCtx()
+	cleanup()
+
+	fmt.Println("Logger closed.")
 }

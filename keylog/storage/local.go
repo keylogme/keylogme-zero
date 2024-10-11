@@ -130,12 +130,13 @@ func (f *FileStorage) saveToFile() error {
 func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
-		case <-time.After(3 * time.Second):
+		case <-time.After(30 * time.Second):
 			// TODO: And set time to save every 30 s
 			f.saveToFile()
 		case <-ctx.Done():
 			// TODO: gracefull shutdown, make last save .
-			slog.Info("Leaving goroutine...")
+			slog.Info("Closing file storage...")
+			f.saveToFile()
 			return
 		}
 	}
