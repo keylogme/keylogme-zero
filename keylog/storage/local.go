@@ -96,7 +96,7 @@ func (f *FileStorage) prepareDataToSave() (DataFile, error) {
 			if _, ok := dataFile.Shortcuts[kId]; !ok {
 				dataFile.Shortcuts[kId] = map[int64]int64{}
 			}
-			if _, ok := dataFile.Shortcuts[kId][kId]; !ok {
+			if _, ok := dataFile.Shortcuts[kId][scId]; !ok {
 				dataFile.Shortcuts[kId][scId] = f.shortcuts[kId][scId]
 			}
 		}
