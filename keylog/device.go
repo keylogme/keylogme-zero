@@ -51,13 +51,13 @@ type device struct {
 }
 
 type DeviceInput struct {
-	Id   int64
-	Name string
+	DeviceId string
+	Name     string
 }
 
 type deviceEvent struct {
 	inputEvent
-	DeviceId int64
+	DeviceId string
 }
 
 func getDevice(input DeviceInput, inputChan chan deviceEvent) *device {
@@ -81,7 +81,7 @@ func (d *device) start() {
 		return
 	}
 	for i := range d.keylogger.Read() {
-		de := deviceEvent{inputEvent: i, DeviceId: d.Id}
+		de := deviceEvent{inputEvent: i, DeviceId: d.DeviceId}
 		d.sendInput <- de
 	}
 }

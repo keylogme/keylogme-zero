@@ -38,7 +38,7 @@ func Start(store storage.Storage, config Config) ([]*device, func()) {
 					// sendShortcut(sender, i.DeviceId, detectedShortcutID)
 					slog.Info(
 						fmt.Sprintf(
-							"Shortcut %d found in device %d\n",
+							"Shortcut %d found in device %s\n",
 							detectedShortcut.ShortcutId,
 							detectedShortcut.DeviceId,
 						),

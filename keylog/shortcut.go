@@ -17,12 +17,12 @@ type Shortcut struct {
 
 type shortcutDevice struct {
 	Shortcut
-	DeviceId int64
+	DeviceId string
 }
 
 type ShortcutDetected struct {
 	ShortcutId int64
-	DeviceId   int64
+	DeviceId   string
 }
 
 type shortcutsDetector struct {
@@ -42,7 +42,7 @@ func newShortcutsDetector(s []Shortcut) *shortcutsDetector {
 	}
 }
 
-func (sd *shortcutsDetector) handleFirstKey(deviceId int64, kp string) {
+func (sd *shortcutsDetector) handleFirstKey(deviceId string, kp string) {
 	for _, s := range sd.Shortcuts {
 		if s.Values[0] == kp {
 			scd := shortcutDevice{Shortcut: s, DeviceId: deviceId}
@@ -52,7 +52,7 @@ func (sd *shortcutsDetector) handleFirstKey(deviceId int64, kp string) {
 	}
 }
 
-func (sd *shortcutsDetector) handleChangeOfDevice(deviceId int64, kp string) ShortcutDetected {
+func (sd *shortcutsDetector) handleChangeOfDevice(deviceId string, kp string) ShortcutDetected {
 	if len(sd.currPossibleShortcuts) > 0 && sd.currPossibleShortcuts[0].DeviceId != deviceId {
 		if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
 			output := sd.prevShortcutDeviceDetected
@@ -66,7 +66,7 @@ func (sd *shortcutsDetector) handleChangeOfDevice(deviceId int64, kp string) Sho
 }
 
 func (sd *shortcutsDetector) checkPossibleShortcuts(
-	deviceId int64,
+	deviceId string,
 	kp string,
 ) ([]shortcutDevice, ShortcutDetected) {
 	new_ps := []shortcutDevice{}
@@ -90,7 +90,7 @@ func (sd *shortcutsDetector) checkPossibleShortcuts(
 	return new_ps, *foundOnePossibleShortcutCompleted
 }
 
-func (sd *shortcutsDetector) Detect(deviceId int64, kp string) ShortcutDetected {
+func (sd *shortcutsDetector) Detect(deviceId string, kp string) ShortcutDetected {
 	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != 0 {
 		return sdet
 	}

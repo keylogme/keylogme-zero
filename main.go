@@ -24,9 +24,9 @@ func main() {
 	// Get config
 	config := keylog.Config{
 		Devices: []keylog.DeviceInput{
-			{Id: 1, Name: "foostan Corne"},
-			{Id: 2, Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
-			{Id: 2, Name: "Logitech MX Master 2S"},
+			{DeviceId: "1", Name: "foostan Corne"},
+			{DeviceId: "2", Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
+			{DeviceId: "2", Name: "Logitech MX Master 2S"},
 			// {Id: 2, Name: "Wacom Intuos BT M Pen"},
 		},
 		Shortcuts: []keylog.Shortcut{
@@ -40,7 +40,7 @@ func main() {
 	// INFO: two different types of cleanup
 	// for storage, the ctx will close
 	// for keylog, a cleanup function is returned
-	ffs := storage.NewFileStorage(ctx, "Oct12.json")
+	ffs := storage.NewFileStorage(ctx, "Oct18.json")
 	_, cleanup := keylog.Start(ffs, config)
 	// defer cleanup()
 
