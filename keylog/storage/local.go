@@ -39,9 +39,6 @@ func NewFileStorage(ctx context.Context, fname string) *FileStorage {
 		keylogs:   map[string]map[uint16]int64{},
 		shortcuts: map[string]map[int64]int64{},
 	}
-	// go func(ctx context.Context) {
-	// 	ffs.savingInBackground(ctx)
-	// }(ctx)
 	go ffs.savingInBackground(ctx)
 	return ffs
 }
@@ -131,10 +128,8 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
 		case <-time.After(30 * time.Second):
-			// TODO: And set time to save every 30 s
 			f.saveToFile()
 		case <-ctx.Done():
-			// TODO: gracefull shutdown, make last save .
 			slog.Info("Closing file storage...")
 			f.saveToFile()
 			return
