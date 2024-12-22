@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/keylogme/zero-trust-logger/keylog"
 	"github.com/keylogme/zero-trust-logger/keylog/storage"
@@ -24,9 +25,9 @@ func main() {
 	// Get config
 	config := keylog.Config{
 		Devices: []keylog.DeviceInput{
-			{DeviceId: "1", Name: "foostan Corne"},
-			{DeviceId: "2", Name: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
-			{DeviceId: "2", Name: "Logitech MX Master 2S"},
+			{DeviceId: "1", Name: "foostan Corne", UsbName: "foostan Corne"},
+			{DeviceId: "2", Name: "my mouse", UsbName: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
+			{DeviceId: "2", Name: "mouse at work", UsbName: "Logitech MX Master 2S"},
 			// {Id: 2, Name: "Wacom Intuos BT M Pen"},
 		},
 		Shortcuts: []keylog.Shortcut{
@@ -36,23 +37,28 @@ func main() {
 			{Id: 4, Values: []string{"J", "S", "G"}, Type: keylog.SequentialShortcutType},
 		},
 	}
-	ctx, cancelCtx := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	// INFO: two different types of cleanup
 	// for storage, the ctx will close
 	// for keylog, a cleanup function is returned
-	ffs := storage.NewFileStorage(ctx, "Oct18.json")
-	_, cleanup := keylog.Start(ffs, config)
-	// defer cleanup()
+	ffs := storage.NewFileStorage(ctx, "Dec21.json")
 
-	// fmt.Println(ds)
+	chEvt := make(chan keylog.DeviceEvent)
+	devices := []keylog.Device{}
+	for _, dev := range config.Devices {
+		d := keylog.GetDevice(ctx, dev, chEvt)
+		devices = append(devices, *d)
+	}
+
+	sd := keylog.NewShortcutsDetector(config.Shortcuts)
+	keylog.Start(chEvt, &devices, sd, ffs)
 
 	// Graceful shutdown
 	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
 	<-ctxInt.Done()
-	cancelCtx()
-	cleanup()
 
-	fmt.Println("Logger closed.")
+	cancel()
+	time.Sleep(3 * time.Second) // graceful wait
+	slog.Info("Logger closed.")
 }

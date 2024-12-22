@@ -1,8 +1,10 @@
 package keylog
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 )
@@ -43,68 +45,81 @@ func getKeyLogger(name string) (*keyLogger, error) {
 	return k, nil
 }
 
-type device struct {
+type Device struct {
 	DeviceInput
 	Connected bool
 	keylogger *keyLogger
-	sendInput chan deviceEvent
+	sendInput chan DeviceEvent
 }
 
 type DeviceInput struct {
-	DeviceId string
-	Name     string
+	DeviceId string `json:"device_id"`
+	Name     string `json:"name"`
+	UsbName  string `json:"usb_name"`
 }
 
-type deviceEvent struct {
+type DeviceEvent struct {
 	inputEvent
 	DeviceId string
 }
 
-func getDevice(input DeviceInput, inputChan chan deviceEvent) *device {
-	device := &device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
-	go device.handleReconnects(device.start)
+func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
+	device := &Device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
+	go device.handleReconnects(ctx, device.start)
 	return device
 }
 
-func mustGetDevice(input DeviceInput, inputChan chan deviceEvent) *device {
+func mustGetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
 	k, err := getKeyLogger(input.Name)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	device := &device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
-	go device.handleReconnects(device.start)
+	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
+	go device.handleReconnects(ctx, device.start)
 	return device
 }
 
-func (d *device) start() {
+func (d *Device) start(ctx context.Context) bool {
 	if d.keylogger == nil {
-		return
+		return false
 	}
-	for i := range d.keylogger.Read() {
-		de := deviceEvent{inputEvent: i, DeviceId: d.DeviceId}
-		d.sendInput <- de
+	keylogChan := d.keylogger.Read()
+	for {
+		select {
+		case <-ctx.Done():
+			return true
+		case i, ok := <-keylogChan:
+			if !ok {
+				slog.Info("exited channel keylogger")
+				return false
+			}
+			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId}
+			d.sendInput <- de
+		}
 	}
 }
 
-func (d *device) handleReconnects(s func()) {
+func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) bool) {
 	if d.keylogger != nil {
 		// blocking call to start reading keylogger
 		d.Connected = true
-		s()
+		fmt.Printf("Device %s connected\n", d.Name)
+		shutdown := s(ctx)
+		if shutdown {
+			slog.Info(fmt.Sprintf("Device %s closed\n", d.Name))
+			d.keylogger.Close()
+			return
+		}
 		d.Connected = false
 		fmt.Printf("Device %s disconnected, reconnecting...\n", d.Name)
 		time.Sleep(1 * time.Second)
 		d.keylogger.Close()
 	}
-	newK, err := getKeyLogger(d.Name)
+	newK, err := getKeyLogger(d.UsbName)
 	if err != nil {
 		fmt.Printf("Device %s not connected to computer, waiting ...\n", d.Name)
 		time.Sleep(5 * time.Second)
 	}
 	d.keylogger = newK // assign to nil if device not found
-	d.handleReconnects(s)
+	d.handleReconnects(ctx, s)
 }
-
-// func (dm *DeviceManager)  {
-//
-// }
