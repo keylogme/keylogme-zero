@@ -16,7 +16,7 @@ type seqShortcutDetector struct {
 func newSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {
 	shortsSeq := []ShortcutCodes{}
 	for _, s := range shortcuts {
-		if s.Type == SequentialShortcutType {
+		if s.Type == SequentialShortcutType && len(s.Codes) > 1 {
 			shortsSeq = append(shortsSeq, s)
 		}
 	}
