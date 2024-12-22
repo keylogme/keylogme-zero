@@ -7,12 +7,6 @@ const (
 	HoldShortcutType       = "hold"
 )
 
-type Shortcut struct {
-	Id     int64        `json:"id"`
-	Values []string     `json:"values"`
-	Type   ShortcutType `json:"type"`
-}
-
 type ShortcutCodes struct {
 	Id    int64        `json:"id"`
 	Codes []uint16     `json:"codes"`
@@ -20,7 +14,7 @@ type ShortcutCodes struct {
 }
 
 type shortcutDevice struct {
-	Shortcut
+	ShortcutCodes
 	DeviceId string
 }
 
@@ -34,10 +28,10 @@ type shortcutsDetector struct {
 	HoldDetector holdShortcutDetector
 }
 
-func NewShortcutsDetector(s []Shortcut) *shortcutsDetector {
+func NewShortcutsDetector(s []ShortcutCodes) *shortcutsDetector {
 	return &shortcutsDetector{
 		SeqDetector:  newSeqShortcutDetector(s),
-		HoldDetector: newHoldShortcutDetector([]ShortcutCodes{}),
+		HoldDetector: newHoldShortcutDetector(s),
 	}
 }
 

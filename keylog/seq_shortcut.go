@@ -1,9 +1,11 @@
 package keylog
 
-import "time"
+import (
+	"time"
+)
 
 type seqShortcutDetector struct {
-	shortcuts                  []Shortcut
+	shortcuts                  []ShortcutCodes
 	indexVal                   int
 	currPossibleShortcuts      []shortcutDevice
 	prevShortcutDeviceDetected ShortcutDetected
@@ -11,9 +13,15 @@ type seqShortcutDetector struct {
 	lastKeyTimestamp           time.Time
 }
 
-func newSeqShortcutDetector(shortcuts []Shortcut) seqShortcutDetector {
+func newSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {
+	shortsSeq := []ShortcutCodes{}
+	for _, s := range shortcuts {
+		if s.Type == SequentialShortcutType {
+			shortsSeq = append(shortsSeq, s)
+		}
+	}
 	return seqShortcutDetector{
-		shortcuts:             shortcuts,
+		shortcuts:             shortsSeq,
 		indexVal:              0,
 		currPossibleShortcuts: []shortcutDevice{},
 	}
@@ -21,12 +29,12 @@ func newSeqShortcutDetector(shortcuts []Shortcut) seqShortcutDetector {
 
 func (sd *seqShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
 	if ke.Type == evKey && ke.KeyRelease() {
-		return sd.Detect(ke.DeviceId, ke.KeyString())
+		return sd.Detect(ke.DeviceId, ke.Code)
 	}
 	return *new(ShortcutDetected)
 }
 
-func (sd *seqShortcutDetector) Detect(deviceId string, kp string) ShortcutDetected {
+func (sd *seqShortcutDetector) Detect(deviceId string, kp uint16) ShortcutDetected {
 	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != 0 {
 		return sdet
 	}
@@ -58,17 +66,17 @@ func (sd *seqShortcutDetector) Detect(deviceId string, kp string) ShortcutDetect
 	return *new(ShortcutDetected)
 }
 
-func (sd *seqShortcutDetector) handleFirstKey(deviceId string, kp string) {
+func (sd *seqShortcutDetector) handleFirstKey(deviceId string, kp uint16) {
 	for _, s := range sd.shortcuts {
-		if s.Values[0] == kp {
-			scd := shortcutDevice{Shortcut: s, DeviceId: deviceId}
+		if s.Codes[0] == kp {
+			scd := shortcutDevice{ShortcutCodes: s, DeviceId: deviceId}
 			sd.currPossibleShortcuts = append(sd.currPossibleShortcuts, scd)
 			sd.indexVal = 1
 		}
 	}
 }
 
-func (sd *seqShortcutDetector) handleChangeOfDevice(deviceId string, kp string) ShortcutDetected {
+func (sd *seqShortcutDetector) handleChangeOfDevice(deviceId string, kp uint16) ShortcutDetected {
 	if len(sd.currPossibleShortcuts) > 0 &&
 		sd.currPossibleShortcuts[0].DeviceId != deviceId {
 		if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
@@ -84,20 +92,20 @@ func (sd *seqShortcutDetector) handleChangeOfDevice(deviceId string, kp string) 
 
 func (sd *seqShortcutDetector) checkPossibleShortcuts(
 	deviceId string,
-	kp string,
+	kp uint16,
 ) ([]shortcutDevice, ShortcutDetected) {
 	new_ps := []shortcutDevice{}
 	foundOnePossibleShortcutCompleted := new(ShortcutDetected)
 	for _, ps := range sd.currPossibleShortcuts {
-		if len(ps.Values) <= sd.indexVal {
+		if len(ps.Codes) <= sd.indexVal {
 			continue
 		}
-		nextKeyShortcut := ps.Values[sd.indexVal]
+		nextKeyShortcut := ps.Codes[sd.indexVal]
 		if nextKeyShortcut == kp && ps.DeviceId == deviceId {
 			// if nextKeyShortcut == kp {
 			new_ps = append(new_ps, ps)
 		}
-		isLastKeyShortcut := len((ps).Values) == sd.indexVal+1
+		isLastKeyShortcut := len((ps).Codes) == sd.indexVal+1
 		if nextKeyShortcut == kp && isLastKeyShortcut && ps.DeviceId == deviceId {
 			// if nextKeyShortcut == kp && isLastKeyShortcut {
 			foundOnePossibleShortcutCompleted.DeviceId = ps.DeviceId
