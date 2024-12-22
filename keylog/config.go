@@ -1,6 +1,6 @@
 package keylog
 
 type Config struct {
-	Devices   []DeviceInput
-	Shortcuts []Shortcut
+	Devices   []DeviceInput `json:"devices"`
+	Shortcuts []Shortcut    `json:"shortcuts"`
 }
