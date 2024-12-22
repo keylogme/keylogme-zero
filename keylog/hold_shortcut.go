@@ -25,7 +25,7 @@ func newHoldShortcutDetector(shortcuts []ShortcutCodes) holdShortcutDetector {
 func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
 	newS := []ShortcutCodes{}
 	for _, s := range shortcuts {
-		if s.Type == TogetherShortcutType {
+		if s.Type == HoldShortcutType {
 			// sort codes (Important for detect function)
 			slices.Sort(s.Codes)
 			newS = append(newS, s)

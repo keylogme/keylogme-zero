@@ -15,8 +15,8 @@ func getFakeEvent(deviceId string, code uint16, keyevent keyevent) DeviceEvent {
 
 func TestHoldShortcut_Detect(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: 1, Codes: []uint16{29, 47}, Type: TogetherShortcutType},
-		{Id: 2, Codes: []uint16{29, 48}, Type: TogetherShortcutType},
+		{Id: 1, Codes: []uint16{29, 47}, Type: HoldShortcutType},
+		{Id: 2, Codes: []uint16{29, 48}, Type: HoldShortcutType},
 	}
 	ds := newHoldShortcutDetector(sl)
 
@@ -39,8 +39,8 @@ func TestHoldShortcut_Detect(t *testing.T) {
 
 func TestHoldShortcut_DetectMultiple_OnlyOne(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: 1, Codes: []uint16{29, 47}, Type: TogetherShortcutType},
-		{Id: 2, Codes: []uint16{29, 48}, Type: TogetherShortcutType},
+		{Id: 1, Codes: []uint16{29, 47}, Type: HoldShortcutType},
+		{Id: 2, Codes: []uint16{29, 48}, Type: HoldShortcutType},
 	}
 	ds := newHoldShortcutDetector(sl)
 
@@ -69,8 +69,8 @@ func TestHoldShortcut_DetectMultiple_OnlyOne(t *testing.T) {
 // test for copy/paste ;)
 func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: 1, Codes: []uint16{29, 47}, Type: TogetherShortcutType}, // copy
-		{Id: 2, Codes: []uint16{29, 48}, Type: TogetherShortcutType}, // paste
+		{Id: 1, Codes: []uint16{29, 47}, Type: HoldShortcutType}, // copy
+		{Id: 2, Codes: []uint16{29, 48}, Type: HoldShortcutType}, // paste
 	}
 	ds := newHoldShortcutDetector(sl)
 
@@ -98,7 +98,7 @@ func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 
 func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: 1, Codes: []uint16{29, 56, 111}, Type: TogetherShortcutType},
+		{Id: 1, Codes: []uint16{29, 56, 111}, Type: HoldShortcutType},
 	}
 	ds := newHoldShortcutDetector(sl)
 
@@ -121,7 +121,7 @@ func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 
 func TestHoldShortcut_Aborted(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: 1, Codes: []uint16{29, 47}, Type: TogetherShortcutType},
+		{Id: 1, Codes: []uint16{29, 47}, Type: HoldShortcutType},
 	}
 	ds := newHoldShortcutDetector(sl)
 

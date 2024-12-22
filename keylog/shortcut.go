@@ -4,7 +4,7 @@ type ShortcutType string
 
 const (
 	SequentialShortcutType = "seq"
-	TogetherShortcutType   = "tog"
+	HoldShortcutType       = "hold"
 )
 
 type Shortcut struct {
