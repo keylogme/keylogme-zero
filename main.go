@@ -38,9 +38,6 @@ func main() {
 		},
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	// INFO: two different types of cleanup
-	// for storage, the ctx will close
-	// for keylog, a cleanup function is returned
 	ffs := storage.NewFileStorage(ctx, "Dec21.json")
 
 	chEvt := make(chan keylog.DeviceEvent)
