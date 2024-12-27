@@ -25,9 +25,10 @@ func main() {
 	// Get config
 	config := keylog.Config{
 		Devices: []keylog.DeviceInput{
-			{DeviceId: "1", Name: "foostan Corne", UsbName: "foostan Corne"},
+			{DeviceId: "1", Name: "crkbd", UsbName: "foostan Corne"},
 			{DeviceId: "2", Name: "my mouse", UsbName: "MOSART Semi. 2.4G INPUT DEVICE Mouse"},
 			{DeviceId: "2", Name: "mouse at work", UsbName: "Logitech MX Master 2S"},
+			{DeviceId: "3", Name: "lenovo", UsbName: "LiteOn Lenovo Traditional USB Keyboard"},
 			// {Id: 2, Name: "Wacom Intuos BT M Pen"},
 		},
 		Shortcuts: []keylog.ShortcutCodes{
