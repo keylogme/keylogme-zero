@@ -13,7 +13,7 @@
   <h3 align="center">Keylogme Zero</h3>
 
   <p align="center">
-    This is a logger for [keylogme.com](https://keylogme.com). The logger saves 
+    This is a logger for [keylogme.com](https://keylogme.com) . This logger saves 
     the stats locally. You can use those results to visualize in (pending...).
     <br />
     <br />
@@ -53,8 +53,6 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
 
 The end goal is to avoid or diminish the pain in your hands due to typing. Commonly known as RSI (Repetitive Strain Injury), 
 tennis elbow, carpal tunnel syndrome, etc.
@@ -152,7 +150,7 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -163,7 +161,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Efrain Sotelo - [@esoteloferry](https://twitter.com/esoteloferry)
 
-Project Link: [https://github.com/keylogme/keylogme-zero](https://github.com/keylogme/keylogme-zero)
+Project Link: [https://keylogme.com](https://keylogme.com)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
