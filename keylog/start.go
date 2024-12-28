@@ -32,9 +32,6 @@ func Start(
 
 			if i.Type == evKey && i.KeyRelease() {
 				start := time.Now()
-
-				// detectedShortcut := sd.Detect(i.DeviceId, i.KeyString())
-				//
 				// FIXME: mod+key is sent, but when mod is released , is sent again
 				// keylogs := []uint16{i.Code}
 				// keylogs = append(keylogs, modPress...)
