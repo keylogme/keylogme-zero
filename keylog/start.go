@@ -32,10 +32,6 @@ func Start(
 
 			if i.Type == evKey && i.KeyRelease() {
 				start := time.Now()
-				// FIXME: mod+key is sent, but when mod is released , is sent again
-				// keylogs := []uint16{i.Code}
-				// keylogs = append(keylogs, modPress...)
-				// err := sendKeylog(sender, i.DeviceId, i.Code)
 				err := store.SaveKeylog(i.DeviceId, i.Code)
 				if err != nil {
 					fmt.Printf("error %s\n", err.Error())
