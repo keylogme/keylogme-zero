@@ -7,7 +7,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/keylogme/keylogme-zero">
-    <img src="images/icon-kiki-80x80.png" alt="Logo" width="80" height="80">
+    <img src="images/icon-keylogme-zero-80x80.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Keylogme Zero</h3>
