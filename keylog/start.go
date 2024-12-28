@@ -15,7 +15,6 @@ func Start(
 	store storage.Storage,
 ) {
 	slog.Info("Listening...")
-
 	go func() {
 		for i := range chEvt {
 			sd := sd.handleKeyEvent(i)
