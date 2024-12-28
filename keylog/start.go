@@ -44,7 +44,12 @@ func Start(
 					fmt.Printf("error %s\n", err.Error())
 				}
 				slog.Info(
-					fmt.Sprintf("| %s | Key :%d %s\n", time.Since(start), i.Code, i.KeyString()),
+					fmt.Sprintf(
+						"| %s | Key :%d %s\n",
+						time.Since(start),
+						i.Code,
+						i.KeyString(),
+					),
 				)
 			}
 		}
