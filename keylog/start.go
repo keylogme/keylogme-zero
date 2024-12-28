@@ -29,7 +29,6 @@ func Start(
 				)
 				store.SaveShortcut(sd.DeviceId, sd.ShortcutId)
 			}
-
 			if i.Type == evKey && i.KeyRelease() {
 				start := time.Now()
 				err := store.SaveKeylog(i.DeviceId, i.Code)
