@@ -33,6 +33,9 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#security">Security</a></li>
+      </ul>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -74,6 +77,13 @@ Of course, ergonomics is not just a nice keyboard and layout. It is also about p
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
+### Security
+
+A keylogger is a tool that records the keystrokes on a computer. It can be used for good or bad purposes.
+Of course, our intention is to use it for good purposes. How can you trust that?, well the code is completely open source, 
+no dependencies and it stores your data locally in your computer, there is no connection to the internet.
+
+The online viewer does not need an account to use it. You can use it anonymously to visualize your stats. 
 
 <!-- GETTING STARTED -->
 ## Getting Started
