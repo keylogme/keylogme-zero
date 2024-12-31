@@ -11,10 +11,6 @@ import (
 	"github.com/keylogme/zero-trust-logger/keylog/storage"
 )
 
-type KeyLog struct {
-	Code uint16 `json:"code"`
-}
-
 // Use lsinput to see which input to be used
 // apt install input-utils
 // sudo lsinput
