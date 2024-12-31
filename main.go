@@ -35,8 +35,14 @@ func main() {
 			{Id: 1, Codes: []uint16{36, 31}, Type: keylog.SequentialShortcutType},
 		},
 	}
+
+	configStorage := storage.ConfigStorage{
+		FileOutput:        "Dec21.json",
+		PeriodicSaveInSec: 10,
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
-	ffs := storage.NewFileStorage(ctx, "Dec21.json")
+	ffs := storage.MustGetNewFileStorage(ctx, configStorage)
 
 	chEvt := make(chan keylog.DeviceEvent)
 	devices := []keylog.Device{}

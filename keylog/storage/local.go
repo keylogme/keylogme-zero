@@ -5,10 +5,33 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 )
+
+type ConfigStorage struct {
+	FileOutput        string        `json:"file_output"`
+	PeriodicSaveInSec time.Duration `json:"periodic_save_in_sec"`
+}
+
+func (c *ConfigStorage) Validate() error {
+	if c.FileOutput == "" {
+		return errors.New("file_output is required")
+	}
+	absPath, err := filepath.Abs(c.FileOutput)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("File will be saved at %s\n", absPath)
+	c.FileOutput = absPath
+	if c.PeriodicSaveInSec == 0 {
+		return errors.New("periodic_save_in_sec is required")
+	}
+	return nil
+}
 
 type Storage interface {
 	SaveKeylog(deviceId string, keycode uint16) error
@@ -16,7 +39,7 @@ type Storage interface {
 }
 
 type FileStorage struct {
-	fname     string
+	config    ConfigStorage
 	keylogs   map[string]map[uint16]int64 // deviceId - keycode - counter
 	shortcuts map[string]map[int64]int64  // deviceId - shortcutId - counter
 }
@@ -33,9 +56,13 @@ func newDataFile() DataFile {
 	}
 }
 
-func NewFileStorage(ctx context.Context, fname string) *FileStorage {
+func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStorage {
+	err := config.Validate()
+	if err != nil {
+		log.Fatalf("Invalid config: %v", err)
+	}
 	ffs := &FileStorage{
-		fname:     fname,
+		config:    config,
 		keylogs:   map[string]map[uint16]int64{},
 		shortcuts: map[string]map[int64]int64{},
 	}
@@ -66,7 +93,7 @@ func (f *FileStorage) SaveShortcut(deviceId string, shortcutId int64) error {
 }
 
 func (f *FileStorage) prepareDataToSave() (DataFile, error) {
-	dataFile, err := getDataFromFile(f.fname)
+	dataFile, err := getDataFromFile(f.config.FileOutput)
 	if err != nil {
 		return dataFile, err
 	}
@@ -114,11 +141,11 @@ func (f *FileStorage) saveToFile() error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(f.fname, pb, 0777)
+	err = os.WriteFile(f.config.FileOutput, pb, 0777)
 	if err != nil {
 		return err
 	}
-	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.fname))
+	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.config.FileOutput))
 	f.keylogs = map[string]map[uint16]int64{}
 	f.shortcuts = map[string]map[int64]int64{}
 	return nil
@@ -127,7 +154,7 @@ func (f *FileStorage) saveToFile() error {
 func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
-		case <-time.After(30 * time.Second):
+		case <-time.After(f.config.PeriodicSaveInSec * time.Second):
 			f.saveToFile()
 		case <-ctx.Done():
 			slog.Info("Closing file storage...")
@@ -138,21 +165,21 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 }
 
 func getDataFromFile(fname string) (DataFile, error) {
-	dataFile := newDataFile()
+	emptyDataForFile := newDataFile()
 	if _, err := os.Stat(fname); errors.Is(err, os.ErrNotExist) {
-		slog.Info(fmt.Sprintf("File %s not exist", fname))
-		return dataFile, nil
+		slog.Info(fmt.Sprintf("File %s not exist, it will be created", fname))
+		return emptyDataForFile, nil
 	}
 
 	content, err := os.ReadFile(fname)
 	if err != nil {
 		slog.Info(fmt.Sprintf("Could not open file %s\n", fname))
-		return dataFile, err
+		return emptyDataForFile, err
 	}
-	err = json.Unmarshal(content, &dataFile)
+	err = json.Unmarshal(content, &emptyDataForFile)
 	if err != nil {
 		slog.Info(fmt.Sprintf("Could not parse file %s, file corrupted\n", fname))
-		return dataFile, err
+		return emptyDataForFile, err
 	}
-	return dataFile, nil
+	return emptyDataForFile, nil
 }
