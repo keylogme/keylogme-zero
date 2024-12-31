@@ -103,7 +103,7 @@ func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) b
 	if d.keylogger != nil {
 		// blocking call to start reading keylogger
 		d.Connected = true
-		fmt.Printf("Device %s connected\n", d.Name)
+		slog.Info(fmt.Sprintf("Device %s connected\n", d.Name))
 		shutdown := s(ctx)
 		if shutdown {
 			slog.Info(fmt.Sprintf("Device %s closed\n", d.Name))
@@ -111,13 +111,13 @@ func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) b
 			return
 		}
 		d.Connected = false
-		fmt.Printf("Device %s disconnected, reconnecting...\n", d.Name)
+		slog.Info(fmt.Sprintf("Device %s disconnected, reconnecting...\n", d.Name))
 		time.Sleep(1 * time.Second)
 		d.keylogger.Close()
 	}
 	newK, err := getKeyLogger(d.UsbName)
 	if err != nil {
-		fmt.Printf("Device %s not connected to computer, waiting ...\n", d.Name)
+		slog.Info(fmt.Sprintf("Device %s not connected to computer, waiting ...\n", d.Name))
 		time.Sleep(5 * time.Second)
 	}
 	d.keylogger = newK // assign to nil if device not found

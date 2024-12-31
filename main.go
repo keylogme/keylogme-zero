@@ -58,7 +58,7 @@ func main() {
 	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	<-ctxInt.Done()
-
+	slog.Info("Shutting down, graceful wait...")
 	cancel()
 	time.Sleep(3 * time.Second) // graceful wait
 	slog.Info("Logger closed.")
