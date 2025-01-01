@@ -98,17 +98,17 @@ The online viewer does not need an account to use it. You can use it anonymously
    ```sh
    cd deploy && sudo ./install.sh
    ```
-<details>
-  <summary>With parameters</summary>
-   If you want to install a specific version:
-   ```sh
-   cd deploy && sudo ./install.sh v1.1.0
-   ```
-   If you want to install and use your own config (don't forget the version, in this case latest):
-   ```sh
-   cd deploy && sudo ./install.sh latest /path/to/your/config.json
-   ```
-</details>
+    <details>
+      <summary>With parameters</summary>
+       If you want to install a specific version:
+       ```sh
+       cd deploy && sudo ./install.sh v1.1.0
+       ```
+       If you want to install and use your own config (don't forget the version, in this case latest):
+       ```sh
+       cd deploy && sudo ./install.sh latest /absolute/path/to/your/config.json
+       ```
+    </details>
 
 3. After some keypresses and 10 seconds, check the stats in `/output_keylogme_zero.json`
 
@@ -180,7 +180,7 @@ sudo lsinput
 
 If your keyboard name appeared multiple times, try with all of them.
 
-For example, the output of the command is below, and the name that worked is `foostan Corne`.
+For example, the output of the command for my corne keyboard is below and the name that worked is `foostan Corne`.
 
 ```sh
 /dev/input/event12
