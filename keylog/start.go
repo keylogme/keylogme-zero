@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/keylogme/zero-trust-logger/keylog/storage"
+	"github.com/keylogme/keylogme-zero/keylog/storage"
 )
 
 func Start(

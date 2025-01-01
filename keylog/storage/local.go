@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/keylogme/zero-trust-logger/keylog/utils"
+	"github.com/keylogme/keylogme-zero/keylog/utils"
 )
 
 type ConfigStorage struct {

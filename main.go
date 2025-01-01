@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keylogme/zero-trust-logger/keylog"
-	"github.com/keylogme/zero-trust-logger/keylog/storage"
-	"github.com/keylogme/zero-trust-logger/keylog/utils"
+	"github.com/keylogme/keylogme-zero/keylog"
+	"github.com/keylogme/keylogme-zero/keylog/storage"
+	"github.com/keylogme/keylogme-zero/keylog/utils"
 )
 
 // Use lsinput to see the usb_name to be used

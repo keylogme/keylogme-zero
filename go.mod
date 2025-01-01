@@ -1,3 +1,3 @@
-module github.com/keylogme/zero-trust-logger
+module github.com/keylogme/keylogme-zero
 
-go 1.22.4
+go 1.23.2

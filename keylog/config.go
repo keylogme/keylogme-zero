@@ -1,6 +1,6 @@
 package keylog
 
-import "github.com/keylogme/zero-trust-logger/keylog/storage"
+import "github.com/keylogme/keylogme-zero/keylog/storage"
 
 type Config struct {
 	Devices   []DeviceInput   `json:"devices"`
