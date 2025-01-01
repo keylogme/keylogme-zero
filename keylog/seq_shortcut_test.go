@@ -7,7 +7,6 @@ import (
 
 func TestSeqShortcut_Detect(t *testing.T) {
 	sl := []ShortcutCodes{
-		// {ID: 1, Codes: []string{"L_CTRL", 31}, Type: SequentialShortcutType},
 		{Id: 1, Codes: []uint16{36, 31}, Type: SequentialShortcutType},
 		{Id: 2, Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
 	}
@@ -42,7 +41,6 @@ func TestSeqShortcut_Detect(t *testing.T) {
 
 func TestSeqShortcut_diffDevice_after_shortcut(t *testing.T) {
 	sl := []ShortcutCodes{
-		// {ID: 1, Codes: []string{"L_CTRL", 31}, Type: SequentialShortcutType},
 		{Id: 1, Codes: []uint16{36, 31}, Type: SequentialShortcutType},
 		{Id: 2, Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
 	}
@@ -72,7 +70,6 @@ func TestSeqShortcut_diffDevice_after_shortcut(t *testing.T) {
 
 func TestSeqShortcut_diffDevice_after_shortcut_2(t *testing.T) {
 	sl := []ShortcutCodes{
-		// {ID: 1, Codes: []string{"L_CTRL", 31}, Type: SequentialShortcutType},
 		{Id: 1, Codes: []uint16{36, 31}, Type: SequentialShortcutType},
 		{Id: 2, Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
 	}
@@ -104,7 +101,6 @@ func TestSeqShortcut_diffDevice_after_shortcut_2(t *testing.T) {
 
 func TestSeqShortcut_diffDevice_after_shortcut_3(t *testing.T) {
 	sl := []ShortcutCodes{
-		// {ID: 1, Codes: []string{"L_CTRL", 31}, Type: SequentialShortcutType},
 		{Id: 1, Codes: []uint16{36, 31}, Type: SequentialShortcutType},
 		{Id: 2, Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
 	}

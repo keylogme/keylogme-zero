@@ -14,12 +14,12 @@
                     29,
                     46
                 ],
-                "type": "seq"
+                "type": "hold"
             }
         ]
     },
     "storage": {
         "file_output": "output-keylogme-zero.json",
-        "periodic_save_in_sec": 5
+        "periodic_save_in_sec": 10
     }
 }
