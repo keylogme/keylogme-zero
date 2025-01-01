@@ -120,7 +120,7 @@ The online viewer does not need an account to use it. You can use it anonymously
 <!-- Config EXAMPLES -->
 ## Config
 
-The default config in `deploy` folder is:
+The file `deploy/default_config.json` contains the default config. You can use it as a template to create your own config.:
 
 ```json
 {
@@ -128,7 +128,7 @@ The default config in `deploy` folder is:
         "devices": [
             {
                 "device_id": "1",
-                "name": "✋ crkbd ⌨️",
+                "name": "⌨️✋ crkbd",
                 "usb_name": "foostan Corne"
             }
         ],
@@ -160,7 +160,8 @@ The config has two main sections:
     - shortcuts : list of shortcuts to monitor
         - id : unique id for the shortcut
         - codes : list of keycodes (decimal format) for the shortcut. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
-        - type : type of shortcut (hold, press)
+        - type : type of shortcut. There are two: `hold` for holding shortcuts like copy (CTRL+C)
+            and `seq` for sequential shortcuts like used in (neo)vim for shortcuts.
 - storage : config for storage
     - file_output : abs filepath to store the stats
     - periodic_save_in_sec : periodic time to save the stats. In seconds.
@@ -181,6 +182,9 @@ sudo lsinput
 If your keyboard name appeared multiple times, try with all of them.
 
 For example, the output of the command for my corne keyboard is below and the name that worked is `foostan Corne`.
+
+<details>
+  <summary>Output lsinput related to keyboard</summary>
 
 ```sh
 /dev/input/event12
@@ -223,18 +227,19 @@ For example, the output of the command for my corne keyboard is below and the na
    uniq    : ""
    bits ev : (null) (null) (null) (null) (null)
 ```
+</details>
 
 
 ### Keycodes hardware
 
-A key(hardware) has a keycode, f.e. in a normal QWERTY keyboard, the keycode of Q is 
+A key (hardware) has a keycode, f.e. in a normal QWERTY keyboard, the keycode of Q is 
 10(HEX) and 16(Decimal), letter C is 2E(HEX) and 46(Decimal). 
 
 The keyboard (hardware) sends the keycode to the computer. The computer uses the
 keyboard layout to convert the keycode to a character. The keyboard layout is defined 
 in your operating system. For example, the layout US QWERTY will convert 16(Decimal) to Q 
 and 46(Decimal) to C. But if I have defined another layout, for example 
-[WORKMAN](https://workmanlayout.org/), then Q 16(Decimal)
+[WORKMAN](https://workmanlayout.org/), then keycode 16(Decimal)
 will be Q and 46(Decimal) will be M. You get the idea 🙃
 
 How to know the keycode?
@@ -245,15 +250,18 @@ The scancode is a hex number, you have to convert it to decimal.
 <!-- ROADMAP -->
 ## Roadmap
 
-
-TODO
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
+- [x] Keylog multiple devices
+- [x] Handle connection/disconnection of devices
+- [x] Handle shortcuts
+    - [x] Hold shortcuts: like copy (Ctrl+C)
+    - [x] Sequential shortcuts: like used in (neo)vim for shortcuts
+- [x] Local storage of stats
+- [ ] Installation script and keylogger compatible with
+    - [x] Linux
+    - [ ] Windows
+    - [ ] Mac
+- [ ] Performance WPM
+- [ ] Accuracy
 
 See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
 
@@ -274,8 +282,6 @@ Don't forget to give the project a star! Thanks again!
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-
 
 
 <!-- LICENSE -->
