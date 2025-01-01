@@ -96,6 +96,41 @@ func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 	}
 }
 
+// test for paste paste paste
+func TestHoldShortcut_DetectConsecutive(t *testing.T) {
+	sl := []ShortcutCodes{
+		{Id: 1, Codes: []uint16{29, 47}, Type: HoldShortcutType}, // copy
+		{Id: 2, Codes: []uint16{29, 48}, Type: HoldShortcutType}, // paste
+	}
+	ds := newHoldShortcutDetector(sl)
+
+	ev := getFakeEvent("1", 28, KeyRelease) // rand key
+	scDetected := ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != 0 {
+		t.Fatal("Detection not expected")
+	}
+	ev = getFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != 0 {
+		t.Fatal("Detection not expected")
+	}
+	ev = getFakeEvent("1", 48, KeyRelease) // second key shortcut (id 2)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != 2 {
+		t.Fatal("Detection expected")
+	}
+	ev = getFakeEvent("1", 48, KeyRelease) // second key shortcut (id 2)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != 2 {
+		t.Fatal("Detection expected")
+	}
+	ev = getFakeEvent("1", 48, KeyRelease) // second key shortcut (id 2)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != 2 {
+		t.Fatal("Detection expected")
+	}
+}
+
 func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 	sl := []ShortcutCodes{
 		{Id: 1, Codes: []uint16{29, 56, 111}, Type: HoldShortcutType},
