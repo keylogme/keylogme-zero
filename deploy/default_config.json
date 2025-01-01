@@ -1,0 +1,25 @@
+{
+    "keylog": {
+        "devices": [
+            {
+                "device_id": "1",
+                "name": "crkbd",
+                "usb_name": "foostan Corne"
+            }
+        ],
+        "shortcuts": [
+            {
+                "id": 1,
+                "codes": [
+                    29,
+                    46
+                ],
+                "type": "seq"
+            }
+        ]
+    },
+    "storage": {
+        "file_output": "output-keylogme-zero.json",
+        "periodic_save_in_sec": 5
+    }
+}

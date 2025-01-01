@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/keylogme/zero-trust-logger/keylog/utils"
 )
 
 type ConfigStorage struct {
@@ -93,9 +95,15 @@ func (f *FileStorage) SaveShortcut(deviceId string, shortcutId int64) error {
 }
 
 func (f *FileStorage) prepareDataToSave() (DataFile, error) {
-	dataFile, err := getDataFromFile(f.config.FileOutput)
-	if err != nil {
-		return dataFile, err
+	dataFile := newDataFile()
+	_, err := os.Stat(f.config.FileOutput)
+	if errors.Is(err, os.ErrNotExist) {
+		slog.Info(fmt.Sprintf("File %s not exist, it will be created", f.config.FileOutput))
+	} else {
+		err := utils.ParseFromFile(f.config.FileOutput, &dataFile)
+		if err != nil {
+			return dataFile, err
+		}
 	}
 	for kId := range f.keylogs {
 		for keycode := range f.keylogs[kId] {
@@ -146,6 +154,7 @@ func (f *FileStorage) saveToFile() error {
 		return err
 	}
 	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.config.FileOutput))
+	// Reset data
 	f.keylogs = map[string]map[uint16]int64{}
 	f.shortcuts = map[string]map[int64]int64{}
 	return nil
@@ -162,24 +171,4 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 			return
 		}
 	}
-}
-
-func getDataFromFile(fname string) (DataFile, error) {
-	emptyDataForFile := newDataFile()
-	if _, err := os.Stat(fname); errors.Is(err, os.ErrNotExist) {
-		slog.Info(fmt.Sprintf("File %s not exist, it will be created", fname))
-		return emptyDataForFile, nil
-	}
-
-	content, err := os.ReadFile(fname)
-	if err != nil {
-		slog.Info(fmt.Sprintf("Could not open file %s\n", fname))
-		return emptyDataForFile, err
-	}
-	err = json.Unmarshal(content, &emptyDataForFile)
-	if err != nil {
-		slog.Info(fmt.Sprintf("Could not parse file %s, file corrupted\n", fname))
-		return emptyDataForFile, err
-	}
-	return emptyDataForFile, nil
 }

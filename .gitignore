@@ -1,4 +1,6 @@
 .env
-*.json
 
-dist/
+deploy/*tar.gz
+deploy/keylogme/*
+
+output*.json

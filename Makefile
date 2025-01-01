@@ -1,8 +1,6 @@
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
-
 run:
-	go build -o ./gokeny ./main.go && sudo ./gokeny
+	go build -o ./gokeny ./main.go && sudo CONFIG_FILE=deploy/default_config.json ./gokeny
+
+test:
+	go test  ./...
 
