@@ -20,6 +20,7 @@ import (
 // sudo lsinput
 // If your keyboard name appeared multiple times,
 // try with all of them
+// See readme
 
 func main() {
 	// Get config

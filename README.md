@@ -13,7 +13,7 @@
   <h3 align="center">Keylogme Zero</h3>
 
   <p align="center">
-    This is a logger for [keylogme.com](https://keylogme.com) . This logger saves 
+    This is a logger for <a href="https://keylogme.com">keylogme.com</a> . This logger saves 
     the stats locally. You can use those results to visualize in (pending...).
     <br />
     <br />
@@ -90,22 +90,28 @@ The online viewer does not need an account to use it. You can use it anonymously
 
 ### Linux
 
-TODO
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+1. Clone the repo
+   ```sh
+   git clone https://github.com/keylogme/keylogme-zero.git
+   ```
+2. Go to deploy and install with sudo permissions
+   ```sh
+   cd deploy && sudo ./install.sh
+   ```
+<details>
+  <summary>With parameters</summary>
+   If you want to install a specific version:
+   ```sh
+   cd deploy && sudo ./install.sh v1.1.0
+   ```
+   If you want to install and use your own config (don't forget the version, in this case latest):
+   ```sh
+   cd deploy && sudo ./install.sh latest /path/to/your/config.json
+   ```
+</details>
 
-1. Install the service
-   ```sh
-   git clone https://github.com/github_username/repo_name.git 
-   ```
-2. Config file
-   ```sh
-   git clone https://github.com/github_username/repo_name.git
-   ```
-3. Start using your devices at work
-   ```sh
-   npm install
-   ```
-4. After some time, check the stats
+3. After some keypresses and 10 seconds, check the stats in `/output_keylogme_zero.json`
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -114,12 +120,127 @@ _Below is an example of how you can instruct your audience on installing and set
 <!-- Config EXAMPLES -->
 ## Config
 
+The default config in `deploy` folder is:
 
-TODO
+```json
+{
+    "keylog": {
+        "devices": [
+            {
+                "device_id": "1",
+                "name": "✋ crkbd ⌨️",
+                "usb_name": "foostan Corne"
+            }
+        ],
+        "shortcuts": [
+            {
+                "id": 1,
+                "codes": [
+                    29,
+                    46
+                ],
+                "type": "hold"
+            }
+        ]
+    },
+    "storage": {
+        "file_output": "output_keylogme_zero.json",
+        "periodic_save_in_sec": 10
+    }
+}
+```
+
+The config has two main sections:
+
+- keylog : config for keylogger
+    - devices : list of devices to monitor
+        - device_id : unique id for the device
+        - name : name of the device, you named it as you want.
+        - usb_name : usb name of the device. Go to <a href="#usb-name">USB name</a> section to know how to get it.
+    - shortcuts : list of shortcuts to monitor
+        - id : unique id for the shortcut
+        - codes : list of keycodes (decimal format) for the shortcut. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
+        - type : type of shortcut (hold, press)
+- storage : config for storage
+    - file_output : abs filepath to store the stats
+    - periodic_save_in_sec : periodic time to save the stats. In seconds.
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+### USB name
 
+A usb device connected to computer has a unique name. 
+To get the name of the device, you can use the following command:
+
+```sh
+apt install input-utils
+sudo lsinput
+```
+
+If your keyboard name appeared multiple times, try with all of them.
+
+For example, the output of the command is below, and the name that worked is `foostan Corne`.
+
+```sh
+/dev/input/event12
+   bustype : BUS_USB
+   vendor  : 0x4653
+   product : 0x1
+   version : 273
+   name    : "foostan Corne"
+   phys    : "usb-0000:00:14.0-4.3/input0"
+   uniq    : ""
+   bits ev : (null) (null) (null) (null) (null)
+
+/dev/input/event13
+   bustype : BUS_USB
+   vendor  : 0x4653
+   product : 0x1
+   version : 273
+   name    : "foostan Corne System Control"
+   phys    : "usb-0000:00:14.0-4.3/input2"
+   uniq    : ""
+   bits ev : (null) (null) (null) (null)
+
+/dev/input/event14
+   bustype : BUS_USB
+   vendor  : 0x4653
+   product : 0x1
+   version : 273
+   name    : "foostan Corne Consumer Control"
+   phys    : "usb-0000:00:14.0-4.3/input2"
+   uniq    : ""
+   bits ev : (null) (null) (null) (null) (null)
+
+/dev/input/event15
+   bustype : BUS_USB
+   vendor  : 0x4653
+   product : 0x1
+   version : 273
+   name    : "foostan Corne Keyboard"
+   phys    : "usb-0000:00:14.0-4.3/input2"
+   uniq    : ""
+   bits ev : (null) (null) (null) (null) (null)
+```
+
+
+### Keycodes hardware
+
+A key(hardware) has a keycode, f.e. in a normal QWERTY keyboard, the keycode of Q is 
+10(HEX) and 16(Decimal), letter C is 2E(HEX) and 46(Decimal). 
+
+The keyboard (hardware) sends the keycode to the computer. The computer uses the
+keyboard layout to convert the keycode to a character. The keyboard layout is defined 
+in your operating system. For example, the layout US QWERTY will convert 16(Decimal) to Q 
+and 46(Decimal) to C. But if I have defined another layout, for example 
+[WORKMAN](https://workmanlayout.org/), then Q 16(Decimal)
+will be Q and 46(Decimal) will be M. You get the idea 🙃
+
+How to know the keycode?
+Go to [kbdlayout.info](https://kbdlayout.info/kbdus)
+and click scancodes to see the keycodes. 
+The scancode is a hex number, you have to convert it to decimal.
 
 <!-- ROADMAP -->
 ## Roadmap

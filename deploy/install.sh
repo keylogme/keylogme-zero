@@ -32,12 +32,13 @@ has_cmd systemctl || {
 }
 # Check inputs
 # Required
-if [ "$keylogme_version" == "" ]; then
-    echo "Please enter version"
-    exit 1
-fi
+# (none)
 
 # Optional
+if [ "$keylogme_version" == "" ]; then
+    echo "keylogme version default to latest"
+    keylogme_version="latest"
+fi
 if [ "$file_config_abs_path" == "" ]; then
     dir_name="$(pwd)"
     default_name="default_config.json"
@@ -45,14 +46,14 @@ if [ "$file_config_abs_path" == "" ]; then
     echo "Absolute config file path will be set to ${file_config_abs_path}"
 fi
 
-echo "Downloading keylogme-zero v-${keylogme_version}..."
+echo "Downloading keylogme-zero ${keylogme_version}..."
 
 # download
 file_compressed="keylogme-zero_Linux_x86_64.tar.gz"
-wget -q https://github.com/keylogme/keylogme-zero/releases/download/v${keylogme_version}/${file_compressed} -O ${file_compressed}
+wget -q https://github.com/keylogme/keylogme-zero/releases/download/${keylogme_version}/${file_compressed} -O ${file_compressed}
 
 # unzip
-echo "Uncompressing keylogme-zero v-${keylogme_version}..."
+echo "Uncompressing keylogme-zero ${keylogme_version}..."
 mkdir keylogme
 tar -xvzf ${file_compressed} -C keylogme
 
@@ -85,4 +86,4 @@ systemctl is-active --quiet keylogger-zero && {
     echo "🟢 keylogger-zero service is running."
 }
 
-echo "🟢 keylogme-zero v-${keylogme_version} installed successfully"
+echo "🟢 keylogme-zero ${keylogme_version} installed successfully"
