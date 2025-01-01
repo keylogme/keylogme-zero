@@ -1,8 +1,9 @@
 [Unit]
 Description= Keylogger zero
 
-[Service]
-ExecStart=/home/esf/dev/2024/logger-zero-trust/gokeny
-
 [Install]
 WantedBy=multi-user.target
+
+
+[Service]
+ExecStart=/bin/keylogme-zero
