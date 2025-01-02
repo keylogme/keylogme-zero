@@ -7,7 +7,7 @@ type Config struct {
 	ShortcutGroups []ShortcutGroup `json:"shortcut_groups"`
 }
 
-type KeylogmeZeroConfig struct {
+type KeylogmeZeroConfigV1 struct {
 	Keylog  Config                `json:"keylog"`
 	Storage storage.ConfigStorage `json:"storage"`
 }

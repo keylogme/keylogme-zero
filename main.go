@@ -26,7 +26,7 @@ func main() {
 	if file_config == "" {
 		log.Fatal("CONFIG_FILE is not set")
 	}
-	var config keylog.KeylogmeZeroConfig
+	var config keylog.KeylogmeZeroConfigV1
 	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
 		log.Fatal("Could not parse config file")
