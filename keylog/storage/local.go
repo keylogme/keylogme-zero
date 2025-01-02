@@ -46,13 +46,13 @@ type FileStorage struct {
 	shortcuts map[string]map[string]int64 // deviceId - shortcutId - counter
 }
 
-type DataFile struct {
+type DataFileV1 struct {
 	Keylogs   map[string]map[uint16]int64 `json:"keylogs,omitempty"`
 	Shortcuts map[string]map[string]int64 `json:"shortcuts,omitempty"`
 }
 
-func newDataFile() DataFile {
-	return DataFile{
+func newDataFile() DataFileV1 {
+	return DataFileV1{
 		Keylogs:   map[string]map[uint16]int64{},
 		Shortcuts: map[string]map[string]int64{},
 	}
@@ -94,7 +94,7 @@ func (f *FileStorage) SaveShortcut(deviceId string, shortcutId string) error {
 	return nil
 }
 
-func (f *FileStorage) prepareDataToSave() (DataFile, error) {
+func (f *FileStorage) prepareDataToSave() (DataFileV1, error) {
 	dataFile := newDataFile()
 	_, err := os.Stat(f.config.FileOutput)
 	if errors.Is(err, os.ErrNotExist) {
