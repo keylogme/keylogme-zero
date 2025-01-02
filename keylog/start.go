@@ -21,7 +21,7 @@ func Start(
 			if sd.ShortcutId != "" {
 				slog.Info(
 					fmt.Sprintf(
-						"Shortcut %d found in device %s\n",
+						"Shortcut %s found in device %s\n",
 						sd.ShortcutId,
 						sd.DeviceId,
 					),
