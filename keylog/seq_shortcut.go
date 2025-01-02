@@ -35,28 +35,28 @@ func (sd *seqShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
 }
 
 func (sd *seqShortcutDetector) Detect(deviceId string, kp uint16) ShortcutDetected {
-	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != 0 {
+	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != "" {
 		return sdet
 	}
 	if len(sd.currPossibleShortcuts) == 0 {
 		sd.handleFirstKey(deviceId, kp)
 	} else {
 		newPossibleShortcuts, shortcutCompleted := sd.checkPossibleShortcuts(deviceId, kp)
-		if len(newPossibleShortcuts) == 1 && shortcutCompleted.ShortcutId != 0 {
+		if len(newPossibleShortcuts) == 1 && shortcutCompleted.ShortcutId != "" {
 			// found only one possible shortcut
 			sd.reset()
 			return shortcutCompleted
 
 		}
 		if len(newPossibleShortcuts) == 0 {
-			if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
+			if sd.prevShortcutDeviceDetected.ShortcutId != "" {
 				output := sd.prevShortcutDeviceDetected
 				sd.reset()
 				return output
 			}
 			sd.reset()
 		} else {
-			if shortcutCompleted.ShortcutId != 0 {
+			if shortcutCompleted.ShortcutId != "" {
 				sd.prevShortcutDeviceDetected = shortcutCompleted
 			}
 			sd.indexVal += 1
@@ -79,7 +79,7 @@ func (sd *seqShortcutDetector) handleFirstKey(deviceId string, kp uint16) {
 func (sd *seqShortcutDetector) handleChangeOfDevice(deviceId string, kp uint16) ShortcutDetected {
 	if len(sd.currPossibleShortcuts) > 0 &&
 		sd.currPossibleShortcuts[0].DeviceId != deviceId {
-		if sd.prevShortcutDeviceDetected.ShortcutId != 0 {
+		if sd.prevShortcutDeviceDetected.ShortcutId != "" {
 			output := sd.prevShortcutDeviceDetected
 			sd.reset()
 			sd.handleFirstKey(deviceId, kp)

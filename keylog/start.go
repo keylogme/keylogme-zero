@@ -18,7 +18,7 @@ func Start(
 	go func() {
 		for i := range chEvt {
 			sd := sd.handleKeyEvent(i)
-			if sd.ShortcutId != 0 {
+			if sd.ShortcutId != "" {
 				slog.Info(
 					fmt.Sprintf(
 						"Shortcut %d found in device %s\n",

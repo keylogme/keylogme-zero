@@ -8,7 +8,8 @@ const (
 )
 
 type ShortcutCodes struct {
-	Id    int64        `json:"id"`
+	Id    string       `json:"id"`
+	Name  string       `json:"name"`
 	Codes []uint16     `json:"codes"`
 	Type  ShortcutType `json:"type"`
 }
@@ -19,7 +20,7 @@ type shortcutDevice struct {
 }
 
 type ShortcutDetected struct {
-	ShortcutId int64
+	ShortcutId string
 	DeviceId   string
 }
 
@@ -37,7 +38,7 @@ func NewShortcutsDetector(s []ShortcutCodes) *shortcutsDetector {
 
 func (sd *shortcutsDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
 	sdect := sd.SeqDetector.handleKeyEvent(ke)
-	if sdect.ShortcutId != 0 {
+	if sdect.ShortcutId != "" {
 		return sdect
 	}
 	return sd.HoldDetector.handleKeyEvent(ke)

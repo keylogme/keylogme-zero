@@ -43,7 +43,12 @@
         <li><a href="#linux">Linux</a></li>
       </ul>
     </li>
-    <li><a href="#config">Config</a></li>
+    <li><a href="#config">Config</a>
+      <ul>
+        <li><a href="#usb-name">USB name</a></li>
+        <li><a href="#keycodes-hardware">Keycodes hardware</a></li>
+      </ul>
+    </li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -134,7 +139,8 @@ The file `deploy/default_config.json` contains the default config. You can use i
         ],
         "shortcuts": [
             {
-                "id": 1,
+                "id": "1",
+                "name": "Copy 📎",
                 "codes": [
                     29,
                     46
@@ -263,7 +269,7 @@ The scancode is a hex number, you have to convert it to decimal.
 - [ ] Performance WPM
 - [ ] Accuracy
 
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/keylogme/keylogme-zero/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

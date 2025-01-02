@@ -37,24 +37,24 @@ func (c *ConfigStorage) Validate() error {
 
 type Storage interface {
 	SaveKeylog(deviceId string, keycode uint16) error
-	SaveShortcut(deviceId string, shortcutId int64) error
+	SaveShortcut(deviceId string, shortcutId string) error
 }
 
 type FileStorage struct {
 	config    ConfigStorage
 	keylogs   map[string]map[uint16]int64 // deviceId - keycode - counter
-	shortcuts map[string]map[int64]int64  // deviceId - shortcutId - counter
+	shortcuts map[string]map[string]int64 // deviceId - shortcutId - counter
 }
 
 type DataFile struct {
 	Keylogs   map[string]map[uint16]int64 `json:"keylogs,omitempty"`
-	Shortcuts map[string]map[int64]int64  `json:"shortcuts,omitempty"`
+	Shortcuts map[string]map[string]int64 `json:"shortcuts,omitempty"`
 }
 
 func newDataFile() DataFile {
 	return DataFile{
 		Keylogs:   map[string]map[uint16]int64{},
-		Shortcuts: map[string]map[int64]int64{},
+		Shortcuts: map[string]map[string]int64{},
 	}
 }
 
@@ -66,7 +66,7 @@ func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStora
 	ffs := &FileStorage{
 		config:    config,
 		keylogs:   map[string]map[uint16]int64{},
-		shortcuts: map[string]map[int64]int64{},
+		shortcuts: map[string]map[string]int64{},
 	}
 	go ffs.savingInBackground(ctx)
 	return ffs
@@ -83,9 +83,9 @@ func (f *FileStorage) SaveKeylog(deviceId string, keycode uint16) error {
 	return nil
 }
 
-func (f *FileStorage) SaveShortcut(deviceId string, shortcutId int64) error {
+func (f *FileStorage) SaveShortcut(deviceId string, shortcutId string) error {
 	if _, ok := f.shortcuts[deviceId]; !ok {
-		f.shortcuts[deviceId] = map[int64]int64{}
+		f.shortcuts[deviceId] = map[string]int64{}
 	}
 	if _, ok := f.shortcuts[deviceId][shortcutId]; !ok {
 		f.shortcuts[deviceId][shortcutId] = 0
@@ -126,7 +126,7 @@ func (f *FileStorage) prepareDataToSave() (DataFile, error) {
 				continue
 			}
 			if _, ok := dataFile.Shortcuts[kId]; !ok {
-				dataFile.Shortcuts[kId] = map[int64]int64{}
+				dataFile.Shortcuts[kId] = map[string]int64{}
 			}
 			if _, ok := dataFile.Shortcuts[kId][scId]; !ok {
 				dataFile.Shortcuts[kId][scId] = f.shortcuts[kId][scId]
@@ -156,7 +156,7 @@ func (f *FileStorage) saveToFile() error {
 	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.config.FileOutput))
 	// Reset data
 	f.keylogs = map[string]map[uint16]int64{}
-	f.shortcuts = map[string]map[int64]int64{}
+	f.shortcuts = map[string]map[string]int64{}
 	return nil
 }
 
