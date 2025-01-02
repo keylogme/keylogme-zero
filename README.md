@@ -137,15 +137,36 @@ The file `deploy/default_config.json` contains the default config. You can use i
                 "usb_name": "foostan Corne"
             }
         ],
-        "shortcuts": [
+        "shortcut_groups": [
             {
-                "id": "1",
-                "name": "Copy 📎",
-                "codes": [
-                    29,
-                    46
-                ],
-                "type": "hold"
+                "id": "A",
+                "name": "Clipboard ✏️",
+                "shortcuts": [
+                    {
+                        "id": "1A",
+                        "name": "Copy 📎",
+                        "codes": [
+                            29,
+                            46
+                        ],
+                        "type": "hold"
+                    }
+                ]
+            },
+            {
+                "id": "B",
+                "name": "Nvim 🕶️",
+                "shortcuts": [
+                    {
+                        "id": "1B",
+                        "name": "Save 💾",
+                        "codes": [
+                            57,
+                            31
+                        ],
+                        "type": "seq"
+                    }
+                ]
             }
         ]
     },

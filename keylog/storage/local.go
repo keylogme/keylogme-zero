@@ -61,7 +61,7 @@ func newDataFile() DataFile {
 func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStorage {
 	err := config.Validate()
 	if err != nil {
-		log.Fatalf("Invalid config: %v", err)
+		log.Fatalf("Invalid config: %v", err.Error())
 	}
 	ffs := &FileStorage{
 		config:    config,

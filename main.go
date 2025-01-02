@@ -43,7 +43,7 @@ func main() {
 		devices = append(devices, *d)
 	}
 
-	sd := keylog.NewShortcutsDetector(config.Keylog.Shortcuts)
+	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 	keylog.Start(chEvt, &devices, sd, ffs)
 
 	// Graceful shutdown
