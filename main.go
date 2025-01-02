@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 
 	"github.com/keylogme/keylogme-zero/keylog"
@@ -24,10 +22,6 @@ import (
 
 func main() {
 	// Get config
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		fmt.Println(pair[0])
-	}
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {
 		log.Fatal("CONFIG_FILE is not set")
