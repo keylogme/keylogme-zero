@@ -53,14 +53,22 @@ func MustGetNewShortcutsDetector(sgs []ShortcutGroup) *shortcutsDetector {
 }
 
 func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
-	var scIds map[string]bool
-	var scs []ShortcutCodes
+	scgIds := map[string]bool{}
+	scIds := map[string]bool{}
+	scs := []ShortcutCodes{}
 	for _, sg := range s {
-		if _, ok := scIds[sg.Id]; ok {
-			return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut id %s", sg.Id)
+		if _, ok := scgIds[sg.Id]; ok {
+			return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut group id %s", sg.Id)
 		}
-		scIds[sg.Id] = true
-		scs = append(scs, sg.Shortcuts...)
+		scgIds[sg.Id] = true
+		for _, sc := range sg.Shortcuts {
+			// check uniqueness shortcut ids
+			if _, ok := scIds[sc.Id]; ok {
+				return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut id %s", sg.Id)
+			}
+			scIds[sc.Id] = true
+			scs = append(scs, sg.Shortcuts...)
+		}
 	}
 	return scs, nil
 }
