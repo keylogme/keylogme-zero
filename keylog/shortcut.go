@@ -68,7 +68,7 @@ func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
 				return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut id %s", sg.Id)
 			}
 			scIds[sc.Id] = true
-			scs = append(scs, sg.Shortcuts...)
+			scs = append(scs, sc)
 		}
 	}
 	return scs, nil
