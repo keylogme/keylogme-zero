@@ -52,6 +52,7 @@ func MustGetNewShortcutsDetector(sgs []ShortcutGroup) *shortcutsDetector {
 	}
 }
 
+// check duplicate ids
 func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
 	scgIds := map[string]bool{}
 	scIds := map[string]bool{}
