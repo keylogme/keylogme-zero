@@ -161,7 +161,7 @@ The file `deploy/default_config.json` contains the default config. You can use i
                         "id": "1B",
                         "name": "Save 💾",
                         "codes": [
-                            57,
+                            36,
                             31
                         ],
                         "type": "seq"
