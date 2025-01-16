@@ -66,14 +66,14 @@ The end goal is to avoid or diminish the pain in your hands due to typing. Commo
 tennis elbow, carpal tunnel syndrome, etc.
 
 There are many great ergonomic keyboards , beautiful hardware out there. However, what is the layout of keys 
-that best suits you? that does not cause you pain? that makes you more productive?.
+that best suits you? that does not overload some fingers? that makes you more productive?.
 
 We all started with QWERTY, then heard of DVORAK, COLEMAK, Workman, Norman, Asset, Capewell-Dvorak, BEAKL, MTGAP, QGMLWB... ?
-There are many layouts but switching to one is not an easy task, you need a lot of practice and patience.
+Many layouts with a specific design criteria in mind but switching to one is not an easy task, you need a lot of practice and patience.
 
 
-Here's how:
-* Monitor : See the finger usage on your layout based on your real usage
+How can keylogme help?, here's how:
+* Monitor : See the finger usage on your current layout based on your real usage
 * Analyze : Compare your layout with others, find patterns to avoid or improve, remap shortcuts
 * Adapt : fine tune your layout based on the stats
 
@@ -208,10 +208,10 @@ sudo lsinput
 
 If your keyboard name appeared multiple times, try with all of them.
 
-For example, the output of the command for my corne keyboard is below and the name that worked is `foostan Corne`.
+For example, the output of the command for my corne keyboard is below and the name that worked is `foostan Corne`
 
 <details>
-  <summary>Output lsinput related to keyboard</summary>
+  <summary>Output of command lsinput related to keyboard</summary>
 
 ```sh
 /dev/input/event12
