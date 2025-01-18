@@ -6,7 +6,7 @@ file_config_abs_path=$2
 echo $EUID
 if [ $EUID != 0 ]; then
     echo "🟡 Running installer with non-sudo permissions."
-    echo "   Please run the script with sudo privileges to create keylogger service"
+    echo "   Please run the script with sudo privileges to create keylogme service"
     echo ""
     exit 1
 fi
@@ -27,7 +27,7 @@ has_cmd tar || {
 }
 
 has_cmd systemctl || {
-    echo "🟡 systemctl is not installed. Please install systemctl to create keylogger service"
+    echo "🟡 systemctl is not installed. Please install systemctl to create keylogme service"
     exit 1
 }
 # Check inputs
@@ -58,9 +58,9 @@ mkdir keylogme
 tar -xvzf ${file_compressed} -C keylogme
 
 # check if service keylogme-zero exists and stop it
-systemctl is-active --quiet keylogger-zero && {
-    echo "🟡 keylogger-zero service is running. Stopping the service..."
-    sudo systemctl stop keylogger-zero
+systemctl is-active --quiet keylogme-zero && {
+    echo "🟡 keylogme-zero service is running. Stopping the service..."
+    sudo systemctl stop keylogme-zero
 }
 
 # try to copy and check if failed
@@ -70,20 +70,20 @@ cp keylogme/keylogme-zero /bin || {
 }
 
 # Copy service file, incase if there are any changes
-service_file_path="/etc/systemd/system/keylogger-zero.service"
-sudo cp keylogger-zero.service ${service_file_path}
+service_file_path="/etc/systemd/system/keylogme-zero.service"
+sudo cp keylogme-zero.service ${service_file_path}
 # Set environment variables in service file
 echo $"Environment=CONFIG_FILE=${file_config_abs_path}" >> ${service_file_path}
 # reload configurations incase if service file has changed
 sudo systemctl daemon-reload
 # restart the service
-sudo systemctl restart keylogger-zero
+sudo systemctl restart keylogme-zero
 # start of VM restart
-sudo systemctl enable keylogger-zero
+sudo systemctl enable keylogme-zero
 
 # check service keylogme-zero is running
-systemctl is-active --quiet keylogger-zero && {
-    echo "🟢 keylogger-zero service is running."
+systemctl is-active --quiet keylogme-zero && {
+    echo "🟢 keylogme-zero service is running."
 }
 
 echo "🟢 keylogme-zero ${keylogme_version} installed successfully"

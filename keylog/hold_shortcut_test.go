@@ -129,6 +129,22 @@ func TestHoldShortcut_DetectConsecutive(t *testing.T) {
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
 	}
+	// Now release and press again ctrl
+	ev = getFakeEvent("1", 29, KeyRelease)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "" {
+		t.Fatal("Detection not expected")
+	}
+	ev = getFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "" {
+		t.Fatal("Detection not expected")
+	}
+	ev = getFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "2" {
+		t.Fatal("Detection expected")
+	}
 }
 
 func TestHoldShortcut_DetectThreeKeys(t *testing.T) {

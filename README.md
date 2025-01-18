@@ -13,8 +13,9 @@
   <h3 align="center">Keylogme Zero</h3>
 
   <p align="center">
-    This is a logger for <a href="https://keylogme.com">keylogme.com</a> . This logger saves 
-    the stats locally. You can use those results to visualize in (pending...).
+    This is the zero trust logger for <a href="https://keylogme.com">keylogme.com</a>. This logger
+    records your keypresses stats and saves them locally. You can use those results to visualize in 
+    <a href="https://keylogme.com/anonymous">keylogme.com/anonymous</a>.
     <br />
     <br />
     <a href="https://keylogme.com/esoteloferry">View Demo</a>
@@ -49,6 +50,7 @@
         <li><a href="#keycodes-hardware">Keycodes hardware</a></li>
       </ul>
     </li>
+    <li><a href="#output">Output</a>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -99,7 +101,7 @@ The online viewer does not need an account to use it. You can use it anonymously
    ```sh
    git clone https://github.com/keylogme/keylogme-zero.git
    ```
-2. Go to deploy and install with sudo permissions
+2. Go to deploy and install with sudo permissions. There is a default config file. 
    ```sh
    cd deploy && sudo ./install.sh
    ```
@@ -115,7 +117,7 @@ The online viewer does not need an account to use it. You can use it anonymously
        ```
     </details>
 
-3. After some keypresses and 10 seconds, check the stats in `/output_keylogme_zero.json`
+3. After some keypresses and 20 seconds, check the stats (output file) in `/output_keylogme_zero.json`
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -273,6 +275,18 @@ How to know the keycode?
 Go to [kbdlayout.info](https://kbdlayout.info/kbdus)
 and click scancodes to see the keycodes. 
 The scancode is a hex number, you have to convert it to decimal.
+
+## Output 
+
+The output file has the format below. You can use it to visualize heatmap of your usage
+in [keylogme.com/anonymous](https://keylogme.com/anonymous) and play with different layouts and keyboards.
+
+```json
+{
+    "keylogs":{"<device_id>":{"<keycode>":"<count>"}},
+    "shortcuts": {"<device_id>":{"<shortcut_id>":"<count>"}},
+}
+```
 
 <!-- ROADMAP -->
 ## Roadmap

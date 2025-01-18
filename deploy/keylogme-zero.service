@@ -1,5 +1,5 @@
 [Unit]
-Description= Keylogger zero
+Description= Keylogme zero (keylogme.com)
 
 [Install]
 WantedBy=multi-user.target
