@@ -64,6 +64,10 @@ func (i *inputEvent) KeyRelease() bool {
 	return i.Value == 0
 }
 
+func (i *inputEvent) IsValid() bool {
+	return i.Code != 0 && (i.KeyPress() || i.KeyRelease())
+}
+
 // keyevent is the keyboard event for up/down (press/release)
 type keyevent int32
 

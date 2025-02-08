@@ -1,8 +1,6 @@
 package keylog
 
 import (
-	"fmt"
-	"log/slog"
 	"slices"
 )
 
@@ -12,10 +10,15 @@ type holdShortcutDetector struct {
 	modPress  []uint16
 }
 
-func newHoldShortcutDetector(shortcuts []ShortcutCodes) holdShortcutDetector {
+func getAllHoldModifiers() []uint16 {
+	return []uint16{29, 97, 42, 54, 56, 100} // ctrl, shft, alt
+}
+
+// detects hold shortcuts like Ctrl+C, Ctrl+Alt+Del, Shift+C
+func newHoldShortcutDetector(shortcuts []ShortcutCodes, modifiers []uint16) holdShortcutDetector {
 	hsd := holdShortcutDetector{
 		shortcuts: []ShortcutCodes{},
-		modifiers: []uint16{29, 97, 42, 54, 56, 100}, // ctrl, shft, alt
+		modifiers: modifiers,
 		modPress:  []uint16{},
 	}
 	hsd.setShortcuts(shortcuts)
@@ -45,20 +48,18 @@ func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected 
 }
 
 func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDetected {
-	if slices.Contains(hd.modPress, code) {
-		hd.modPress = slices.DeleteFunc(hd.modPress, func(v uint16) bool {
-			if v == code {
-				return true
-			}
-			return false
-		})
-	}
-
-	tempCodes := hd.modPress
+	// cleanup old modifiers
+	hd.modPress = slices.DeleteFunc(hd.modPress, func(v uint16) bool {
+		if v == code {
+			return true
+		}
+		return false
+	})
+	tempCodes := slices.Clone(hd.modPress)
 	tempCodes = append(tempCodes, code)
 	slices.Sort(tempCodes)
 
-	slog.Info(fmt.Sprintf("detect %s %d\n", deviceId, code))
+	// slog.Info(fmt.Sprintf("detect %s %d \n", deviceId, code))
 	for _, s := range hd.shortcuts {
 		isEqual := slices.Equal(tempCodes, s.Codes)
 		if isEqual {
@@ -71,6 +72,6 @@ func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDet
 	return ShortcutDetected{}
 }
 
-func (hd *holdShortcutDetector) reset() {
-	hd.modPress = []uint16{}
-}
+// func (hd *holdShortcutDetector) reset() {
+// 	hd.modPress = []uint16{}
+// }

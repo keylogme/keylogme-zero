@@ -61,6 +61,7 @@ type DeviceInput struct {
 type DeviceEvent struct {
 	inputEvent
 	DeviceId string
+	ExecTime time.Time
 }
 
 func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
@@ -93,7 +94,10 @@ func (d *Device) start(ctx context.Context) bool {
 				slog.Info("exited channel keylogger")
 				return false
 			}
-			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId}
+			if !i.IsValid() {
+				continue
+			}
+			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: time.Now()}
 			d.sendInput <- de
 		}
 	}

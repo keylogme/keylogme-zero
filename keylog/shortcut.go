@@ -35,6 +35,10 @@ type ShortcutDetected struct {
 	DeviceId   string
 }
 
+func (sd ShortcutDetected) IsDetected() bool {
+	return sd.ShortcutId != ""
+}
+
 type shortcutsDetector struct {
 	SeqDetector  seqShortcutDetector
 	HoldDetector holdShortcutDetector
@@ -48,7 +52,7 @@ func MustGetNewShortcutsDetector(sgs []ShortcutGroup) *shortcutsDetector {
 
 	return &shortcutsDetector{
 		SeqDetector:  newSeqShortcutDetector(s),
-		HoldDetector: newHoldShortcutDetector(s),
+		HoldDetector: newHoldShortcutDetector(s, getAllHoldModifiers()),
 	}
 }
 

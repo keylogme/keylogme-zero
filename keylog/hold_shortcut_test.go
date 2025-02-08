@@ -1,15 +1,19 @@
 package keylog
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func getFakeEvent(deviceId string, code uint16, keyevent keyevent) DeviceEvent {
 	return DeviceEvent{
-		inputEvent{
+		inputEvent: inputEvent{
 			Type:  evKey,
 			Code:  code,
 			Value: int32(keyevent),
 		},
-		deviceId,
+		DeviceId: deviceId,
+		ExecTime: time.Now(),
 	}
 }
 
@@ -18,7 +22,7 @@ func TestHoldShortcut_Detect(t *testing.T) {
 		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
 		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 28, KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
@@ -42,7 +46,7 @@ func TestHoldShortcut_DetectMultiple_OnlyOne(t *testing.T) {
 		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
 		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 28, KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
@@ -72,7 +76,7 @@ func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType}, // copy
 		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType}, // paste
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 28, KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
@@ -102,7 +106,7 @@ func TestHoldShortcut_DetectConsecutive(t *testing.T) {
 		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType}, // copy
 		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType}, // paste
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 28, KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
@@ -151,7 +155,7 @@ func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 	sl := []ShortcutCodes{
 		{Id: "1", Codes: []uint16{29, 56, 111}, Type: HoldShortcutType},
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
 	scDetected := ds.handleKeyEvent(ev)
@@ -174,7 +178,7 @@ func TestHoldShortcut_Aborted(t *testing.T) {
 	sl := []ShortcutCodes{
 		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
 	}
-	ds := newHoldShortcutDetector(sl)
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
 
 	ev := getFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
 	scDetected := ds.handleKeyEvent(ev)
@@ -195,5 +199,32 @@ func TestHoldShortcut_Aborted(t *testing.T) {
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
+	}
+}
+
+func TestHoldShortcut_ModPressEmpty(t *testing.T) {
+	sl := []ShortcutCodes{
+		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
+		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
+	}
+	ds := newHoldShortcutDetector(sl, getAllHoldModifiers())
+
+	ev := getFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	scDetected := ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "" {
+		t.Fatal("Detection not expected")
+	}
+	ev = getFakeEvent("1", 47, KeyRelease) // second key shortcut
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "2" {
+		t.Fatal("Detection expected")
+	}
+	ev = getFakeEvent("1", 29, KeyRelease)
+	scDetected = ds.handleKeyEvent(ev)
+	if scDetected.ShortcutId != "" {
+		t.Fatal("Detection not expected")
+	}
+	if len(ds.modPress) != 0 {
+		t.Fatal("modPress should be empty")
 	}
 }
