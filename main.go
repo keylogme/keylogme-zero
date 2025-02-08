@@ -31,7 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not parse config file")
 	}
-	thresholdAutoShiftState := time.Duration(1 * time.Millisecond)
+	thresholdAutoShiftState := time.Duration(125 * time.Millisecond)
 
 	// Start logger
 	ctx, cancel := context.WithCancel(context.Background())
@@ -43,7 +43,6 @@ func main() {
 		d := keylog.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
-
 	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
 	ss := keylog.NewShiftStateDetector(thresholdAutoShiftState)

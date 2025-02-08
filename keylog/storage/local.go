@@ -38,24 +38,126 @@ func (c *ConfigStorage) Validate() error {
 type Storage interface {
 	SaveKeylog(deviceId string, keycode uint16) error
 	SaveShortcut(deviceId string, shortcutId string) error
+	SaveShiftState(deviceId string, modifier uint16, keycode uint16, auto bool) error
 }
 
 type FileStorage struct {
-	config    ConfigStorage
-	keylogs   map[string]map[uint16]int64 // deviceId - keycode - counter
-	shortcuts map[string]map[string]int64 // deviceId - shortcutId - counter
+	config   ConfigStorage
+	dataFile DataFileV1
 }
 
 type DataFileV1 struct {
-	Keylogs   map[string]map[uint16]int64 `json:"keylogs,omitempty"`
+	// deviceId - keycode - counter
+	Keylogs map[string]map[uint16]int64 `json:"keylogs,omitempty"`
+	// deviceId - shortcutId - counter
 	Shortcuts map[string]map[string]int64 `json:"shortcuts,omitempty"`
+	// deviceId - modifier - keycode - counter
+	ShiftStates map[string]map[uint16]map[uint16]int64 `json:"shift_states,omitempty"`
+	// deviceId - modifier - keycode - counter
+	ShiftStatesAuto map[string]map[uint16]map[uint16]int64 `json:"shift_states_auto,omitempty"`
+}
+
+func (d *DataFileV1) AddKeylog(deviceId string, keycode uint16, addQty int64) {
+	if _, ok := d.Keylogs[deviceId]; !ok {
+		d.Keylogs[deviceId] = map[uint16]int64{}
+	}
+	if _, ok := d.Keylogs[deviceId][keycode]; !ok {
+		d.Keylogs[deviceId][keycode] = 0
+	}
+	d.Keylogs[deviceId][keycode] += addQty
+}
+
+func (d *DataFileV1) AddShortcut(deviceId string, shortcutId string, addQty int64) {
+	if _, ok := d.Shortcuts[deviceId]; !ok {
+		d.Shortcuts[deviceId] = map[string]int64{}
+	}
+	if _, ok := d.Shortcuts[deviceId][shortcutId]; !ok {
+		d.Shortcuts[deviceId][shortcutId] = 0
+	}
+	d.Shortcuts[deviceId][shortcutId] += addQty
+}
+
+func updateShiftState(
+	shiftStates *map[string]map[uint16]map[uint16]int64,
+	deviceId string,
+	modifier uint16,
+	keycode uint16,
+	addQty int64,
+) {
+	ss := (*shiftStates)
+	if _, ok := ss[deviceId]; !ok {
+		ss[deviceId] = map[uint16]map[uint16]int64{}
+	}
+	if _, ok := ss[deviceId][modifier]; !ok {
+		ss[deviceId][modifier] = map[uint16]int64{}
+	}
+	if _, ok := ss[deviceId][modifier][keycode]; !ok {
+		ss[deviceId][modifier][keycode] = 0
+	}
+	ss[deviceId][modifier][keycode] += addQty
+}
+
+func (d *DataFileV1) AddShiftState(
+	deviceId string,
+	modifier uint16,
+	keycode uint16,
+	addQty int64,
+) {
+	updateShiftState(&d.ShiftStates, deviceId, modifier, keycode, addQty)
+}
+
+func (d *DataFileV1) AddAutoShiftState(
+	deviceId string,
+	modifier uint16,
+	keycode uint16,
+	addQty int64,
+) {
+	updateShiftState(&d.ShiftStatesAuto, deviceId, modifier, keycode, addQty)
+}
+
+func (d *DataFileV1) Merge(data DataFileV1) {
+	for kId := range data.Keylogs {
+		for keycode := range data.Keylogs[kId] {
+			d.AddKeylog(kId, keycode, data.Keylogs[kId][keycode])
+		}
+	}
+	for kId := range data.Shortcuts {
+		for scId := range data.Shortcuts[kId] {
+			d.AddShortcut(kId, scId, data.Shortcuts[kId][scId])
+		}
+	}
+	for kId := range data.ShiftStates {
+		for modifier := range data.ShiftStates[kId] {
+			for keycode := range data.ShiftStates[kId][modifier] {
+				d.AddShiftState(kId, modifier, keycode, data.ShiftStates[kId][modifier][keycode])
+			}
+		}
+	}
+	for kId := range data.ShiftStatesAuto {
+		for modifier := range data.ShiftStatesAuto[kId] {
+			for keycode := range data.ShiftStatesAuto[kId][modifier] {
+				d.AddAutoShiftState(
+					kId,
+					modifier,
+					keycode,
+					data.ShiftStatesAuto[kId][modifier][keycode],
+				)
+			}
+		}
+	}
+}
+
+func (d *DataFileV1) Reset() {
+	d.Keylogs = map[string]map[uint16]int64{}
+	d.Shortcuts = map[string]map[string]int64{}
+	d.ShiftStates = map[string]map[uint16]map[uint16]int64{}
+	d.ShiftStatesAuto = map[string]map[uint16]map[uint16]int64{}
 }
 
 func newDataFile() DataFileV1 {
-	return DataFileV1{
-		Keylogs:   map[string]map[uint16]int64{},
-		Shortcuts: map[string]map[string]int64{},
-	}
+	d := DataFileV1{}
+	d.Reset()
+	return d
 }
 
 func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStorage {
@@ -64,37 +166,38 @@ func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStora
 		log.Fatalf("Invalid config: %v", err.Error())
 	}
 	ffs := &FileStorage{
-		config:    config,
-		keylogs:   map[string]map[uint16]int64{},
-		shortcuts: map[string]map[string]int64{},
+		config:   config,
+		dataFile: newDataFile(),
 	}
 	go ffs.savingInBackground(ctx)
 	return ffs
 }
 
 func (f *FileStorage) SaveKeylog(deviceId string, keycode uint16) error {
-	if _, ok := f.keylogs[deviceId]; !ok {
-		f.keylogs[deviceId] = map[uint16]int64{}
-	}
-	if _, ok := f.keylogs[deviceId][keycode]; !ok {
-		f.keylogs[deviceId][keycode] = 0
-	}
-	f.keylogs[deviceId][keycode] += 1
+	f.dataFile.AddKeylog(deviceId, keycode, 1)
 	return nil
 }
 
 func (f *FileStorage) SaveShortcut(deviceId string, shortcutId string) error {
-	if _, ok := f.shortcuts[deviceId]; !ok {
-		f.shortcuts[deviceId] = map[string]int64{}
-	}
-	if _, ok := f.shortcuts[deviceId][shortcutId]; !ok {
-		f.shortcuts[deviceId][shortcutId] = 0
-	}
-	f.shortcuts[deviceId][shortcutId] += 1
+	f.dataFile.AddShortcut(deviceId, shortcutId, 1)
 	return nil
 }
 
-func (f *FileStorage) prepareDataToSave() (DataFileV1, error) {
+func (f *FileStorage) SaveShiftState(
+	deviceId string,
+	modifier uint16,
+	keycode uint16,
+	auto bool,
+) error {
+	if auto {
+		updateShiftState(&f.dataFile.ShiftStatesAuto, deviceId, modifier, keycode, 1)
+	} else {
+		updateShiftState(&f.dataFile.ShiftStates, deviceId, modifier, keycode, 1)
+	}
+	return nil
+}
+
+func (f *FileStorage) prepareDataToSave() error {
 	dataFile := newDataFile()
 	_, err := os.Stat(f.config.FileOutput)
 	if errors.Is(err, os.ErrNotExist) {
@@ -102,50 +205,23 @@ func (f *FileStorage) prepareDataToSave() (DataFileV1, error) {
 	} else {
 		err := utils.ParseFromFile(f.config.FileOutput, &dataFile)
 		if err != nil {
-			return dataFile, err
+			return err
 		}
 	}
-	for kId := range f.keylogs {
-		for keycode := range f.keylogs[kId] {
-			if _, ok := dataFile.Keylogs[kId][keycode]; ok {
-				dataFile.Keylogs[kId][keycode] += f.keylogs[kId][keycode]
-				continue
-			}
-			if _, ok := dataFile.Keylogs[kId]; !ok {
-				dataFile.Keylogs[kId] = map[uint16]int64{}
-			}
-			if _, ok := dataFile.Keylogs[kId][keycode]; !ok {
-				dataFile.Keylogs[kId][keycode] = f.keylogs[kId][keycode]
-			}
-		}
-	}
-	for kId := range f.shortcuts {
-		for scId := range f.shortcuts[kId] {
-			if _, ok := dataFile.Shortcuts[kId][scId]; ok {
-				dataFile.Shortcuts[kId][scId] += f.shortcuts[kId][scId]
-				continue
-			}
-			if _, ok := dataFile.Shortcuts[kId]; !ok {
-				dataFile.Shortcuts[kId] = map[string]int64{}
-			}
-			if _, ok := dataFile.Shortcuts[kId][scId]; !ok {
-				dataFile.Shortcuts[kId][scId] = f.shortcuts[kId][scId]
-			}
-		}
-	}
-	return dataFile, nil
+	f.dataFile.Merge(dataFile)
+	return nil
 }
 
 func (f *FileStorage) saveToFile() error {
-	if len(f.keylogs) == 0 && len(f.shortcuts) == 0 {
-		return nil
-	}
+	// if len(f.keylogs) == 0 && len(f.shortcuts) == 0 {
+	// 	return nil
+	// }
 	start := time.Now()
-	data, err := f.prepareDataToSave()
+	err := f.prepareDataToSave()
 	if err != nil {
 		return err
 	}
-	pb, err := json.Marshal(data)
+	pb, err := json.Marshal(f.dataFile)
 	if err != nil {
 		return err
 	}
@@ -155,8 +231,7 @@ func (f *FileStorage) saveToFile() error {
 	}
 	slog.Info(fmt.Sprintf("| %s | File %s updated.\n", time.Since(start), f.config.FileOutput))
 	// Reset data
-	f.keylogs = map[string]map[uint16]int64{}
-	f.shortcuts = map[string]map[string]int64{}
+	f.dataFile.Reset()
 	return nil
 }
 
