@@ -10,8 +10,24 @@ type holdShortcutDetector struct {
 	modPress  []uint16
 }
 
+func getCtrlKeys() []uint16 {
+	return []uint16{29, 97}
+}
+
+func isShiftKey(code uint16) bool {
+	return code == 42 || code == 54
+}
+
+func getShiftKeys() []uint16 {
+	return []uint16{42, 54}
+}
+
+func getAltKeys() []uint16 {
+	return []uint16{56, 100}
+}
+
 func getAllHoldModifiers() []uint16 {
-	return []uint16{29, 97, 42, 54, 56, 100} // ctrl, shft, alt
+	return slices.Concat(getCtrlKeys(), getShiftKeys(), getAltKeys())
 }
 
 // detects hold shortcuts like Ctrl+C, Ctrl+Alt+Del, Shift+C
@@ -23,6 +39,10 @@ func newHoldShortcutDetector(shortcuts []ShortcutCodes, modifiers []uint16) hold
 	}
 	hsd.setShortcuts(shortcuts)
 	return hsd
+}
+
+func (hd *holdShortcutDetector) isHolded() bool {
+	return len(hd.modPress) > 0
 }
 
 func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
@@ -41,7 +61,7 @@ func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected 
 	if ke.Type == evKey && ke.KeyPress() && slices.Contains(hd.modifiers, ke.Code) {
 		hd.modPress = append(hd.modPress, ke.Code)
 	}
-	if ke.Type == evKey && ke.KeyRelease() && len(hd.modPress) > 0 {
+	if ke.Type == evKey && ke.KeyRelease() && hd.isHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
 	}
 	return ShortcutDetected{}

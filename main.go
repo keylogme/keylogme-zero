@@ -21,6 +21,9 @@ import (
 // See readme
 
 func main() {
+	// go func() {
+	// 	fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	// }()
 	// Get config
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {
@@ -31,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not parse config file")
 	}
-	thresholdAutoShiftState := time.Duration(125 * time.Millisecond)
+	thresholdShifted := time.Duration(125 * time.Millisecond)
 
 	// Start logger
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,7 +48,7 @@ func main() {
 	}
 	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
-	ss := keylog.NewShiftStateDetector(thresholdAutoShiftState)
+	ss := keylog.NewShiftStateDetector(thresholdShifted)
 	keylog.Start(chEvt, &devices, sd, ss, ffs)
 
 	// Graceful shutdown
