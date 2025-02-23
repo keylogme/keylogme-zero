@@ -174,7 +174,7 @@ The file `deploy/default_config.json` contains the default config. You can use i
     },
     "storage": {
         "file_output": "output_keylogme_zero.json",
-        "periodic_save_in_sec": 10
+        "periodic_save_in_sec": 20
     }
 }
 ```
@@ -258,6 +258,7 @@ For example, the output of the command for my corne keyboard is below and the na
 ```
 </details>
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ### Keycodes hardware
 
@@ -276,6 +277,8 @@ Go to [kbdlayout.info](https://kbdlayout.info/kbdus)
 and click scancodes to see the keycodes. 
 The scancode is a hex number, you have to convert it to decimal.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Output 
 
 The output file has the format below. You can use it to visualize heatmap of your usage
@@ -287,6 +290,7 @@ in [keylogme.com/anonymous](https://keylogme.com/anonymous) and play with differ
     "shortcuts": {"<device_id>":{"<shortcut_id>":"<count>"}},
 }
 ```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -301,6 +305,8 @@ in [keylogme.com/anonymous](https://keylogme.com/anonymous) and play with differ
     - [x] Linux
     - [ ] Windows
     - [ ] Mac
+- [x] Shifted keys
+- [x] Layer changes
 - [ ] Performance WPM
 - [ ] Accuracy
 
