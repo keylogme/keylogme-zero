@@ -13,6 +13,7 @@ func Start(
 	devices *[]Device,
 	sd *shortcutsDetector,
 	ss *shiftStateDetector,
+	ld *layersDetector,
 	store storage.Storage,
 ) {
 	slog.Info("Listening...")
@@ -41,6 +42,12 @@ func Start(
 				)
 				store.SaveShiftState(ssd.DeviceId, ssd.Modifier, ssd.Code, ssd.Auto)
 
+			}
+			ldd := ld.isLayerChangeDetected(i)
+			if ldd.IsDetected() {
+				slog.Info(
+					fmt.Sprintf("Layer %d detected in device %s\n", ldd.LayerId, i.DeviceId),
+				)
 			}
 			if i.Type == evKey && i.KeyRelease() {
 				start := time.Now()

@@ -49,7 +49,10 @@ func main() {
 	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
 	ss := keylog.NewShiftStateDetector(thresholdShifted)
-	keylog.Start(chEvt, &devices, sd, ss, ffs)
+
+	ld := keylog.NewLayerDetector([]keylog.Layer{}, thresholdShifted)
+
+	keylog.Start(chEvt, &devices, sd, ss, ld, ffs)
 
 	// Graceful shutdown
 	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)
