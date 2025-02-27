@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/keylog"
-	"github.com/keylogme/keylogme-zero/keylog/storage"
-	"github.com/keylogme/keylogme-zero/keylog/utils"
+	"github.com/keylogme/keylogme-zero/v1/keylog"
+	"github.com/keylogme/keylogme-zero/v1/keylog/storage"
+	"github.com/keylogme/keylogme-zero/v1/keylog/utils"
 )
 
 // Use lsinput to see the usb_name to be used
@@ -29,7 +29,7 @@ func main() {
 	if file_config == "" {
 		log.Fatal("CONFIG_FILE is not set")
 	}
-	var config keylog.KeylogmeZeroConfigV1
+	var config keylog.KeylogmeZeroConfig
 	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
 		log.Fatal("Could not parse config file")

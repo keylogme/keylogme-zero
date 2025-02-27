@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/keylog/utils"
+	"github.com/keylogme/keylogme-zero/v1/keylog/utils"
 )
 
 type ConfigStorage struct {
@@ -43,10 +43,10 @@ type Storage interface {
 
 type FileStorage struct {
 	config   ConfigStorage
-	dataFile DataFileV1
+	dataFile DataFile
 }
 
-type DataFileV1 struct {
+type DataFile struct {
 	// deviceId - keycode - counter
 	Keylogs map[string]map[uint16]int64 `json:"keylogs,omitempty"`
 	// deviceId - shortcutId - counter
@@ -57,7 +57,7 @@ type DataFileV1 struct {
 	ShiftStatesAuto map[string]map[uint16]map[uint16]int64 `json:"shift_states_auto,omitempty"`
 }
 
-func (d *DataFileV1) AddKeylog(deviceId string, keycode uint16, addQty int64) {
+func (d *DataFile) AddKeylog(deviceId string, keycode uint16, addQty int64) {
 	if _, ok := d.Keylogs[deviceId]; !ok {
 		d.Keylogs[deviceId] = map[uint16]int64{}
 	}
@@ -67,7 +67,7 @@ func (d *DataFileV1) AddKeylog(deviceId string, keycode uint16, addQty int64) {
 	d.Keylogs[deviceId][keycode] += addQty
 }
 
-func (d *DataFileV1) AddShortcut(deviceId string, shortcutId string, addQty int64) {
+func (d *DataFile) AddShortcut(deviceId string, shortcutId string, addQty int64) {
 	if _, ok := d.Shortcuts[deviceId]; !ok {
 		d.Shortcuts[deviceId] = map[string]int64{}
 	}
@@ -97,7 +97,7 @@ func updateShiftState(
 	ss[deviceId][modifier][keycode] += addQty
 }
 
-func (d *DataFileV1) AddShiftState(
+func (d *DataFile) AddShiftState(
 	deviceId string,
 	modifier uint16,
 	keycode uint16,
@@ -106,7 +106,7 @@ func (d *DataFileV1) AddShiftState(
 	updateShiftState(&d.ShiftStates, deviceId, modifier, keycode, addQty)
 }
 
-func (d *DataFileV1) AddAutoShiftState(
+func (d *DataFile) AddAutoShiftState(
 	deviceId string,
 	modifier uint16,
 	keycode uint16,
@@ -115,7 +115,7 @@ func (d *DataFileV1) AddAutoShiftState(
 	updateShiftState(&d.ShiftStatesAuto, deviceId, modifier, keycode, addQty)
 }
 
-func (d *DataFileV1) Merge(data DataFileV1) {
+func (d *DataFile) Merge(data DataFile) {
 	for kId := range data.Keylogs {
 		for keycode := range data.Keylogs[kId] {
 			d.AddKeylog(kId, keycode, data.Keylogs[kId][keycode])
@@ -147,15 +147,15 @@ func (d *DataFileV1) Merge(data DataFileV1) {
 	}
 }
 
-func (d *DataFileV1) Reset() {
+func (d *DataFile) Reset() {
 	d.Keylogs = map[string]map[uint16]int64{}
 	d.Shortcuts = map[string]map[string]int64{}
 	d.ShiftStates = map[string]map[uint16]map[uint16]int64{}
 	d.ShiftStatesAuto = map[string]map[uint16]map[uint16]int64{}
 }
 
-func newDataFile() DataFileV1 {
-	d := DataFileV1{}
+func newDataFile() DataFile {
+	d := DataFile{}
 	d.Reset()
 	return d
 }
