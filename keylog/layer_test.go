@@ -11,30 +11,30 @@ func getTestLayers() []Layer {
 		{
 			LayerId: 1,
 			Codes:   []uint16{16, 17, 18}, // letters q, w, e
-			ShiftStates: []ShortcutCodes{
-				{
-					Id:    "1_2",
-					Codes: []uint16{42, 16}, // Q
-					Type:  HoldShortcutType,
-				},
+			ShiftedCodes: ShiftedCodes{
+				ShiftCode: 42,           // shift key
+				Codes:     []uint16{16}, // Q
 			},
 		},
 		{
 			LayerId: 2,
 			Codes:   []uint16{2, 3, 4}, // numbers 1,2,3
-			ShiftStates: []ShortcutCodes{
-				{
-					Id:    "4_5",
-					Codes: []uint16{42, 2}, // !
-					Type:  HoldShortcutType,
-				},
+			ShiftedCodes: ShiftedCodes{
+				ShiftCode: 42,          // shift key
+				Codes:     []uint16{2}, // !
 			},
 		},
 	}
 }
 
+func getTestShiftStateConfig() ShiftState {
+	return ShiftState{
+		ThresholdAuto: Duration{Duration: 100 * time.Millisecond},
+	}
+}
+
 func TestChangeLayerSingleCodes(t *testing.T) {
-	lsd := NewLayerDetector(getTestLayers(), 100*time.Millisecond)
+	lsd := NewLayerDetector(getTestLayers(), getTestShiftStateConfig())
 	deviceId := "1"
 	// first layer - press "q" and  "w"
 	ld := lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
@@ -70,7 +70,7 @@ func TestChangeLayerSingleCodes(t *testing.T) {
 }
 
 func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
-	lsd := NewLayerDetector(getTestLayers(), 100*time.Millisecond)
+	lsd := NewLayerDetector(getTestLayers(), getTestShiftStateConfig())
 	deviceId := "1"
 	// first layer - press "Q"
 	if lsd.GetCurrentLayerId() != 0 {

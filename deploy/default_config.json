@@ -38,6 +38,27 @@
                     }
                 ]
             }
+        ],
+        "shift_state": {
+            "threshold_auto": "100ms"
+        },
+        "layers": [
+            {
+                "id": 1,
+                "codes": [],
+                "shifted_codes": {
+                    "shift_code": 42,
+                    "codes": []
+                }
+            },
+            {
+                "id": 2,
+                "codes": [],
+                "shifted_codes": {
+                    "shift_code": 42,
+                    "codes": []
+                }
+            }
         ]
     },
     "storage": {

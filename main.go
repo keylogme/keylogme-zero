@@ -34,7 +34,6 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not parse config file")
 	}
-	thresholdShifted := time.Duration(125 * time.Millisecond)
 
 	// Start logger
 	ctx, cancel := context.WithCancel(context.Background())
@@ -48,9 +47,9 @@ func main() {
 	}
 	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
-	ss := keylog.NewShiftStateDetector(thresholdShifted)
+	ss := keylog.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := keylog.NewLayerDetector([]keylog.Layer{}, thresholdShifted)
+	ld := keylog.NewLayerDetector([]keylog.Layer{}, config.Keylog.ShiftState)
 
 	keylog.Start(chEvt, &devices, sd, ss, ld, ffs)
 

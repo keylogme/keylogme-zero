@@ -1,13 +1,32 @@
 package keylog
 
 import (
-	"time"
+	"fmt"
 )
 
+type ShiftedCodes struct {
+	ShiftCode uint16   `json:"shift_code"`
+	Codes     []uint16 `json:"codes"`
+}
+
+func (sc ShiftedCodes) getShortcuts() []ShortcutCodes {
+	scs := []ShortcutCodes{}
+	for _, code := range sc.Codes {
+		fakeIDName := fmt.Sprintf("%d_%d", sc.ShiftCode, code)
+		scs = append(scs, ShortcutCodes{
+			Id:    fakeIDName,
+			Name:  fakeIDName,
+			Codes: []uint16{sc.ShiftCode, code},
+			Type:  HoldShortcutType,
+		})
+	}
+	return scs
+}
+
 type Layer struct {
-	LayerId     int64           `json:"layer_id"`
-	Codes       []uint16        `json:"codes"`
-	ShiftStates []ShortcutCodes `json:"shift_states"`
+	LayerId      int64        `json:"id"`
+	Codes        []uint16     `json:"codes"`
+	ShiftedCodes ShiftedCodes `json:"shifted_codes"`
 }
 
 type LayerDetected struct {
@@ -39,17 +58,12 @@ func (ld *layerDetector) isHolded() bool {
 	return ld.shiftDetector.isHolded()
 }
 
-type LayerDuration struct {
-	LayerId int64
-	Start   time.Time
-}
-
 type layersDetector struct {
 	layers               []layerDetector
 	currentLayerDetected *layerDetector
 }
 
-func NewLayerDetector(layers []Layer, thresholdShifted time.Duration) *layersDetector {
+func NewLayerDetector(layers []Layer, shiftStateConfig ShiftState) *layersDetector {
 	l := []layerDetector{}
 	// each layer will have its own detector
 	for _, layer := range layers {
@@ -60,10 +74,10 @@ func NewLayerDetector(layers []Layer, thresholdShifted time.Duration) *layersDet
 		}
 		// for shifted states we will use a shift state detector
 		hsd := holdShortcutDetector{
-			shortcuts: layer.ShiftStates,
+			shortcuts: layer.ShiftedCodes.getShortcuts(),
 			modifiers: getShiftKeys(),
 		}
-		ssd := NewShiftStateDetectorWithHoldSD(hsd, thresholdShifted)
+		ssd := NewShiftStateDetectorWithHoldSD(hsd, shiftStateConfig)
 		ld := layerDetector{
 			Layer:         layer,
 			shiftDetector: *ssd,

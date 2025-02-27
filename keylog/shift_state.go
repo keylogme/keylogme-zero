@@ -63,22 +63,22 @@ func getShortcutCodesForShiftState(shiftCodes []uint16) []ShortcutCodes {
 	return listSS
 }
 
-func NewShiftStateDetector(thresholdShifted time.Duration) *shiftStateDetector {
+func NewShiftStateDetector(config ShiftState) *shiftStateDetector {
 	shiftMods := []uint16{42, 54}
 	scs := getShortcutCodesForShiftState(shiftMods)
 	return &shiftStateDetector{
 		holdDetector:  newHoldShortcutDetector(scs, shiftMods),
-		thresholdAuto: thresholdShifted,
+		thresholdAuto: config.ThresholdAuto.Duration,
 	}
 }
 
 func NewShiftStateDetectorWithHoldSD(
 	hd holdShortcutDetector,
-	thresholdAuto time.Duration,
+	config ShiftState,
 ) *shiftStateDetector {
 	return &shiftStateDetector{
 		holdDetector:  hd,
-		thresholdAuto: thresholdAuto,
+		thresholdAuto: config.ThresholdAuto.Duration,
 	}
 }
 
