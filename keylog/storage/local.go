@@ -39,6 +39,7 @@ type Storage interface {
 	SaveKeylog(deviceId string, keycode uint16) error
 	SaveShortcut(deviceId string, shortcutId string) error
 	SaveShiftState(deviceId string, modifier uint16, keycode uint16, auto bool) error
+	SaveLayerChange(deviceId string, layerId int64) error
 }
 
 type FileStorage struct {
@@ -55,6 +56,9 @@ type DataFile struct {
 	ShiftStates map[string]map[uint16]map[uint16]int64 `json:"shift_states,omitempty"`
 	// deviceId - modifier - keycode - counter
 	ShiftStatesAuto map[string]map[uint16]map[uint16]int64 `json:"shift_states_auto,omitempty"`
+
+	// deviceId - layerId - counter
+	LayerChanges map[string]map[int64]int64 `json:"layer_changes,omitempty"`
 }
 
 func (d *DataFile) AddKeylog(deviceId string, keycode uint16, addQty int64) {
@@ -106,6 +110,16 @@ func (d *DataFile) AddShiftState(
 	updateShiftState(&d.ShiftStates, deviceId, modifier, keycode, addQty)
 }
 
+func (d *DataFile) AddLayerChange(deviceId string, layerId int64, addQty int64) {
+	if _, ok := d.LayerChanges[deviceId]; !ok {
+		d.LayerChanges[deviceId] = map[int64]int64{}
+	}
+	if _, ok := d.LayerChanges[deviceId][layerId]; !ok {
+		d.LayerChanges[deviceId][layerId] = 0
+	}
+	d.LayerChanges[deviceId][layerId] += addQty
+}
+
 func (d *DataFile) AddAutoShiftState(
 	deviceId string,
 	modifier uint16,
@@ -145,6 +159,11 @@ func (d *DataFile) Merge(data DataFile) {
 			}
 		}
 	}
+	for kId := range data.LayerChanges {
+		for layerId := range data.LayerChanges[kId] {
+			d.AddLayerChange(kId, layerId, data.LayerChanges[kId][layerId])
+		}
+	}
 }
 
 func (d *DataFile) Reset() {
@@ -152,6 +171,7 @@ func (d *DataFile) Reset() {
 	d.Shortcuts = map[string]map[string]int64{}
 	d.ShiftStates = map[string]map[uint16]map[uint16]int64{}
 	d.ShiftStatesAuto = map[string]map[uint16]map[uint16]int64{}
+	d.LayerChanges = map[string]map[int64]int64{}
 }
 
 func newDataFile() DataFile {
@@ -194,6 +214,11 @@ func (f *FileStorage) SaveShiftState(
 	} else {
 		updateShiftState(&f.dataFile.ShiftStates, deviceId, modifier, keycode, 1)
 	}
+	return nil
+}
+
+func (f *FileStorage) SaveLayerChange(deviceId string, layerId int64) error {
+	f.dataFile.AddLayerChange(deviceId, layerId, 1)
 	return nil
 }
 

@@ -3,7 +3,6 @@ package keylog
 import (
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/keylogme/keylogme-zero/v1/keylog/storage"
 )
@@ -48,17 +47,16 @@ func Start(
 				slog.Info(
 					fmt.Sprintf("Layer %d detected in device %s\n", ldd.LayerId, i.DeviceId),
 				)
+				store.SaveLayerChange(i.DeviceId, ldd.LayerId)
 			}
 			if i.Type == evKey && i.KeyRelease() {
-				start := time.Now()
 				err := store.SaveKeylog(i.DeviceId, i.Code)
 				if err != nil {
-					fmt.Printf("error %s\n", err.Error())
+					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
 				}
 				slog.Info(
 					fmt.Sprintf(
-						"| %s | Key :%d %s\n",
-						time.Since(start),
+						"Key :%d %s\n",
 						i.Code,
 						i.KeyString(),
 					),
