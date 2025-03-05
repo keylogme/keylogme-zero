@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"syscall"
 	"time"
 )
 
@@ -97,7 +98,18 @@ func (d *Device) start(ctx context.Context) bool {
 			if !i.IsValid() {
 				continue
 			}
-			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: time.Now()}
+			// Get current time with microsecond precision
+			now := time.Now()
+
+			// Get Unix timestamp with nanoseconds and format with microseconds precision
+			// fmt.Printf(
+			// 	"Current time of %d %d (microsecond precision): %s\n",
+			// 	i.Code,
+			// 	i.Value,
+			// 	now.Format("2006-01-02 15:04:05.000000"),
+			// )
+
+			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
 			d.sendInput <- de
 		}
 	}
@@ -126,4 +138,12 @@ func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) b
 	}
 	d.keylogger = newK // assign to nil if device not found
 	d.handleReconnects(ctx, s)
+}
+
+// Convert syscall.Timeval to time.Time
+func timevalToTime(tv syscall.Timeval) time.Time {
+	// Convert seconds to nanoseconds and add microseconds converted to nanoseconds
+	secondsInNano := tv.Sec * int64(time.Second)
+	usecsInNano := tv.Usec * 1000 // 1 microsecond = 1000 nanoseconds
+	return time.Unix(0, secondsInNano+usecsInNano)
 }

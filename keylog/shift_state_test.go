@@ -6,7 +6,8 @@ import (
 )
 
 func TestShiftStateDetectorMCU(t *testing.T) {
-	ssd := NewShiftStateDetector(getTestShiftStateConfig())
+	config := getTestShiftStateConfig()
+	ssd := NewShiftStateDetector(config)
 
 	devId := "1"
 	shiftKey := uint16(42)
@@ -16,6 +17,14 @@ func TestShiftStateDetectorMCU(t *testing.T) {
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
+	time.Sleep(config.ThresholdAuto.Duration / 2)
+	// press second key
+	ev = getFakeEvent(devId, 2, KeyPress)
+	ssDect = ssd.handleKeyEvent(ev)
+	if ssDect.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
+	// release second key
 	ev = getFakeEvent(devId, 2, KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if !ssDect.IsDetected() {
@@ -38,7 +47,15 @@ func TestShiftStateDetectorHuman(t *testing.T) {
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
+
 	time.Sleep(config.ThresholdAuto.Duration + 1*time.Millisecond)
+	// press second key
+	ev = getFakeEvent(devId, 2, KeyPress)
+	ssDect = ssd.handleKeyEvent(ev)
+	if ssDect.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
+	// release second key
 	ev = getFakeEvent(devId, 2, KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if !ssDect.IsDetected() {

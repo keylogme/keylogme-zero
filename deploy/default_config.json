@@ -40,7 +40,7 @@
             }
         ],
         "shift_state": {
-            "threshold_auto": "100ms"
+            "threshold_auto": "5ms"
         },
         "layers": [
             {

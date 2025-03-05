@@ -32,6 +32,7 @@ func (ssd *shiftStateDetected) IsDetected() bool {
 type shiftStateDetector struct {
 	holdDetector     holdShortcutDetector
 	lastModPressTime int64 // unix micro
+	lastKeyPressTime int64 // unix micro
 	keyCodePressTime int64 // unix micro
 	thresholdAuto    time.Duration
 }
@@ -88,14 +89,14 @@ func (skd *shiftStateDetector) isHolded() bool {
 
 func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected {
 	sd := skd.holdDetector.handleKeyEvent(ke)
-	skd.setTimes(ke.ExecTime)
+	skd.setTimes(ke)
 	if sd.IsDetected() &&
 		len(skd.holdDetector.modPress) == 1 &&
 		skd.lastModPressTime != 0 {
 
 		mod := skd.holdDetector.modPress[0]
 		auto := false
-		diffTimeMicro := ke.ExecTime.UnixMicro() - skd.lastModPressTime
+		diffTimeMicro := skd.lastKeyPressTime - skd.lastModPressTime
 		fmt.Printf("diffTimeMicro %d\n", diffTimeMicro)
 		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
 			auto = true
@@ -110,12 +111,19 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 	return shiftStateDetected{}
 }
 
-func (skd *shiftStateDetector) setTimes(t time.Time) {
+func (skd *shiftStateDetector) setTimes(ke DeviceEvent) {
+	t := ke.ExecTime
+
 	// set lastModPressTime
 	if len(skd.holdDetector.modPress) > 0 && skd.lastModPressTime == 0 {
 		skd.lastModPressTime = t.UnixMicro()
 	}
 	if len(skd.holdDetector.modPress) == 0 && skd.lastModPressTime != 0 {
 		skd.lastModPressTime = 0
+	}
+
+	// set lastKeyPressTime
+	if ke.KeyPress() && skd.lastModPressTime != 0 {
+		skd.lastKeyPressTime = t.UnixMicro()
 	}
 }
