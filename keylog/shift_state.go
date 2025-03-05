@@ -97,7 +97,6 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 		mod := skd.holdDetector.modPress[0]
 		auto := false
 		diffTimeMicro := skd.lastKeyPressTime - skd.lastModPressTime
-		fmt.Printf("diffTimeMicro %d\n", diffTimeMicro)
 		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
 			auto = true
 		}

@@ -58,11 +58,11 @@ func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
 }
 
 func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
-	if ke.Type == evKey && ke.KeyPress() && slices.Contains(hd.modifiers, ke.Code) {
-		hd.modPress = append(hd.modPress, ke.Code)
-	}
 	if ke.Type == evKey && ke.KeyRelease() && hd.isHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
+	}
+	if ke.Type == evKey && ke.KeyPress() && slices.Contains(hd.modifiers, ke.Code) {
+		hd.modPress = append(hd.modPress, ke.Code)
 	}
 	return ShortcutDetected{}
 }
