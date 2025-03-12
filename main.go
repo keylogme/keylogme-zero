@@ -49,7 +49,7 @@ func main() {
 
 	ss := keylog.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := keylog.NewLayerDetector([]keylog.Layer{}, config.Keylog.ShiftState)
+	ld := keylog.NewLayerDetector(config.Keylog.Layers, config.Keylog.ShiftState)
 
 	keylog.Start(chEvt, &devices, sd, ss, ld, ffs)
 
