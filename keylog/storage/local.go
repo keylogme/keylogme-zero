@@ -9,14 +9,16 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
+	"github.com/keylogme/keylogme-zero/v1/keylog/types"
 	"github.com/keylogme/keylogme-zero/v1/keylog/utils"
 )
 
 type ConfigStorage struct {
-	FileOutput        string        `json:"file_output"`
-	PeriodicSaveInSec time.Duration `json:"periodic_save_in_sec"`
+	FileOutput   string         `json:"file_output"`
+	PeriodicSave types.Duration `json:"periodic_save"`
 }
 
 func (c *ConfigStorage) Validate() error {
@@ -29,8 +31,8 @@ func (c *ConfigStorage) Validate() error {
 	}
 	fmt.Printf("File will be saved at %s\n", absPath)
 	c.FileOutput = absPath
-	if c.PeriodicSaveInSec == 0 {
-		return errors.New("periodic_save_in_sec is required")
+	if c.PeriodicSave.Duration == 0 {
+		return errors.New("periodic_save_in_sec is required and non zero")
 	}
 	return nil
 }
@@ -44,10 +46,11 @@ type Storage interface {
 
 type FileStorage struct {
 	config   ConfigStorage
-	dataFile DataFile
+	dataFile *DataFile
 }
 
 type DataFile struct {
+	mu sync.Mutex
 	// deviceId - keycode - counter
 	Keylogs map[string]map[uint16]int64 `json:"keylogs,omitempty"`
 	// deviceId - shortcutId - counter
@@ -62,6 +65,8 @@ type DataFile struct {
 }
 
 func (d *DataFile) AddKeylog(deviceId string, keycode uint16, addQty int64) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if _, ok := d.Keylogs[deviceId]; !ok {
 		d.Keylogs[deviceId] = map[uint16]int64{}
 	}
@@ -72,6 +77,8 @@ func (d *DataFile) AddKeylog(deviceId string, keycode uint16, addQty int64) {
 }
 
 func (d *DataFile) AddShortcut(deviceId string, shortcutId string, addQty int64) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if _, ok := d.Shortcuts[deviceId]; !ok {
 		d.Shortcuts[deviceId] = map[string]int64{}
 	}
@@ -107,10 +114,14 @@ func (d *DataFile) AddShiftState(
 	keycode uint16,
 	addQty int64,
 ) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	updateShiftState(&d.ShiftStates, deviceId, modifier, keycode, addQty)
 }
 
 func (d *DataFile) AddLayerChange(deviceId string, layerId int64, addQty int64) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	if _, ok := d.LayerChanges[deviceId]; !ok {
 		d.LayerChanges[deviceId] = map[int64]int64{}
 	}
@@ -126,10 +137,16 @@ func (d *DataFile) AddAutoShiftState(
 	keycode uint16,
 	addQty int64,
 ) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
 	updateShiftState(&d.ShiftStatesAuto, deviceId, modifier, keycode, addQty)
 }
 
-func (d *DataFile) Merge(data DataFile) {
+func (d *DataFile) Merge(data *DataFile) {
+	// Lock input datafile
+	data.mu.Lock()
+	defer data.mu.Unlock()
+	//
 	for kId := range data.Keylogs {
 		for keycode := range data.Keylogs[kId] {
 			d.AddKeylog(kId, keycode, data.Keylogs[kId][keycode])
@@ -174,10 +191,10 @@ func (d *DataFile) Reset() {
 	d.LayerChanges = map[string]map[int64]int64{}
 }
 
-func newDataFile() DataFile {
+func newDataFile() *DataFile {
 	d := DataFile{}
 	d.Reset()
-	return d
+	return &d
 }
 
 func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStorage {
@@ -228,7 +245,7 @@ func (f *FileStorage) prepareDataToSave() error {
 	if errors.Is(err, os.ErrNotExist) {
 		slog.Info(fmt.Sprintf("File %s not exist, it will be created", f.config.FileOutput))
 	} else {
-		err := utils.ParseFromFile(f.config.FileOutput, &dataFile)
+		err := utils.ParseFromFile(f.config.FileOutput, dataFile)
 		if err != nil {
 			return err
 		}
@@ -263,7 +280,7 @@ func (f *FileStorage) saveToFile() error {
 func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
-		case <-time.After(f.config.PeriodicSaveInSec * time.Second):
+		case <-time.After(f.config.PeriodicSave.Duration):
 			f.saveToFile()
 		case <-ctx.Done():
 			slog.Info("Closing file storage...")

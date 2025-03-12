@@ -50,10 +50,6 @@ func Start(
 				store.SaveLayerChange(i.DeviceId, ldd.LayerId)
 			}
 			if i.Type == evKey && i.KeyRelease() {
-				err := store.SaveKeylog(i.DeviceId, i.Code)
-				if err != nil {
-					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
-				}
 				slog.Info(
 					fmt.Sprintf(
 						"Key :%d %s\n",
@@ -61,6 +57,10 @@ func Start(
 						i.KeyString(),
 					),
 				)
+				err := store.SaveKeylog(i.DeviceId, i.Code)
+				if err != nil {
+					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
+				}
 			}
 		}
 	}()
