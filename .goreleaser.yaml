@@ -13,8 +13,8 @@ before:
     - go mod tidy
 
 builds:
-  - main: ./cmd/
-  - env:
+  - main: ./cmd/main.go
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
