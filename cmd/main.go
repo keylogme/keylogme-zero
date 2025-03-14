@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"time"
 
-	k0 "github.com/keylogme/keylogme-zero/v1"
-	"github.com/keylogme/keylogme-zero/v1/storage"
-	"github.com/keylogme/keylogme-zero/v1/utils"
+	k0 "github.com/keylogme/keylogme-zero"
+	"github.com/keylogme/keylogme-zero/storage"
+	"github.com/keylogme/keylogme-zero/utils"
 )
 
 // Use lsinput to see the usb_name to be used

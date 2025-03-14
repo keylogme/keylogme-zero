@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/v1/types"
-	"github.com/keylogme/keylogme-zero/v1/utils"
+	"github.com/keylogme/keylogme-zero/types"
+	"github.com/keylogme/keylogme-zero/utils"
 )
 
 type ConfigStorage struct {

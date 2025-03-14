@@ -1,8 +1,8 @@
 package keylog
 
 import (
-	"github.com/keylogme/keylogme-zero/v1/storage"
-	"github.com/keylogme/keylogme-zero/v1/types"
+	"github.com/keylogme/keylogme-zero/storage"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 type KeylogmeZeroConfig struct {

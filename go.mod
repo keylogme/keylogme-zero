@@ -1,3 +1,3 @@
-module github.com/keylogme/keylogme-zero/v1
+module github.com/keylogme/keylogme-zero
 
 go 1.23.2
