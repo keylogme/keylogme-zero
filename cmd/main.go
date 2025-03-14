@@ -8,9 +8,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/v1/keylog"
-	"github.com/keylogme/keylogme-zero/v1/keylog/storage"
-	"github.com/keylogme/keylogme-zero/v1/keylog/utils"
+	k0 "github.com/keylogme/keylogme-zero/v1"
+	"github.com/keylogme/keylogme-zero/v1/storage"
+	"github.com/keylogme/keylogme-zero/v1/utils"
 )
 
 // Use lsinput to see the usb_name to be used
@@ -29,7 +29,7 @@ func main() {
 	if file_config == "" {
 		log.Fatal("CONFIG_FILE is not set")
 	}
-	var config keylog.KeylogmeZeroConfig
+	var config k0.KeylogmeZeroConfig
 	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
 		log.Fatal("Could not parse config file")
@@ -39,19 +39,19 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	ffs := storage.MustGetNewFileStorage(ctx, config.Storage)
 
-	chEvt := make(chan keylog.DeviceEvent)
-	devices := []keylog.Device{}
+	chEvt := make(chan k0.DeviceEvent)
+	devices := []k0.Device{}
 	for _, dev := range config.Keylog.Devices {
-		d := keylog.GetDevice(ctx, dev, chEvt)
+		d := k0.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
-	sd := keylog.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
+	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
-	ss := keylog.NewShiftStateDetector(config.Keylog.ShiftState)
+	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := keylog.NewLayerDetector(config.Keylog.Layers, config.Keylog.ShiftState)
+	ld := k0.NewLayerDetector(config.Keylog.Layers, config.Keylog.ShiftState)
 
-	keylog.Start(chEvt, &devices, sd, ss, ld, ffs)
+	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
 
 	// Graceful shutdown
 	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/v1/keylog/types"
+	"github.com/keylogme/keylogme-zero/v1/types"
 )
 
 // test to replicate the issue "concurrent map writes"

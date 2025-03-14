@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/v1/keylog/types"
-	"github.com/keylogme/keylogme-zero/v1/keylog/utils"
+	"github.com/keylogme/keylogme-zero/v1/types"
+	"github.com/keylogme/keylogme-zero/v1/utils"
 )
 
 type ConfigStorage struct {
@@ -267,7 +267,7 @@ func (f *FileStorage) saveToFile() error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(f.config.FileOutput, pb, 0777)
+	err = os.WriteFile(f.config.FileOutput, pb, os.ModePerm)
 	if err != nil {
 		return err
 	}

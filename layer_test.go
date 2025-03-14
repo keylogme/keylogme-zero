@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/v1/keylog/types"
+	"github.com/keylogme/keylogme-zero/v1/types"
 )
 
 func getTestLayers() []Layer {
