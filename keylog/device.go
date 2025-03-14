@@ -6,7 +6,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"syscall"
 	"time"
 )
 
@@ -138,12 +137,4 @@ func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) b
 	}
 	d.keylogger = newK // assign to nil if device not found
 	d.handleReconnects(ctx, s)
-}
-
-// Convert syscall.Timeval to time.Time
-func timevalToTime(tv syscall.Timeval) time.Time {
-	// Convert seconds to nanoseconds and add microseconds converted to nanoseconds
-	secondsInNano := tv.Sec * int64(time.Second)
-	usecsInNano := tv.Usec * 1000 // 1 microsecond = 1000 nanoseconds
-	return time.Unix(0, secondsInNano+usecsInNano)
 }
