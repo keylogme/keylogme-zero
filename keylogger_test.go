@@ -97,11 +97,13 @@ func TestKeylog(t *testing.T) {
 	// run goroutine to receive keypress
 	recEvt := make(chan inputEvent)
 	go func() {
-		// FIXME: I added this sleep to make sure select can receive the channel
-		time.Sleep(1 * time.Second)
+		fmt.Println("Starting goroutine")
+		time.Sleep(100 * time.Millisecond)
 		for i := range k.Read() {
+			fmt.Println("Received from k.Read():", i)
 			recEvt <- i
 		}
+		fmt.Println("Exiting goroutine")
 	}()
 	// test
 	fmt.Println("writing..")

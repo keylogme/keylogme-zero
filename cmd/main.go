@@ -21,9 +21,6 @@ import (
 // See readme
 
 func main() {
-	// go func() {
-	// 	fmt.Println(http.ListenAndServe("localhost:6060", nil))
-	// }()
 	// Get config
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {
