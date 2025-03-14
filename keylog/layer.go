@@ -56,9 +56,9 @@ func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	return LayerDetected{}
 }
 
-func (ld *layerDetector) isHolded() bool {
-	return ld.shiftDetector.isHolded()
-}
+// func (ld *layerDetector) isHolded() bool {
+// 	return ld.shiftDetector.isHolded()
+// }
 
 type layersDetector struct {
 	layers               []layerDetector

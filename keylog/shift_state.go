@@ -33,7 +33,6 @@ type shiftStateDetector struct {
 	holdDetector     holdShortcutDetector
 	lastModPressTime int64 // unix micro
 	lastKeyPressTime int64 // unix micro
-	keyCodePressTime int64 // unix micro
 	thresholdAuto    time.Duration
 }
 

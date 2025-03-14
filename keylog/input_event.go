@@ -7,29 +7,29 @@ import (
 
 const (
 	// evSyn is used as markers to separate events. events may be separated in time or in space, such as with the multitouch protocol.
-	evSyn eventType = 0x00
+	// evSyn eventType = 0x00
 	// evKey is used to describe state changes of keyboards, buttons, or other key-like devices.
 	evKey eventType = 0x01
 	// evRel is used to describe relative axis value changes, e.g. moving the mouse 5 units to the left.
-	evRel eventType = 0x02
+	// evRel eventType = 0x02
 	// evAbs is used to describe absolute axis value changes, e.g. describing the coordinates of a touch on a touchscreen.
-	evAbs eventType = 0x03
+	// evAbs eventType = 0x03
 	// evMsc is used to describe miscellaneous input data that do not fit into other types.
 	evMsc eventType = 0x04
 	// evSw is used to describe binary state input switches.
-	evSw eventType = 0x05
+	// evSw eventType = 0x05
 	// evLed is used to turn LEDs on devices on and off.
-	evLed eventType = 0x11
+	// evLed eventType = 0x11
 	// evSnd is used to output sound to devices.
-	evSnd eventType = 0x12
+	// evSnd eventType = 0x12
 	// evRep is used for autorepeating devices.
-	evRep eventType = 0x14
+	// evRep eventType = 0x14
 	// evFf is used to send force feedback commands to an input device.
-	evFf eventType = 0x15
+	// evFf eventType = 0x15
 	// evPwr is a special type for power button and switch input.
-	evPwr eventType = 0x16
+	// evPwr eventType = 0x16
 	// evFfStatus is used to receive force feedback device status.
-	evFfStatus eventType = 0x17
+	// evFfStatus eventType = 0x17
 )
 
 // eventType are groupings of codes under a logical input construct.

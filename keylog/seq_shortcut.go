@@ -1,16 +1,12 @@
 package keylog
 
-import (
-	"time"
-)
-
 type seqShortcutDetector struct {
 	shortcuts                  []ShortcutCodes
 	indexVal                   int
 	currPossibleShortcuts      []shortcutDevice
 	prevShortcutDeviceDetected ShortcutDetected
-	delayMS                    int64
-	lastKeyTimestamp           time.Time
+	// delayMS                    int64
+	// lastKeyTimestamp           time.Time
 }
 
 func newSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {

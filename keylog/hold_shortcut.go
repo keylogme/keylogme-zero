@@ -70,10 +70,7 @@ func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected 
 func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDetected {
 	// cleanup old modifiers
 	hd.modPress = slices.DeleteFunc(hd.modPress, func(v uint16) bool {
-		if v == code {
-			return true
-		}
-		return false
+		return v == code
 	})
 	tempCodes := slices.Clone(hd.modPress)
 	tempCodes = append(tempCodes, code)

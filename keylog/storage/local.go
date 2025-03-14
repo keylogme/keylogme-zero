@@ -281,10 +281,16 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 	for {
 		select {
 		case <-time.After(f.config.PeriodicSave.Duration):
-			f.saveToFile()
+			err := f.saveToFile()
+			if err != nil {
+				slog.Error(fmt.Sprintf("Error saving file: %v", err))
+			}
 		case <-ctx.Done():
 			slog.Info("Closing file storage...")
-			f.saveToFile()
+			err := f.saveToFile()
+			if err != nil {
+				slog.Error(fmt.Sprintf("Error saving file: %v", err))
+			}
 			return
 		}
 	}

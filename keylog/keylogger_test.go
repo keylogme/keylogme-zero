@@ -149,7 +149,7 @@ func TestDisconnection(t *testing.T) {
 	}
 	// block until decive disconnected or timeout
 	select {
-	case _ = <-closedSig:
+	case <-closedSig:
 		break
 	case <-time.After(3 * time.Second):
 		t.Fatal("Test listener timed out")

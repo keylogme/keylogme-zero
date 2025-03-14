@@ -26,7 +26,7 @@ func TestMultipleSaves(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			fs.SaveKeylog("device1", 1)
+			_ = fs.SaveKeylog("device1", 1)
 		}()
 	}
 

@@ -3,7 +3,6 @@ package keylog
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"time"
@@ -70,15 +69,15 @@ func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEven
 	return device
 }
 
-func mustGetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
-	k, err := getKeyLogger(input.Name)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
-	go device.handleReconnects(ctx, device.start)
-	return device
-}
+// func mustGetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
+// 	k, err := getKeyLogger(input.Name)
+// 	if err != nil {
+// 		log.Fatal(err.Error())
+// 	}
+// 	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
+// 	go device.handleReconnects(ctx, device.start)
+// 	return device
+// }
 
 func (d *Device) start(ctx context.Context) bool {
 	if d.keylogger == nil {

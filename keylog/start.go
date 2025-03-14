@@ -27,7 +27,10 @@ func Start(
 						sd.DeviceId,
 					),
 				)
-				store.SaveShortcut(sd.DeviceId, sd.ShortcutId)
+				err := store.SaveShortcut(sd.DeviceId, sd.ShortcutId)
+				if err != nil {
+					slog.Error(fmt.Sprintf("Error storing shortcut : %s\n", err.Error()))
+				}
 			}
 			ssd := ss.handleKeyEvent(i)
 			if ssd.IsDetected() {
@@ -39,7 +42,10 @@ func Start(
 						ssd.Auto,
 					),
 				)
-				store.SaveShiftState(ssd.DeviceId, ssd.Modifier, ssd.Code, ssd.Auto)
+				err := store.SaveShiftState(ssd.DeviceId, ssd.Modifier, ssd.Code, ssd.Auto)
+				if err != nil {
+					slog.Error(fmt.Sprintf("Error storing shift state : %s\n", err.Error()))
+				}
 
 			}
 			ldd := ld.isLayerChangeDetected(i)
@@ -47,7 +53,10 @@ func Start(
 				slog.Info(
 					fmt.Sprintf("Layer %d detected in device %s\n", ldd.LayerId, i.DeviceId),
 				)
-				store.SaveLayerChange(i.DeviceId, ldd.LayerId)
+				err := store.SaveLayerChange(i.DeviceId, ldd.LayerId)
+				if err != nil {
+					slog.Error(fmt.Sprintf("Error storing layer change : %s\n", err.Error()))
+				}
 			}
 			if i.Type == evKey && i.KeyRelease() {
 				slog.Info(
