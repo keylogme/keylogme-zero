@@ -19,6 +19,9 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 
 	switch value := v.(type) {
+	case int:
+		// Assume the number is in milliseconds
+		d.Duration = time.Duration(value) * time.Millisecond
 	case float64:
 		// Assume the number is in milliseconds
 		d.Duration = time.Duration(value) * time.Millisecond
