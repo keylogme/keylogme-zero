@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	WAIT_TIME_ON_DISCONNECTION = 300 * time.Millisecond
+)
+
 // findKeyboardDevice by going through each device registered on OS
 // Mostly it will contain keyword - keyboard
 // Returns the file path which contains events
@@ -32,11 +36,23 @@ func findKeyboardDevice(name string) string {
 	return ""
 }
 
+func getPathDevice(name string) string {
+	// INFO: for testing purposes, we can pass the abs path of a test file.
+	// So we check if the file exists, if not we try to find the device
+	_, err := os.Open(name)
+	if os.IsNotExist(err) {
+		slog.Info("file does not exist")
+		return findKeyboardDevice(name)
+	}
+	return name
+}
+
 func getKeyLogger(name string) (*keyLogger, error) {
-	pathDevice := findKeyboardDevice(name)
+	pathDevice := getPathDevice(name)
 	if pathDevice == "" {
 		return nil, fmt.Errorf("Device with name %s not found\n", name)
 	}
+	slog.Debug(fmt.Sprintf("Opening %s\n", pathDevice))
 	k, err := newKeylogger(pathDevice)
 	if err != nil {
 		return nil, fmt.Errorf("Could not set keylogger for %s. %s\n", name, err.Error())
@@ -46,7 +62,7 @@ func getKeyLogger(name string) (*keyLogger, error) {
 
 type Device struct {
 	DeviceInput
-	Connected bool
+	ctx       context.Context
 	keylogger *keyLogger
 	sendInput chan DeviceEvent
 }
@@ -64,29 +80,21 @@ type DeviceEvent struct {
 }
 
 func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
-	device := &Device{DeviceInput: input, Connected: true, keylogger: nil, sendInput: inputChan}
-	go device.handleReconnects(ctx, device.start)
+	device := &Device{ctx: ctx, DeviceInput: input, keylogger: nil, sendInput: inputChan}
+	go device.handleReconnects()
 	return device
 }
 
-// func mustGetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
-// 	k, err := getKeyLogger(input.Name)
-// 	if err != nil {
-// 		log.Fatal(err.Error())
-// 	}
-// 	device := &Device{DeviceInput: input, Connected: true, keylogger: k, sendInput: inputChan}
-// 	go device.handleReconnects(ctx, device.start)
-// 	return device
-// }
-
-func (d *Device) start(ctx context.Context) bool {
+func (d *Device) start() bool {
+	defer d.Close()
+	slog.Info(fmt.Sprintf("🚀 Starting device %s %v\n", d.Name, d.keylogger))
 	if d.keylogger == nil {
 		return false
 	}
 	keylogChan := d.keylogger.Read()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-d.ctx.Done():
 			return true
 		case i, ok := <-keylogChan:
 			if !ok {
@@ -94,18 +102,19 @@ func (d *Device) start(ctx context.Context) bool {
 				return false
 			}
 			if !i.IsValid() {
+				slog.Debug(fmt.Sprintf("Invalid input event %+v\n", i))
 				continue
 			}
 			// Get current time with microsecond precision
 			now := time.Now()
 
 			// Get Unix timestamp with nanoseconds and format with microseconds precision
-			// fmt.Printf(
-			// 	"Current time of %d %d (microsecond precision): %s\n",
-			// 	i.Code,
-			// 	i.Value,
-			// 	now.Format("2006-01-02 15:04:05.000000"),
-			// )
+			slog.Debug(fmt.Sprintf(
+				"Current time of %d %d (microsecond precision): %s\n",
+				i.Code,
+				i.Value,
+				now.Format("2006-01-02 15:04:05.000000"),
+			))
 
 			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
 			d.sendInput <- de
@@ -113,27 +122,37 @@ func (d *Device) start(ctx context.Context) bool {
 	}
 }
 
-func (d *Device) handleReconnects(ctx context.Context, s func(context.Context) bool) {
-	if d.keylogger != nil {
-		// blocking call to start reading keylogger
-		d.Connected = true
-		slog.Info(fmt.Sprintf("Device %s connected\n", d.Name))
-		shutdown := s(ctx)
+func (d *Device) IsConnected() bool {
+	return d.keylogger != nil
+}
+
+func (d *Device) handleReconnects() {
+	for {
+		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
+		newK, err := getKeyLogger(d.UsbName)
+		if err != nil {
+			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
+			select {
+			case <-time.After(WAIT_TIME_ON_DISCONNECTION):
+				continue
+			case <-d.ctx.Done():
+				slog.Info(fmt.Sprintf("💤 Shutting down device %s\n", d.Name))
+				return
+			}
+		}
+		// newK exists
+		d.keylogger = newK // connected
+		shutdown := d.start()
 		if shutdown {
-			slog.Info(fmt.Sprintf("Device %s closed\n", d.Name))
-			d.keylogger.Close()
+			slog.Info(fmt.Sprintf("💤 Shutting down device %s\n", d.Name))
 			return
 		}
-		d.Connected = false
-		slog.Info(fmt.Sprintf("Device %s disconnected, reconnecting...\n", d.Name))
-		time.Sleep(1 * time.Second)
+	}
+}
+
+func (d *Device) Close() {
+	if d.keylogger != nil {
 		d.keylogger.Close()
 	}
-	newK, err := getKeyLogger(d.UsbName)
-	if err != nil {
-		slog.Info(fmt.Sprintf("Device %s not connected to computer, waiting ...\n", d.Name))
-		time.Sleep(5 * time.Second)
-	}
-	d.keylogger = newK // assign to nil if device not found
-	d.handleReconnects(ctx, s)
+	d.keylogger = nil
 }

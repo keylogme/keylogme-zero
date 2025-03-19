@@ -3,7 +3,11 @@ package keylog
 import (
 	"encoding/binary"
 	"fmt"
+	"log/slog"
+	"math/rand"
 	"os"
+	"path"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -68,12 +72,46 @@ func TestWithPermission(t *testing.T) {
 	}
 }
 
-func writeKeyOnceForTesting(filename string, code uint16) error {
-	fd, err := os.OpenFile(filename, os.O_WRONLY, os.ModeCharDevice)
+func initDeviceFile() (*os.File, error) {
+	tf, err := os.MkdirTemp("", "device_test")
+	if err != nil {
+		return &os.File{}, err
+	}
+	filename := fmt.Sprintf("device_%d", rand.Int())
+	filepath := path.Join(tf, filename)
+	// INFO: 0666 everyone can read and write so tests does not need to run with root privileges
+	fd, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return &os.File{}, err
+	}
+	return fd, nil
+}
+
+func disconnectDeviceFile(df *os.File) error {
+	// INFO: removing file will not close the file descriptor of keylogger
+	// because if any process has the file open when this happens,
+	// deletion is postponed until all processes have closed the file.
+	// source: https://www.gnu.org/software/libc/manual/html_node/Deleting-Files.html
+	// For simulating device disconnection, we close file descriptor
+	err := df.Close()
 	if err != nil {
 		return err
 	}
+	return os.Remove(df.Name())
+}
+
+func reconnectDeviceFile(df *os.File) error {
+	fd, err := os.OpenFile(df.Name(), os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	*df = *fd
+	return nil
+}
+
+func writeKeyDeviceFile(fd *os.File, code uint16) error {
 	for _, i := range []int32{int32(KeyPress), int32(KeyRelease)} {
+		slog.Info(fmt.Sprintf("writing key: %d, isRelease %d\n", code, i))
 		err := binary.Write(fd, binary.LittleEndian, inputEvent{Type: evKey, Code: code, Value: i})
 		if err != nil {
 			return err
@@ -83,38 +121,42 @@ func writeKeyOnceForTesting(filename string, code uint16) error {
 }
 
 func TestKeylog(t *testing.T) {
-	fd, err := os.CreateTemp("", "*")
+	before := runtime.NumGoroutine()
+	defer checkGoroutineLeak(t, before)
+
+	df, err := initDeviceFile()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer fd.Close()
-	// try to create new keylogger with file descriptor which has the permission
-	k, err := newKeylogger(fd.Name())
+	defer df.Close()
+	deviceFile := df.Name()
+
+	k, err := newKeylogger(deviceFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer k.Close()
 	// run goroutine to receive keypress
-	recEvt := make(chan inputEvent)
+	recEvt := make(chan inputEvent, 1)
 	go func() {
-		fmt.Println("Starting goroutine")
-		time.Sleep(100 * time.Millisecond)
+		t.Log("Starting goroutine")
 		for i := range k.Read() {
-			fmt.Println("Received from k.Read():", i)
+			t.Logf("Received from k.Read(): %+v\n", i)
 			recEvt <- i
 		}
-		fmt.Println("Exiting goroutine")
+		t.Log("Exiting goroutine")
 	}()
 	// test
-	fmt.Println("writing..")
-	err = writeKeyOnceForTesting(fd.Name(), uint16(1))
+	time.Sleep(200 * time.Millisecond)
+	t.Log("writing..")
+	err = writeKeyDeviceFile(df, uint16(1))
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("check keypress..")
-	// block until keypress received or timeout
+	t.Log("check keypress is received (keyrelease is not checked)..")
 	select {
 	case result := <-recEvt:
+		t.Logf("Received: %+v\n", result)
 		if result.Code != uint16(1) {
 			t.Fatal("Wrong code")
 		}
@@ -123,14 +165,27 @@ func TestKeylog(t *testing.T) {
 	}
 }
 
-func TestDisconnection(t *testing.T) {
-	fd, err := os.CreateTemp("", "*")
+func checkGoroutineLeak(t *testing.T, before int) {
+	time.Sleep(2 * time.Second)
+	after := runtime.NumGoroutine()
+	if after > before {
+		t.Fatalf("Goroutines leak. Before: %d, After: %d", before, after)
+	}
+}
+
+// when you remove a usb device from the computer, the device file is removed
+func TestDisconnectionKeylogger(t *testing.T) {
+	before := runtime.NumGoroutine()
+	defer checkGoroutineLeak(t, before)
+
+	fd, err := initDeviceFile()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer fd.Close()
+	deviceFile := fd.Name()
+
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := newKeylogger(fd.Name())
+	k, err := newKeylogger(deviceFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,8 +199,9 @@ func TestDisconnection(t *testing.T) {
 		fmt.Println("Out of loop")
 		closedSig <- 1
 	}()
-	// test
-	err = os.Remove(fd.Name())
+	time.Sleep(200 * time.Millisecond)
+	// disconnect
+	err = disconnectDeviceFile(k.fd)
 	if err != nil {
 		t.Fatal(err)
 	}

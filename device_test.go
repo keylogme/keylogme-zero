@@ -1,39 +1,77 @@
 package keylog
 
-// func TestReconnection(t *testing.T) {
-// 	fd, err := os.CreateTemp("", "*")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer fd.Close()
-// 	info, err := fd.Stat()
-// 	fmt.Printf("%#v\n", info)
-// 	fmt.Println(fd.Name())
-// 	// try to create new keylogger with file descriptor which has the permission
-// 	k, err := NewKeylogger(fd.Name())
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	defer k.Close()
-// 	// run goroutine to receive keypress
-// 	closedSig := make(chan int)
-// 	go func() {
-// 		for i := range k.Read() {
-// 			fmt.Println(i)
-// 		}
-// 		fmt.Println("Out of loop")
-// 		closedSig <- 1
-// 	}()
-// 	// test
-// 	err = os.Remove(fd.Name())
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	// block until decive disconnected or timeout
-// 	select {
-// 	case _ = <-closedSig:
-// 		break
-// 	case <-time.After(3 * time.Second):
-// 		t.Fatal("Test listener timed out")
-// 	}
-// }
+import (
+	"context"
+	"log/slog"
+	"runtime"
+	"testing"
+	"time"
+)
+
+func TestDisconnectionDevice(t *testing.T) {
+	before := runtime.NumGoroutine()
+	defer checkGoroutineLeak(t, before)
+
+	df, err := initDeviceFile()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer df.Close()
+	filepath := df.Name()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	intputDevice := DeviceInput{
+		DeviceId: "device1",
+		Name:     "device1",
+		UsbName:  filepath,
+	}
+
+	chEvt := make(chan DeviceEvent, 10)
+	d := GetDevice(ctx, intputDevice, chEvt)
+	defer d.Close()
+
+	time.Sleep(50 * time.Millisecond)
+	// press keys
+	err = writeKeyDeviceFile(df, uint16(1))
+	if err != nil {
+		t.Fatalf("error writing: %s\n", err.Error())
+	}
+	time.Sleep(50 * time.Millisecond)
+	// one for keypress and other for keyrelease
+	t.Log(len(chEvt))
+	if len(chEvt) != 2 {
+		t.Fatal("expected 2 device events")
+	}
+	// disconnect device
+	slog.Info("Disconnecting device")
+	err = disconnectDeviceFile(d.keylogger.fd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(WAIT_TIME_ON_DISCONNECTION * 2)
+	if d.IsConnected() {
+		t.Fatal("device should not be connected")
+	}
+	// reconnect device
+	slog.Info("Reconnecting device")
+	err = reconnectDeviceFile(df)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(50 * time.Millisecond)
+	if !d.IsConnected() {
+		t.Fatal("device should be connected")
+	}
+	// press keys
+	err = writeKeyDeviceFile(df, uint16(1))
+	if err != nil {
+		t.Fatalf("error writing: %s\n", err.Error())
+	}
+	time.Sleep(50 * time.Millisecond)
+	// one for keypress and other for keyrelease
+	t.Log(len(chEvt))
+	if len(chEvt) != 4 {
+		t.Fatal("expected 4 device events")
+	}
+}

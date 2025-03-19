@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"syscall"
 )
@@ -15,8 +18,8 @@ type keyLogger struct {
 
 // newKeylogger creates a new keylogger for a device path
 func newKeylogger(devPath string) (*keyLogger, error) {
-	// TODO: input is device name so if keyboard changes  port -> device can be found by name
 	k := &keyLogger{}
+	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", k.IsRoot()))
 	fd, err := os.OpenFile(devPath, os.O_RDONLY, os.ModeCharDevice)
 	if err != nil {
 		if os.IsPermission(err) && !k.IsRoot() {
@@ -44,6 +47,7 @@ func (k *keyLogger) Read() chan inputEvent {
 		for {
 			e, err := k.read()
 			if err != nil {
+				slog.Debug(fmt.Sprintf("error reading from file descriptor: %s\n", err))
 				close(event)
 				break
 			}
@@ -60,7 +64,12 @@ func (k *keyLogger) Read() chan inputEvent {
 func (k *keyLogger) read() (*inputEvent, error) {
 	buffer := make([]byte, eventsize)
 	n, err := k.fd.Read(buffer)
-	if err != nil {
+	// bypass EOF, maybe keyboard is connected
+	// but you don't press any key
+	if err != nil && err != io.EOF {
+		slog.Debug(
+			fmt.Sprintf("error reading from file descriptor %s: %s\n", k.fd.Name(), err.Error()),
+		)
 		return nil, err
 	}
 	// no input, dont send error
