@@ -80,7 +80,7 @@ func initDeviceFile() (*os.File, error) {
 	filename := fmt.Sprintf("device_%d", rand.Int())
 	filepath := path.Join(tf, filename)
 	// INFO: 0666 everyone can read and write so tests does not need to run with root privileges
-	fd, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0666)
+	fd, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return &os.File{}, err
 	}
@@ -101,7 +101,7 @@ func disconnectDeviceFile(df *os.File) error {
 }
 
 func reconnectDeviceFile(df *os.File) error {
-	fd, err := os.OpenFile(df.Name(), os.O_RDWR|os.O_CREATE, 0666)
+	fd, err := os.OpenFile(df.Name(), os.O_RDWR|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err
 	}
