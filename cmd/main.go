@@ -56,6 +56,9 @@ func main() {
 	<-ctxInt.Done()
 	slog.Info("Shutting down, graceful wait...")
 	cancel()
+	// INFO: close channel so start loop ends
+	close(chEvt)
+	// FIXME: instead of graceful wait, use wg.Wait() to wait for all goroutines to finish
 	time.Sleep(3 * time.Second) // graceful wait
 	slog.Info("Logger closed.")
 }
