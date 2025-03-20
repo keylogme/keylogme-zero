@@ -90,4 +90,10 @@ func TestPeriodicSave(t *testing.T) {
 	if after > before {
 		t.Fatalf("Goroutines leak. Before: %d, After: %d", before, after)
 	}
+
+	// cleanup file
+	err = os.Remove(filepath)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
