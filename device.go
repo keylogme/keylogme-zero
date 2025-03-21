@@ -41,7 +41,7 @@ func getPathDevice(name string) string {
 	// So we check if the file exists, if not we try to find the device
 	_, err := os.Open(name)
 	if os.IsNotExist(err) {
-		slog.Info("file does not exist")
+		slog.Debug(fmt.Sprintf("file %s does not exist", name))
 		return findKeyboardDevice(name)
 	}
 	return name
@@ -87,7 +87,7 @@ func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEven
 
 func (d *Device) start() bool {
 	defer d.Close()
-	slog.Info(fmt.Sprintf("🚀 Starting device %s %v\n", d.Name, d.keylogger))
+	slog.Info(fmt.Sprintf("🚀 Starting device %s \n", d.Name))
 	if d.keylogger == nil {
 		return false
 	}
