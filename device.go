@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	WAIT_TIME_ON_DISCONNECTION = 300 * time.Millisecond
+	reconnect_wait = 300 * time.Millisecond
 )
 
 // findKeyboardDevice by going through each device registered on OS
@@ -133,7 +133,7 @@ func (d *Device) handleReconnects() {
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {
-			case <-time.After(WAIT_TIME_ON_DISCONNECTION):
+			case <-time.After(reconnect_wait):
 				continue
 			case <-d.ctx.Done():
 				slog.Info(fmt.Sprintf("💤 Shutting down device %s\n", d.Name))
