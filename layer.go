@@ -63,7 +63,6 @@ func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 type layersDetector struct {
 	layers               []layerDetector
 	currentLayerDetected *layerDetector
-	possibleLayers       []*layerDetector
 }
 
 func NewLayerDetector(layers []Layer, shiftStateConfig ShiftState) *layersDetector {
