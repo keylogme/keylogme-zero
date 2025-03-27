@@ -7,10 +7,12 @@ import (
 
 // Auto is true when the shift state is triggered by the microcontroller
 type shiftStateDetected struct {
-	DeviceId string
-	Modifier uint16
-	Code     uint16
-	Auto     bool
+	DeviceId             string
+	Modifier             uint16
+	Code                 uint16
+	Auto                 bool
+	DiffTimePressMicro   int64
+	DiffTimeReleaseMicro int64
 }
 
 func (ssd *shiftStateDetected) IsDetected() bool {
@@ -30,10 +32,13 @@ func (ssd *shiftStateDetected) IsDetected() bool {
 // you don't need to press shift to type symbols that are common in programming
 // (but you still need to press one to access the symbol layer)
 type shiftStateDetector struct {
-	holdDetector     holdShortcutDetector
-	lastModPressTime int64 // unix micro
-	lastKeyPressTime int64 // unix micro
-	thresholdAuto    time.Duration
+	holdDetector           holdShortcutDetector
+	lastModPressTime       int64 // unix micro
+	lastKeyPressTime       int64 // unix micro
+	lastKeyReleaseTime     int64 // unix micro
+	lastModReleaseTime     int64 // unix micro
+	thresholdAuto          time.Duration
+	possibleAutoShiftState shiftStateDetected
 }
 
 func getShiftCodeKey(shiftCode, code uint16) string {
@@ -86,25 +91,44 @@ func (skd *shiftStateDetector) isHolded() bool {
 	return skd.holdDetector.isHolded()
 }
 
+// an auto shift state will block saving keylogs because it's not a human typing
+// f.e. 42(shift) + 13(=) => +, instead of saving 42 and 13 , I will only save shifted 13
+func (skd *shiftStateDetector) blockSaveKeylog() bool {
+	return skd.possibleAutoShiftState.IsDetected()
+}
+
 func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected {
 	sd := skd.holdDetector.handleKeyEvent(ke)
 	skd.setTimes(ke)
-	if sd.IsDetected() &&
-		len(skd.holdDetector.modPress) == 1 &&
-		skd.lastModPressTime != 0 {
-
+	if sd.IsDetected() && skd.isHolded() {
 		mod := skd.holdDetector.modPress[0] // by default first element is the modifier
 		auto := false
 		diffTimeMicro := skd.lastKeyPressTime - skd.lastModPressTime
+		sdetect := shiftStateDetected{
+			DeviceId:           ke.DeviceId,
+			Modifier:           mod,
+			Code:               ke.Code,
+			Auto:               auto,
+			DiffTimePressMicro: diffTimeMicro,
+		}
 		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
-			auto = true
+			// auto shift needs confirmation on shift release
+			skd.possibleAutoShiftState = sdetect
+			return shiftStateDetected{}
 		}
-		return shiftStateDetected{
-			DeviceId: ke.DeviceId,
-			Modifier: mod,
-			Code:     ke.Code,
-			Auto:     auto,
+		return sdetect
+	}
+	if !skd.isHolded() && skd.possibleAutoShiftState.IsDetected() {
+		diffTimeMicro := skd.lastModReleaseTime - skd.lastKeyReleaseTime
+		result := skd.possibleAutoShiftState
+		result.Auto = false
+		result.DiffTimeReleaseMicro = diffTimeMicro
+		skd.possibleAutoShiftState = shiftStateDetected{}
+		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
+			// confirm auto shift state
+			result.Auto = true
 		}
+		return result
 	}
 	return shiftStateDetected{}
 }
@@ -112,16 +136,32 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 func (skd *shiftStateDetector) setTimes(ke DeviceEvent) {
 	t := ke.ExecTime
 
-	// set lastModPressTime
-	if len(skd.holdDetector.modPress) > 0 && skd.lastModPressTime == 0 {
+	if skd.isHolded() && skd.lastModPressTime == 0 {
+		skd.reset()
 		skd.lastModPressTime = t.UnixMicro()
 	}
-	if len(skd.holdDetector.modPress) == 0 && skd.lastModPressTime != 0 {
-		skd.lastModPressTime = 0
+
+	if ke.KeyRelease() && skd.isHolded() {
+		skd.lastKeyReleaseTime = t.UnixMicro()
 	}
 
-	// set lastKeyPressTime
-	if ke.KeyPress() && skd.lastModPressTime != 0 {
+	if ke.KeyPress() && skd.isHolded() {
 		skd.lastKeyPressTime = t.UnixMicro()
 	}
+	if ke.KeyRelease() && !skd.isHolded() {
+		skd.lastModPressTime = 0
+		skd.lastModReleaseTime = t.UnixMicro()
+	}
+
+	if ke.KeyPress() && !skd.isHolded() {
+		skd.reset()
+	}
+}
+
+func (skd *shiftStateDetector) reset() {
+	skd.lastModPressTime = 0
+	skd.lastKeyReleaseTime = 0
+	skd.lastKeyPressTime = 0
+	skd.lastModReleaseTime = 0
+	skd.possibleAutoShiftState = shiftStateDetected{}
 }

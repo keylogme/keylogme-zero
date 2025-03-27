@@ -45,8 +45,12 @@ type layerDetector struct {
 
 func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	sd := ld.shiftDetector.handleKeyEvent(ke)
-	if sd.IsDetected() {
+	if sd.IsDetected() && sd.Auto {
 		return LayerDetected{LayerId: ld.Layer.LayerId}
+	}
+	if ld.shiftDetector.blockSaveKeylog() {
+		//  there is a potential shift state (auto) that needs to be confirmed
+		return LayerDetected{}
 	}
 	if ke.KeyRelease() {
 		if _, ok := ld.mapKeys[ke.Code]; ok {
@@ -55,10 +59,6 @@ func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	}
 	return LayerDetected{}
 }
-
-// func (ld *layerDetector) isHolded() bool {
-// 	return ld.shiftDetector.isHolded()
-// }
 
 type layersDetector struct {
 	layers               []layerDetector
@@ -76,7 +76,7 @@ func NewLayerDetector(layers []Layer, shiftStateConfig ShiftState) *layersDetect
 			mk[code] = true
 		}
 		hsd := newHoldShortcutDetector(layer.ShiftedCodes.getShortcuts(), getShiftKeys())
-		// for shifted states we will use a shift state detector
+		// for shifted states (auto) we will use a shift state detector
 		ssd := NewShiftStateDetectorWithHoldSD(hsd, shiftStateConfig)
 		ld := layerDetector{
 			Layer:         layer,
@@ -109,31 +109,16 @@ func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	if lsd.currentLayerDetected != nil && !isShiftKey(ke.Code) {
 		ld := lsd.currentLayerDetected.handleKeyEvent(ke)
 		if ld.IsDetected() {
-			lsd.reset()
 			return ld
 		}
 	}
-	// Check if key is in possible layers
-	for _, l := range lsd.possibleLayers {
-		ld := l.handleKeyEvent(ke)
-		if ld.IsDetected() {
-			lsd.currentLayerDetected = l
-			lsd.reset()
-			return ld
-		}
-	}
-	lsd.reset()
-	// Finally check all layers
+	// Check in all layers
 	for idx := range lsd.layers {
 		l := &lsd.layers[idx]
 		ld := l.handleKeyEvent(ke)
 		if ld.IsDetected() {
 			lsd.currentLayerDetected = l
-			lsd.reset()
 			return ld
-		}
-		if l.shiftDetector.isHolded() {
-			lsd.possibleLayers = append(lsd.possibleLayers, l)
 		}
 	}
 	return LayerDetected{}
@@ -144,8 +129,4 @@ func (lsd *layersDetector) GetCurrentLayerId() int64 {
 		return 0
 	}
 	return lsd.currentLayerDetected.Layer.LayerId
-}
-
-func (lsd *layersDetector) reset() {
-	lsd.possibleLayers = []*layerDetector{}
 }

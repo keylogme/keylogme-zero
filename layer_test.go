@@ -40,7 +40,7 @@ func getTestLayersCodesEmpty() []Layer {
 		},
 		{
 			LayerId: 2,
-			Codes:   []uint16{},
+			Codes:   []uint16{2},
 			ShiftedCodes: ShiftedCodes{
 				ShiftCode: 42,          // shift key
 				Codes:     []uint16{2}, // !
@@ -132,12 +132,15 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
-	if lsd.GetCurrentLayerId() != 1 { // after Shift+Q press , layer id = 1 is set
+	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
+	}
+	if lsd.GetCurrentLayerId() != 1 { // after Shift+Q press , layer id = 1 is set
+		t.Fatal("Layer id incorrect")
 	}
 	// change layer- use shifted code in second layer
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyPress))
@@ -152,15 +155,15 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 		t.Fatal("Detection not expected")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 2, KeyRelease))
+	if ld.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
 	if !ld.IsDetected() {
 		t.Fatal("Detection expected ")
 	}
 	if lsd.GetCurrentLayerId() != 2 { //  layer id is changed
 		t.Fatal("Layer id incorrect")
-	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
 	}
 	// change back to first layer
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
@@ -199,12 +202,15 @@ func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
-	if lsd.GetCurrentLayerId() != 1 { // after first key , layer id is set
+	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
+	}
+	if lsd.GetCurrentLayerId() != 1 {
+		t.Fatal("Layer id incorrect")
 	}
 	// change layer- use shifted code in second layer
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyPress))
@@ -215,21 +221,19 @@ func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 2, KeyPress))
-	// lsd.debug()
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected ")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 2, KeyRelease))
-	// lsd.debug()
+	if ld.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
 	if !ld.IsDetected() {
 		t.Fatal("Detection expected")
 	}
 	if lsd.GetCurrentLayerId() != 2 { //  layer id is changed
 		t.Fatal("Layer id incorrect")
-	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
 	}
 	// change back to first layer
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))

@@ -61,7 +61,9 @@ func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected 
 	if ke.Type == evKey && ke.KeyRelease() && hd.isHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
 	}
-	if ke.Type == evKey && ke.KeyPress() && slices.Contains(hd.modifiers, ke.Code) {
+	if ke.Type == evKey && ke.KeyPress() &&
+		slices.Contains(hd.modifiers, ke.Code) &&
+		!slices.Contains(hd.modPress, ke.Code) {
 		hd.modPress = append(hd.modPress, ke.Code)
 	}
 	return ShortcutDetected{}
@@ -72,12 +74,16 @@ func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDet
 	hd.modPress = slices.DeleteFunc(hd.modPress, func(v uint16) bool {
 		return v == code
 	})
+	if len(hd.modPress) == 0 {
+		return ShortcutDetected{}
+	}
 	tempCodes := slices.Clone(hd.modPress)
 	tempCodes = append(tempCodes, code)
 	slices.Sort(tempCodes)
 
 	// slog.Info(fmt.Sprintf("detect %s %d \n", deviceId, code))
 	for _, s := range hd.shortcuts {
+		// slog.Info(fmt.Sprintf("shortcut %v  vs  %v\n", s, tempCodes))
 		isEqual := slices.Equal(tempCodes, s.Codes)
 		if isEqual {
 			return ShortcutDetected{

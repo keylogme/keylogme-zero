@@ -36,10 +36,12 @@ func Start(
 			if ssd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
-						"Shift state of %d found in device %s - auto %t\n",
+						"Shift state of %d found in device %s - auto %t | diff time : press %d μs release %d μs\n",
 						ssd.Code,
 						ssd.DeviceId,
 						ssd.Auto,
+						ssd.DiffTimePressMicro,
+						ssd.DiffTimeReleaseMicro,
 					),
 				)
 				err := store.SaveShiftState(ssd.DeviceId, ssd.Modifier, ssd.Code, ssd.Auto)
@@ -57,6 +59,9 @@ func Start(
 				if err != nil {
 					slog.Error(fmt.Sprintf("Error storing layer change : %s\n", err.Error()))
 				}
+			}
+			if ss.blockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
+				continue
 			}
 			if i.Type == evKey && i.KeyRelease() {
 				slog.Info(
