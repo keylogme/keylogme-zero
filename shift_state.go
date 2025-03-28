@@ -51,7 +51,7 @@ func getShortcutCodesForShiftState(shiftCodes []uint16) []ShortcutCodes {
 		16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
 		30, 31, 32, 33, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48, 49, 50,
 	}
-	symbolsCodes := []uint16{12, 13, 26, 27, 28, 39, 40, 43, 51, 52, 53}
+	symbolsCodes := []uint16{12, 13, 26, 27, 28, 39, 40, 41, 43, 51, 52, 53}
 	allCodes := append(numCodes, append(lettersCodes, symbolsCodes...)...)
 	listSS := []ShortcutCodes{}
 	for _, sc := range shiftCodes {
