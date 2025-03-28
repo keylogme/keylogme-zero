@@ -71,7 +71,7 @@ func Start(
 						i.KeyString(),
 					),
 				)
-				err := store.SaveKeylog(i.DeviceId, i.Code)
+				err := store.SaveKeylog(i.DeviceId, ld.GetCurrentLayerId(), i.Code)
 				if err != nil {
 					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
 				}

@@ -38,7 +38,7 @@ func (c *ConfigStorage) Validate() error {
 }
 
 type Storage interface {
-	SaveKeylog(deviceId string, keycode uint16) error
+	SaveKeylog(deviceId string, layerId int64, keycode uint16) error
 	SaveShortcut(deviceId string, shortcutId string) error
 	SaveShiftState(deviceId string, modifier uint16, keycode uint16, auto bool) error
 	SaveLayerChange(deviceId string, layerId int64) error
@@ -51,8 +51,8 @@ type FileStorage struct {
 
 type DataFile struct {
 	mu sync.Mutex
-	// deviceId - keycode - counter
-	Keylogs map[string]map[uint16]int64 `json:"keylogs,omitempty"`
+	// deviceId - layerId - keycode - counter
+	Keylogs map[string]map[int64]map[uint16]int64 `json:"keylogs,omitempty"`
 	// deviceId - shortcutId - counter
 	Shortcuts map[string]map[string]int64 `json:"shortcuts,omitempty"`
 	// deviceId - modifier - keycode - counter
@@ -64,16 +64,19 @@ type DataFile struct {
 	LayerChanges map[string]map[int64]int64 `json:"layer_changes,omitempty"`
 }
 
-func (d *DataFile) AddKeylog(deviceId string, keycode uint16, addQty int64) {
+func (d *DataFile) AddKeylog(deviceId string, layerId int64, keycode uint16, addQty int64) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if _, ok := d.Keylogs[deviceId]; !ok {
-		d.Keylogs[deviceId] = map[uint16]int64{}
+		d.Keylogs[deviceId] = map[int64]map[uint16]int64{}
 	}
-	if _, ok := d.Keylogs[deviceId][keycode]; !ok {
-		d.Keylogs[deviceId][keycode] = 0
+	if _, ok := d.Keylogs[deviceId][layerId]; !ok {
+		d.Keylogs[deviceId][layerId] = map[uint16]int64{}
 	}
-	d.Keylogs[deviceId][keycode] += addQty
+	if _, ok := d.Keylogs[deviceId][layerId][keycode]; !ok {
+		d.Keylogs[deviceId][layerId][keycode] = 0
+	}
+	d.Keylogs[deviceId][layerId][keycode] += addQty
 }
 
 func (d *DataFile) AddShortcut(deviceId string, shortcutId string, addQty int64) {
@@ -148,8 +151,10 @@ func (d *DataFile) Merge(data *DataFile) {
 	defer data.mu.Unlock()
 	//
 	for kId := range data.Keylogs {
-		for keycode := range data.Keylogs[kId] {
-			d.AddKeylog(kId, keycode, data.Keylogs[kId][keycode])
+		for layerId := range data.Keylogs[kId] {
+			for keycode := range data.Keylogs[kId][layerId] {
+				d.AddKeylog(kId, layerId, keycode, data.Keylogs[kId][layerId][keycode])
+			}
 		}
 	}
 	for kId := range data.Shortcuts {
@@ -184,7 +189,7 @@ func (d *DataFile) Merge(data *DataFile) {
 }
 
 func (d *DataFile) Reset() {
-	d.Keylogs = map[string]map[uint16]int64{}
+	d.Keylogs = map[string]map[int64]map[uint16]int64{}
 	d.Shortcuts = map[string]map[string]int64{}
 	d.ShiftStates = map[string]map[uint16]map[uint16]int64{}
 	d.ShiftStatesAuto = map[string]map[uint16]map[uint16]int64{}
@@ -210,8 +215,8 @@ func MustGetNewFileStorage(ctx context.Context, config ConfigStorage) *FileStora
 	return ffs
 }
 
-func (f *FileStorage) SaveKeylog(deviceId string, keycode uint16) error {
-	f.dataFile.AddKeylog(deviceId, keycode, 1)
+func (f *FileStorage) SaveKeylog(deviceId string, layerId int64, keycode uint16) error {
+	f.dataFile.AddKeylog(deviceId, layerId, keycode, 1)
 	return nil
 }
 

@@ -32,7 +32,7 @@ func TestMultipleSaves(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_ = fs.SaveKeylog("device1", 1)
+			_ = fs.SaveKeylog("device1", 1, 1)
 		}()
 	}
 
@@ -40,7 +40,7 @@ func TestMultipleSaves(t *testing.T) {
 	t.Log("done")
 
 	// check response
-	resultKeylogs := fs.dataFile.Keylogs["device1"][1]
+	resultKeylogs := fs.dataFile.Keylogs["device1"][1][1]
 	if resultKeylogs != int64(numGoRoutines) {
 		t.Errorf("expected %d, got %d", numGoRoutines, resultKeylogs)
 	}
@@ -64,7 +64,7 @@ func TestPeriodicSave(t *testing.T) {
 	fs := MustGetNewFileStorage(ctx, config)
 
 	// save keylog
-	err = fs.SaveKeylog("device1", 1)
+	err = fs.SaveKeylog("device1", 1, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestPeriodicSave(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("dataFile: %+v\n", dataFile)
-	if dataFile.Keylogs["device1"][1] != 1 {
+	if dataFile.Keylogs["device1"][1][1] != 1 {
 		t.Fatal("expected 1 keylog")
 	}
 	cancel() // close file storage
