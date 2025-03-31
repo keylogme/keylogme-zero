@@ -68,9 +68,10 @@ type Device struct {
 }
 
 type DeviceInput struct {
-	DeviceId string `json:"device_id"`
-	Name     string `json:"name"`
-	UsbName  string `json:"usb_name"`
+	DeviceId string  `json:"device_id"`
+	Name     string  `json:"name"`
+	UsbName  string  `json:"usb_name"`
+	Layers   []Layer `json:"layers"`
 }
 
 type DeviceEvent struct {

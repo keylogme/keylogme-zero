@@ -7,43 +7,55 @@ import (
 	"github.com/keylogme/keylogme-zero/types"
 )
 
-func getTestLayers() []Layer {
-	return []Layer{
+func getTestLayers(kdevId string) []DeviceInput {
+	return []DeviceInput{
 		{
-			LayerId: 1,
-			Codes:   []uint16{16, 17, 18}, // letters q, w, e
-			ShiftedCodes: ShiftedCodes{
-				ShiftCode: 42,           // shift key
-				Codes:     []uint16{16}, // Q
-			},
-		},
-		{
-			LayerId: 2,
-			Codes:   []uint16{2, 3, 4}, // numbers 1,2,3
-			ShiftedCodes: ShiftedCodes{
-				ShiftCode: 42,          // shift key
-				Codes:     []uint16{2}, // !
+			DeviceId: kdevId,
+			Layers: []Layer{
+				{
+					LayerId: 1,
+					Codes: []LayerCode{
+						{Code: 16},               // q
+						{Code: 17},               // w
+						{Code: 18},               // e
+						{Code: 16, Modifier: 42}, // Q
+					},
+				},
+				{
+					LayerId: 2,
+					Codes: []LayerCode{
+						{Code: 2},               // 1
+						{Code: 3},               // 2
+						{Code: 4},               // 3
+						{Code: 2, Modifier: 42}, //!
+					},
+				},
 			},
 		},
 	}
 }
 
-func getTestLayersCodesEmpty() []Layer {
-	return []Layer{
+func getTestLayersCodesEmpty(kdevId string) []DeviceInput {
+	return []DeviceInput{
 		{
-			LayerId: 1,
-			Codes:   []uint16{16, 17, 18}, // letters q, w, e
-			ShiftedCodes: ShiftedCodes{
-				ShiftCode: 42,           // shift key
-				Codes:     []uint16{16}, // Q
-			},
-		},
-		{
-			LayerId: 2,
-			Codes:   []uint16{2},
-			ShiftedCodes: ShiftedCodes{
-				ShiftCode: 42,          // shift key
-				Codes:     []uint16{2}, // !
+			DeviceId: kdevId,
+			Layers: []Layer{
+				{
+					LayerId: 1,
+					Codes: []LayerCode{
+						{Code: 16},               // q
+						{Code: 17},               // w
+						{Code: 18},               // e
+						{Code: 16, Modifier: 42}, // Q
+					},
+				},
+				{
+					LayerId: 2,
+					Codes: []LayerCode{
+						{Code: 2},               // 1
+						{Code: 2, Modifier: 42}, //!
+					},
+				},
 			},
 		},
 	}
@@ -56,8 +68,8 @@ func getTestShiftStateConfig() ShiftState {
 }
 
 func TestChangeLayerSingleCodes(t *testing.T) {
-	lsd := NewLayerDetector(getTestLayers(), getTestShiftStateConfig())
 	deviceId := "1"
+	lsd := NewLayerDetector(getTestLayers(deviceId), getTestShiftStateConfig())
 	// first layer - press "q" and  "w"
 	ld := lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
 	if ld.IsDetected() {
@@ -108,8 +120,8 @@ func TestChangeLayerSingleCodes(t *testing.T) {
 }
 
 func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
-	lsd := NewLayerDetector(getTestLayers(), getTestShiftStateConfig())
 	deviceId := "1"
+	lsd := NewLayerDetector(getTestLayers(deviceId), getTestShiftStateConfig())
 	// first layer - press "Q"
 	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")
@@ -177,8 +189,8 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 }
 
 func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
-	lsd := NewLayerDetector(getTestLayersCodesEmpty(), getTestShiftStateConfig())
 	deviceId := "1"
+	lsd := NewLayerDetector(getTestLayersCodesEmpty(deviceId), getTestShiftStateConfig())
 	// first layer - press "Q"
 	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")

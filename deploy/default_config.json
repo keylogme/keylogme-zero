@@ -4,7 +4,105 @@
             {
                 "device_id": "1",
                 "name": "⌨️✋ crkbd",
-                "usb_name": "foostan Corne"
+                "usb_name": "foostan Corne",
+                "layers": [
+                    {
+                        "id": 1,
+                        "name": "Base",
+                        "codes": [
+                            {
+                                "code": 16
+                            },
+                            {
+                                "code": 17
+                            },
+                            {
+                                "code": 18
+                            },
+                            {
+                                "code": 19
+                            },
+                            {
+                                "code": 20
+                            },
+                            {
+                                "code": 21
+                            },
+                            {
+                                "code": 22
+                            },
+                            {
+                                "code": 23
+                            },
+                            {
+                                "code": 24
+                            },
+                            {
+                                "code": 25
+                            },
+                            {
+                                "code": 30
+                            },
+                            {
+                                "code": 31
+                            },
+                            {
+                                "code": 32
+                            },
+                            {
+                                "code": 33
+                            },
+                            {
+                                "code": 34
+                            },
+                            {
+                                "code": 35
+                            },
+                            {
+                                "code": 36
+                            },
+                            {
+                                "code": 37
+                            },
+                            {
+                                "code": 38
+                            },
+                            {
+                                "code": 44
+                            },
+                            {
+                                "code": 45
+                            },
+                            {
+                                "code": 46
+                            },
+                            {
+                                "code": 47
+                            },
+                            {
+                                "code": 48
+                            },
+                            {
+                                "code": 49
+                            },
+                            {
+                                "code": 50
+                            }
+                        ]
+                    },
+                    {
+                        "id": 2,
+                        "codes": [
+                            {
+                                "code": 13
+                            },
+                            {
+                                "code": 13,
+                                "modifier": 42
+                            }
+                        ]
+                    }
+                ]
             }
         ],
         "shortcut_groups": [
@@ -41,56 +139,7 @@
         ],
         "shift_state": {
             "threshold_auto": "5ms"
-        },
-        "layers": [
-            {
-                "id": 1,
-                "codes": [
-                    16,
-                    17,
-                    18,
-                    19,
-                    20,
-                    21,
-                    22,
-                    23,
-                    24,
-                    25,
-                    30,
-                    31,
-                    32,
-                    33,
-                    34,
-                    35,
-                    36,
-                    37,
-                    38,
-                    44,
-                    45,
-                    46,
-                    47,
-                    48,
-                    49,
-                    50
-                ],
-                "shifted_codes": {
-                    "shift_code": 42,
-                    "codes": []
-                }
-            },
-            {
-                "id": 2,
-                "codes": [
-                    13
-                ],
-                "shifted_codes": {
-                    "shift_code": 42,
-                    "codes": [
-                        13
-                    ]
-                }
-            }
-        ]
+        }
     },
     "storage": {
         "file_output": "output_keylogme_zero_v1.json",

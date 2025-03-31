@@ -46,7 +46,7 @@ func main() {
 
 	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := k0.NewLayerDetector(config.Keylog.Layers, config.Keylog.ShiftState)
+	ld := k0.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
 
 	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
 
