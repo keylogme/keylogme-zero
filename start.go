@@ -73,14 +73,24 @@ func Start(
 				continue
 			}
 			if i.Type == evKey && i.KeyRelease() {
-				slog.Info(
-					fmt.Sprintf(
-						"Key :%d %s in layer %d\n",
-						i.Code,
-						i.KeyString(),
-						ld.GetCurrentLayerId(),
-					),
-				)
+				if ld.GetCurrentLayerId() == 0 {
+					slog.Info(
+						fmt.Sprintf(
+							"Key :%d %s not defined in any layer\n",
+							i.Code,
+							i.KeyString(),
+						),
+					)
+				} else {
+					slog.Info(
+						fmt.Sprintf(
+							"Key :%d %s in layer %d\n",
+							i.Code,
+							i.KeyString(),
+							ld.GetCurrentLayerId(),
+						),
+					)
+				}
 				err := store.SaveKeylog(i.DeviceId, ld.GetCurrentLayerId(), i.Code)
 				if err != nil {
 					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
