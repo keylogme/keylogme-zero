@@ -2,6 +2,7 @@ package keylog
 
 import (
 	"fmt"
+	"log/slog"
 	"slices"
 )
 
@@ -98,13 +99,12 @@ func NewLayerDetector(devices []DeviceInput, shiftStateConfig ShiftState) *layer
 }
 
 func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
-	oldLayerId := int64(0)
-	if lsd.GetCurrentLayerId() != 0 {
-		oldLayerId = lsd.GetCurrentLayerId()
-	}
+	oldLayerId := lsd.GetCurrentLayerId()
 	ld := lsd.handleKeyEvent(ke)
-	if oldLayerId != 0 && ld.IsDetected() {
-		if oldLayerId == lsd.GetCurrentLayerId() {
+	if ld.IsDetected() {
+		newLayer := lsd.GetCurrentLayerId()
+		slog.Debug(fmt.Sprintf("Old layer %d - New layer %d", oldLayerId, newLayer))
+		if oldLayerId == newLayer {
 			return LayerDetected{}
 		}
 		// if not equal then there was a change of layer
@@ -114,7 +114,7 @@ func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
 }
 
 func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
-	numPossibleLayers := 0
+	numBlockedLayers := 0
 	idxPossible := 0
 	possibleDetection := LayerDetected{}
 	for idx := range lsd.layers[ke.DeviceId] {
@@ -125,15 +125,17 @@ func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 			possibleDetection = ld
 		}
 		if l.shiftDetector.blockSaveKeylog() {
-			numPossibleLayers++
+			numBlockedLayers++
 		}
 	}
-	if numPossibleLayers > 0 {
+	if numBlockedLayers > 0 {
 		return LayerDetected{}
 	}
 	if possibleDetection.IsDetected() {
 		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
-	} else {
+		return possibleDetection
+	}
+	if ke.KeyRelease() {
 		lsd.currentLayerDetected = nil
 	}
 	return possibleDetection

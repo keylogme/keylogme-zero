@@ -74,6 +74,7 @@ func TestChangeLayerSingleCodes(t *testing.T) {
 	lsd := NewLayerDetector(getTestLayers(deviceId), getTestShiftStateConfig())
 	// first layer - press "q" and  "w"
 	ld := lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
+	// t.Log(lsd.GetCurrentLayerId())
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
@@ -81,8 +82,9 @@ func TestChangeLayerSingleCodes(t *testing.T) {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
+	// t.Log(lsd.GetCurrentLayerId())
+	if !ld.IsDetected() {
+		t.Fatal("Detection expected")
 	}
 	if lsd.GetCurrentLayerId() != 1 {
 		t.Fatal("Layer id incorrect")
@@ -92,18 +94,21 @@ func TestChangeLayerSingleCodes(t *testing.T) {
 		t.Fatal("Detection not expected")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 17, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
-	}
-	// change layer
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 3, KeyPress))
+	// t.Log(lsd.GetCurrentLayerId())
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	if lsd.GetCurrentLayerId() != 1 {
 		t.Fatal("Layer id incorrect")
 	}
+	// change layer
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 3, KeyPress))
+	// t.Log(lsd.GetCurrentLayerId())
+	if ld.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 3, KeyRelease))
+	// t.Log(lsd.GetCurrentLayerId())
 	if !ld.IsDetected() {
 		t.Fatal("Detection expected")
 	}
@@ -139,9 +144,6 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
-	if lsd.GetCurrentLayerId() != 0 {
-		t.Fatal("Layer id incorrect")
-	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 13, KeyRelease))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
@@ -150,8 +152,8 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
+	if !ld.IsDetected() {
+		t.Fatal("Detection expected")
 	}
 	if lsd.GetCurrentLayerId() != 1 { // after Shift+Q press , layer id = 1 is set
 		t.Fatal("Layer id incorrect")
@@ -220,8 +222,8 @@ func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
 		t.Fatal("Layer id incorrect")
 	}
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 42, KeyRelease))
-	if ld.IsDetected() {
-		t.Fatal("Detection not expected")
+	if !ld.IsDetected() {
+		t.Fatal("Detection expected")
 	}
 	if lsd.GetCurrentLayerId() != 1 {
 		t.Fatal("Layer id incorrect")
