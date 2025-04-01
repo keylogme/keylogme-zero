@@ -13,7 +13,7 @@ func getTestLayers(kdevId string) []DeviceInput {
 			DeviceId: kdevId,
 			Layers: []Layer{
 				{
-					LayerId: 1,
+					Id: 1,
 					Codes: []LayerCode{
 						{Code: 16},               // q
 						{Code: 17},               // w
@@ -22,7 +22,7 @@ func getTestLayers(kdevId string) []DeviceInput {
 					},
 				},
 				{
-					LayerId: 2,
+					Id: 2,
 					Codes: []LayerCode{
 						{Code: 2},               // 1
 						{Code: 3},               // 2
@@ -41,7 +41,7 @@ func getTestLayersCodesEmpty(kdevId string) []DeviceInput {
 			DeviceId: kdevId,
 			Layers: []Layer{
 				{
-					LayerId: 1,
+					Id: 1,
 					Codes: []LayerCode{
 						{Code: 16},               // q
 						{Code: 17},               // w
@@ -50,7 +50,7 @@ func getTestLayersCodesEmpty(kdevId string) []DeviceInput {
 					},
 				},
 				{
-					LayerId: 2,
+					Id: 2,
 					Codes: []LayerCode{
 						{Code: 2},               // 1
 						{Code: 2, Modifier: 42}, //!

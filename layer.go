@@ -11,8 +11,9 @@ type LayerCode struct {
 }
 
 type Layer struct {
-	LayerId int64       `json:"id"`
-	Codes   []LayerCode `json:"codes"`
+	Id    int64       `json:"id"`
+	Name  string      `json:"name"`
+	Codes []LayerCode `json:"codes"`
 }
 
 type LayerDetected struct {
@@ -33,7 +34,7 @@ type layerDetector struct {
 func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	sd := ld.shiftDetector.handleKeyEvent(ke)
 	if sd.IsDetected() && sd.Auto {
-		return LayerDetected{LayerId: ld.Layer.LayerId, DeviceId: ke.DeviceId}
+		return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId}
 	}
 	if ld.shiftDetector.blockSaveKeylog() {
 		//  there is a potential shift state (auto) that needs to be confirmed
@@ -41,7 +42,7 @@ func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	}
 	if ke.KeyRelease() {
 		if _, ok := ld.mapKeys[ke.Code]; ok {
-			return LayerDetected{LayerId: ld.Layer.LayerId, DeviceId: ke.DeviceId}
+			return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId}
 		}
 	}
 	return LayerDetected{}
@@ -136,5 +137,5 @@ func (lsd *layersDetector) GetCurrentLayerId() int64 {
 	if lsd.currentLayerDetected == nil {
 		return 0
 	}
-	return lsd.currentLayerDetected.Layer.LayerId
+	return lsd.currentLayerDetected.Layer.Id
 }

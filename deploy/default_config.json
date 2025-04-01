@@ -92,6 +92,7 @@
                     },
                     {
                         "id": 2,
+                        "name": "Symbol",
                         "codes": [
                             {
                                 "code": 13

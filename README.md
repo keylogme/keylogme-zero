@@ -136,7 +136,8 @@ The file `deploy/default_config.json` contains the default config. You can use i
             {
                 "device_id": "1",
                 "name": "⌨️✋ crkbd",
-                "usb_name": "foostan Corne"
+                "usb_name": "foostan Corne",
+                "layers":[....]
             }
         ],
         "shortcut_groups": [
@@ -183,9 +184,13 @@ The config has two main sections:
 
 - keylog : config for keylogger
     - devices : list of devices to monitor
-        - device_id : unique id for the device
+        - device_id : unique id (4 alphanumeric characters) for the device
         - name : name of the device, you named it as you want.
         - usb_name : usb name of the device. Go to <a href="#usb-name">USB name</a> section to know how to get it.
+        - layers: list of layers to monitor
+            - layer_id : unique id (int) for the layer
+            - name : name of the layer
+            - codes : list of keycodes or shifted states (decimal format) for the layer. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
     - shortcuts : list of shortcuts to monitor
         - id : unique id for the shortcut
         - codes : list of keycodes (decimal format) for the shortcut. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
