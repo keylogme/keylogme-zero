@@ -114,23 +114,27 @@ func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
 }
 
 func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
-	// First check if key is in current layer (fast access to non shift keys)
-	if lsd.currentLayerDetected != nil && !isShiftKey(ke.Code) {
-		ld := lsd.currentLayerDetected.handleKeyEvent(ke)
-		if ld.IsDetected() {
-			return ld
-		}
-	}
-	// Check in all layers
+	numPossibleLayers := 0
+	idxPossible := 0
+	possibleDetection := LayerDetected{}
 	for idx := range lsd.layers[ke.DeviceId] {
 		l := &lsd.layers[ke.DeviceId][idx]
 		ld := l.handleKeyEvent(ke)
 		if ld.IsDetected() {
-			lsd.currentLayerDetected = l
-			return ld
+			idxPossible = idx
+			possibleDetection = ld
+		}
+		if l.shiftDetector.blockSaveKeylog() {
+			numPossibleLayers++
 		}
 	}
-	return LayerDetected{}
+	if numPossibleLayers > 0 {
+		return LayerDetected{}
+	}
+	if possibleDetection.IsDetected() {
+		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
+	}
+	return possibleDetection
 }
 
 func (lsd *layersDetector) GetCurrentLayerId() int64 {

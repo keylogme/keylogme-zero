@@ -18,7 +18,8 @@ func getTestLayers(kdevId string) []DeviceInput {
 						{Code: 16},               // q
 						{Code: 17},               // w
 						{Code: 18},               // e
-						{Code: 16, Modifier: 42}, // Q
+						{Code: 42},               // shift
+						{Code: 13, Modifier: 42}, // +
 					},
 				},
 				{
@@ -46,7 +47,8 @@ func getTestLayersCodesEmpty(kdevId string) []DeviceInput {
 						{Code: 16},               // q
 						{Code: 17},               // w
 						{Code: 18},               // e
-						{Code: 16, Modifier: 42}, // Q
+						{Code: 42},               // shift
+						{Code: 13, Modifier: 42}, // +
 					},
 				},
 				{
@@ -133,14 +135,14 @@ func TestWithShiftedCodesInMultipleLayers(t *testing.T) {
 	if lsd.GetCurrentLayerId() != 0 { // shift key are not deterministic, should not trigger a layer change
 		t.Fatal("Layer id incorrect")
 	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 13, KeyPress))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")
 	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyRelease))
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 13, KeyRelease))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
@@ -202,14 +204,14 @@ func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
 	if lsd.GetCurrentLayerId() != 0 { // shift key are not deterministic, should not trigger a layer change
 		t.Fatal("Layer id incorrect")
 	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyPress))
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 13, KeyPress))
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	if lsd.GetCurrentLayerId() != 0 {
 		t.Fatal("Layer id incorrect")
 	}
-	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyRelease))
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 13, KeyRelease))
 	// first time current layer set=> does not trigger layer change detection
 	if ld.IsDetected() {
 		t.Fatal("Detection not expected")

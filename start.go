@@ -53,7 +53,13 @@ func Start(
 			ldd := ld.isLayerChangeDetected(i)
 			if ldd.IsDetected() {
 				slog.Info(
-					fmt.Sprintf("Layer %d detected in device %s\n", ldd.LayerId, ldd.DeviceId),
+					fmt.Sprintf(
+						"Layer %d detected in device %s during key %d (Release? %t)\n",
+						ldd.LayerId,
+						ldd.DeviceId,
+						i.Code,
+						i.KeyRelease(),
+					),
 				)
 				err := store.SaveLayerChange(ldd.DeviceId, ldd.LayerId)
 				if err != nil {

@@ -14,10 +14,6 @@ func getCtrlKeys() []uint16 {
 	return []uint16{29, 97}
 }
 
-func isShiftKey(code uint16) bool {
-	return code == 42 || code == 54
-}
-
 func getShiftKeys() []uint16 {
 	return []uint16{42, 54}
 }
