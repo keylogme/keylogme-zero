@@ -133,6 +133,8 @@ func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	}
 	if possibleDetection.IsDetected() {
 		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
+	} else {
+		lsd.currentLayerDetected = nil
 	}
 	return possibleDetection
 }

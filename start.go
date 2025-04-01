@@ -67,14 +67,18 @@ func Start(
 				}
 			}
 			if ss.blockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
+				slog.Debug(
+					fmt.Sprintf("Blocked keylog save | %t %t\n", ss.blockSaveKeylog(), ssd.Auto),
+				)
 				continue
 			}
 			if i.Type == evKey && i.KeyRelease() {
 				slog.Info(
 					fmt.Sprintf(
-						"Key :%d %s\n",
+						"Key :%d %s in layer %d\n",
 						i.Code,
 						i.KeyString(),
+						ld.GetCurrentLayerId(),
 					),
 				)
 				err := store.SaveKeylog(i.DeviceId, ld.GetCurrentLayerId(), i.Code)
