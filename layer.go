@@ -7,7 +7,7 @@ import (
 
 type LayerCode struct {
 	Code     uint16 `json:"code"`
-	Modifier uint16 `json:"modifier"`
+	Modifier uint16 `json:"modifier,omitempty"`
 }
 
 type Layer struct {
