@@ -7,6 +7,7 @@ import (
 
 // Auto is true when the shift state is triggered by the microcontroller
 type shiftStateDetected struct {
+	ShortcutId           string
 	DeviceId             string
 	Modifier             uint16
 	Code                 uint16
@@ -105,6 +106,7 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 		auto := false
 		diffTimeMicro := skd.lastKeyPressTime - skd.lastModPressTime
 		sdetect := shiftStateDetected{
+			ShortcutId:         sd.ShortcutId,
 			DeviceId:           ke.DeviceId,
 			Modifier:           mod,
 			Code:               ke.Code,

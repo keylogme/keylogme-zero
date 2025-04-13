@@ -18,6 +18,7 @@ type Layer struct {
 }
 
 type LayerDetected struct {
+	Id       string
 	DeviceId string
 	LayerId  int64
 }
@@ -35,7 +36,7 @@ type layerDetector struct {
 func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	sd := ld.shiftDetector.handleKeyEvent(ke)
 	if sd.IsDetected() && sd.Auto {
-		return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId}
+		return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId, Id: sd.ShortcutId}
 	}
 	if ld.shiftDetector.blockSaveKeylog() {
 		//  there is a potential shift state (auto) that needs to be confirmed
@@ -43,7 +44,11 @@ func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	}
 	if ke.KeyRelease() {
 		if _, ok := ld.mapKeys[ke.Code]; ok {
-			return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId}
+			return LayerDetected{
+				LayerId:  ld.Layer.Id,
+				DeviceId: ke.DeviceId,
+				Id:       fmt.Sprintf("%d", ke.Code),
+			}
 		}
 	}
 	return LayerDetected{}
@@ -116,13 +121,13 @@ func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
 func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	numBlockedLayers := 0
 	idxPossible := 0
-	possibleFirstDetection := LayerDetected{}
+	possibleDetection := LayerDetected{}
 	for idx := range lsd.layers[ke.DeviceId] {
 		l := &lsd.layers[ke.DeviceId][idx]
 		ld := l.handleKeyEvent(ke)
-		if ld.IsDetected() && !possibleFirstDetection.IsDetected() {
+		if ld.IsDetected() && ld.Id != possibleDetection.Id {
 			idxPossible = idx
-			possibleFirstDetection = ld
+			possibleDetection = ld
 		}
 		if l.shiftDetector.blockSaveKeylog() {
 			numBlockedLayers++
@@ -131,14 +136,14 @@ func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	if numBlockedLayers > 0 {
 		return LayerDetected{}
 	}
-	if possibleFirstDetection.IsDetected() {
+	if possibleDetection.IsDetected() {
 		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
-		return possibleFirstDetection
+		return possibleDetection
 	}
 	if ke.KeyRelease() {
 		lsd.currentLayerDetected = nil
 	}
-	return possibleFirstDetection
+	return possibleDetection
 }
 
 func (lsd *layersDetector) GetCurrentLayerId() int64 {
