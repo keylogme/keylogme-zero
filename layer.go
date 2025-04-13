@@ -116,13 +116,13 @@ func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
 func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	numBlockedLayers := 0
 	idxPossible := 0
-	possibleDetection := LayerDetected{}
+	possibleFirstDetection := LayerDetected{}
 	for idx := range lsd.layers[ke.DeviceId] {
 		l := &lsd.layers[ke.DeviceId][idx]
 		ld := l.handleKeyEvent(ke)
-		if ld.IsDetected() {
+		if ld.IsDetected() && !possibleFirstDetection.IsDetected() {
 			idxPossible = idx
-			possibleDetection = ld
+			possibleFirstDetection = ld
 		}
 		if l.shiftDetector.blockSaveKeylog() {
 			numBlockedLayers++
@@ -131,14 +131,14 @@ func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	if numBlockedLayers > 0 {
 		return LayerDetected{}
 	}
-	if possibleDetection.IsDetected() {
+	if possibleFirstDetection.IsDetected() {
 		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
-		return possibleDetection
+		return possibleFirstDetection
 	}
 	if ke.KeyRelease() {
 		lsd.currentLayerDetected = nil
 	}
-	return possibleDetection
+	return possibleFirstDetection
 }
 
 func (lsd *layersDetector) GetCurrentLayerId() int64 {

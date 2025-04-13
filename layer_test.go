@@ -63,6 +63,33 @@ func getTestLayersCodesEmpty(kdevId string) []DeviceInput {
 	}
 }
 
+func getTestLayersWithCodesRepeated(kdevId string) []DeviceInput {
+	return []DeviceInput{
+		{
+			DeviceId: kdevId,
+			Layers: []Layer{
+				{
+					Id: 1,
+					Codes: []LayerCode{
+						{Code: 16},               // q
+						{Code: 17},               // w
+						{Code: 18},               // e
+						{Code: 42},               // shift
+						{Code: 13, Modifier: 42}, // +
+					},
+				},
+				{
+					Id: 2,
+					Codes: []LayerCode{
+						{Code: 16}, // q
+						{Code: 17}, // w
+					},
+				},
+			},
+		},
+	}
+}
+
 func getTestShiftStateConfig() ShiftState {
 	return ShiftState{
 		ThresholdAuto: types.Duration{Duration: 100 * time.Millisecond},
@@ -259,5 +286,28 @@ func TestWithShiftedCodesInMultipleLayers_CodesEmpty(t *testing.T) {
 	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 16, KeyRelease))
 	if !ld.IsDetected() {
 		t.Fatal("Detection expected")
+	}
+}
+
+func TestWithRepeatedCodes(t *testing.T) {
+	deviceId := "1"
+	lsd := NewLayerDetector(getTestLayersWithCodesRepeated(deviceId), getTestShiftStateConfig())
+	// first layer - press "Q"
+	if lsd.GetCurrentLayerId() != 0 {
+		t.Fatal("Layer id incorrect")
+	}
+	ld := lsd.isLayerChangeDetected(getFakeEvent(deviceId, 17, KeyPress))
+	if ld.IsDetected() {
+		t.Fatal("Detection not expected")
+	}
+	if lsd.GetCurrentLayerId() != 0 { // shift key are not deterministic, should not trigger a layer change
+		t.Fatal("Layer id incorrect")
+	}
+	ld = lsd.isLayerChangeDetected(getFakeEvent(deviceId, 17, KeyRelease))
+	if !ld.IsDetected() {
+		t.Fatal("Detection expected")
+	}
+	if lsd.GetCurrentLayerId() != 1 {
+		t.Fatal("Layer id incorrect")
 	}
 }
