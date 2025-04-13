@@ -66,6 +66,27 @@ func Start(
 					slog.Error(fmt.Sprintf("Error storing layer change : %s\n", err.Error()))
 				}
 			}
+			// slog.Info(
+			// 	fmt.Sprintf("Key :%d %s (release ? %t)\n", i.Code, i.KeyString(), i.KeyRelease()),
+			// )
+			if ssd.IsDetected() && ssd.Auto {
+				if ld.GetCurrentLayerId() == 0 {
+					slog.Info(
+						fmt.Sprintf(
+							"Key shifted (auto): Mod: %d Code: %d not defined in any layer \n",
+							ssd.Modifier,
+							ssd.Code,
+						),
+					)
+				} else {
+					slog.Info(
+						fmt.Sprintf(
+							"Key shifted (auto): Mod: %d Code: %d in layer %d\n",
+							ssd.Modifier, ssd.Code, ld.GetCurrentLayerId(),
+						),
+					)
+				}
+			}
 			if ss.blockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
 				slog.Debug(
 					fmt.Sprintf("Blocked keylog save | %t %t\n", ss.blockSaveKeylog(), ssd.Auto),
