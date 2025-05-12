@@ -4,3 +4,6 @@ run:
 test:
 	cd .. && go test  ./...
 
+compile:
+	GOOS=linux go build -o k0_linux .
+	GOOS=darwin go build -o k0_darwin .
