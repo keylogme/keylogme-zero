@@ -11,13 +11,9 @@ typedef struct {
   IOHIDDeviceRef device;
   int vendorID;
   int productID;
+  IOHIDManagerRef manager;
+  CFRunLoopRef runLoop;
 } HIDDeviceContext;
-
-#define MAX_DEVICES 64
-static IOHIDManagerRef hidManager = NULL;
-static HIDDeviceContext *contexts[MAX_DEVICES];
-static int contextCount = 0;
-static bool runLoopStarted = false;
 
 void HIDCallback(void *context, IOReturn result, void *sender,
                  IOHIDValueRef value) {
@@ -37,8 +33,23 @@ void HIDCallback(void *context, IOReturn result, void *sender,
   }
 }
 
+void stopDevice(CFRunLoopRef runLoop, IOHIDManagerRef manager) {
+
+  IOHIDManagerUnscheduleFromRunLoop(manager, runLoop, kCFRunLoopDefaultMode);
+  IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
+  CFRelease(manager);
+
+  // Stop loop
+  CFRunLoopPerformBlock(runLoop, kCFRunLoopDefaultMode, ^{
+    CFRunLoopStop(runLoop);
+  });
+  CFRunLoopWakeUp(runLoop);
+  printf("Finished stopping device\n");
+}
+
 void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
   HIDDeviceContext *ctx = (HIDDeviceContext *)context;
+  printf("Device removal callback\n");
   if (!ctx)
     return;
 
@@ -47,13 +58,8 @@ void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
 
   GoHandleDeviceEvent(ctx->vendorID, ctx->productID, 0); // disconnected
 
-  for (int i = 0; i < contextCount; i++) {
-    if (contexts[i] == ctx) {
-      free(contexts[i]);
-      contexts[i] = NULL;
-      break;
-    }
-  }
+  // cleanup
+  stopDevice(ctx->runLoop, ctx->manager);
 }
 
 void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
@@ -61,11 +67,12 @@ void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
   DeviceRemovalCallback(context, result, sender);
 }
 
+// Device matching callback may be called multiple times for the same device
+// because a device can have multiple interfaces (keyboards, controls, mouse
+// integrated, etc )
 void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
                             IOHIDDeviceRef device) {
-  if (contextCount >= MAX_DEVICES)
-    return;
-
+  printf("Device matching callback\n");
   CFNumberRef vendorRef =
       IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVendorIDKey));
   CFNumberRef productRef =
@@ -76,22 +83,17 @@ void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
   if (productRef)
     CFNumberGetValue(productRef, kCFNumberIntType, &p);
 
-  for (int i = 0; i < contextCount; i++) {
-    if (contexts[i] && contexts[i]->device == device)
-      return; // already added
-  }
-
   HIDDeviceContext *ctx = malloc(sizeof(HIDDeviceContext));
   ctx->device = device;
   ctx->vendorID = v;
   ctx->productID = p;
+  ctx->manager = (IOHIDManagerRef)sender;
+  ctx->runLoop = CFRunLoopGetCurrent();
 
   IOHIDDeviceRegisterInputValueCallback(device, HIDCallback, ctx);
   IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetCurrent(),
                                  kCFRunLoopDefaultMode);
   IOHIDDeviceRegisterRemovalCallback(device, DeviceRemovalCallback, ctx);
-
-  contexts[contextCount++] = ctx;
 
   GoHandleDeviceEvent(v, p, 1); // connected
 }
@@ -114,56 +116,88 @@ CFMutableDictionaryRef CreateMatchingDict(int vendorID, int productID) {
   return dict;
 }
 
-void setupDevice(int vendorID, int productID) {
-  if (!hidManager) {
-    hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-    IOHIDManagerRegisterDeviceMatchingCallback(hidManager,
-                                               DeviceMatchingCallback, NULL);
-    IOHIDManagerRegisterDeviceRemovalCallback(
-        hidManager, ManagerDeviceRemovalCallback, NULL);
-    IOHIDManagerScheduleWithRunLoop(hidManager, CFRunLoopGetCurrent(),
-                                    kCFRunLoopDefaultMode);
-    IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
+bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
+  printf("setup device .... CFRunLoopGetCurrent() = %p\n",
+         CFRunLoopGetCurrent());
+  *hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+  IOHIDManagerRegisterDeviceMatchingCallback(*hidManager,
+                                             DeviceMatchingCallback, NULL);
+  IOHIDManagerRegisterDeviceRemovalCallback(*hidManager,
+                                            ManagerDeviceRemovalCallback, NULL);
+  IOReturn ret = IOHIDManagerOpen(*hidManager, kIOHIDOptionsTypeNone);
+  if (ret != kIOReturnSuccess) {
+    printf("IOHIDManagerOpen failed: %d\n", ret);
+    CFRelease(*hidManager);
+    return false;
   }
-
+  // setup listener device
   CFDictionaryRef dict = CreateMatchingDict(vendorID, productID);
+  // use MatchingMultiple because SetDeviceMatching overrides prev matches
   IOHIDManagerSetDeviceMatchingMultiple(
-      hidManager,
+      *hidManager,
       CFArrayCreate(NULL, (const void **)&dict, 1, &kCFTypeArrayCallBacks));
+  // IOHIDManagerSetDeviceMatching(hidManager, dict);
   CFRelease(dict);
-}
-
-void Start(void) {
-  if (hidManager && !runLoopStarted) {
-    runLoopStarted = true;
-    CFRunLoopRun();
-    runLoopStarted = false;
+  // check  if device is available now
+  CFSetRef deviceSet = IOHIDManagerCopyDevices(*hidManager);
+  if (!deviceSet) {
+    printf("No HID devices found.\n");
+    CFRelease(*hidManager);
+    return false;
   }
-}
 
-void Stop(void) {
-  for (int i = 0; i < contextCount; i++) {
-    if (contexts[i]) {
-      IOHIDDeviceUnscheduleFromRunLoop(
-          contexts[i]->device, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-      free(contexts[i]);
-      contexts[i] = NULL;
+  if (!deviceSet || CFSetGetCount(deviceSet) == 0) {
+    if (deviceSet) {
+      CFRelease(deviceSet);
+    }
+    CFRelease(*hidManager);
+    return false;
+  }
+
+  bool deviceFound = false;
+  IOHIDDeviceRef *devices =
+      malloc(sizeof(IOHIDDeviceRef) * CFSetGetCount(deviceSet));
+  CFSetGetValues(deviceSet, (const void **)devices);
+  for (CFIndex i = 0; i < CFSetGetCount(deviceSet); i++) {
+    IOHIDDeviceRef dev = devices[i];
+
+    CFNumberRef vendorRef =
+        IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDVendorIDKey));
+    CFNumberRef productRef =
+        IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDProductIDKey));
+
+    int vid = 0, pid = 0;
+    if (vendorRef)
+      CFNumberGetValue(vendorRef, kCFNumberIntType, &vid);
+    if (productRef)
+      CFNumberGetValue(productRef, kCFNumberIntType, &pid);
+
+    if (vid == vendorID && pid == productID) {
+      deviceFound = true;
     }
   }
-  contextCount = 0;
+  free(devices);
+  CFRelease(deviceSet);
 
-  if (hidManager) {
-    IOHIDManagerUnscheduleFromRunLoop(hidManager, CFRunLoopGetCurrent(),
-                                      kCFRunLoopDefaultMode);
-    IOHIDManagerClose(hidManager, kIOHIDOptionsTypeNone);
-    CFRelease(hidManager);
-    hidManager = NULL;
+  if (deviceFound == false) {
+    CFRelease(*hidManager);
+    return false;
   }
+  return true;
+}
 
-  if (runLoopStarted) {
-    CFRunLoopStop(CFRunLoopGetCurrent());
-    runLoopStarted = false;
-  }
+void Start(IOHIDManagerRef hidManager, CFRunLoopRef runLoop) {
+  printf("Starting run loop...\n");
+  printf("Start : = loop %p \n", runLoop);
+  printf("hid %p\n", hidManager);
+  IOHIDManagerScheduleWithRunLoop(hidManager, runLoop, kCFRunLoopDefaultMode);
+  // CFRunLoopPerformBlock(*runLoop,
+  // kCFRunLoopDefaultMode, ^{
+  //   printf("Starting run loop...\n");
+  //   CFRunLoopRun();
+  // });
+  // CFRunLoopWakeUp(*runLoop);
+  CFRunLoopRun();
 }
 
 void ListConnectedHIDDevices() {
@@ -181,6 +215,11 @@ void ListConnectedHIDDevices() {
   CFIndex count = CFSetGetCount(deviceSet);
   IOHIDDeviceRef *devices = malloc(sizeof(IOHIDDeviceRef) * count);
   CFSetGetValues(deviceSet, (const void **)devices);
+
+  // INFO: a keyboard may appear multiple times in deviceSet, why?
+  //  Composite devices: many keyboards are composite HID devices, they expose
+  //  multiple logical interfaces f.e. a keyboard, a consumer control (vol
+  //  up/down, brightness, etc.), possibly a touchpad or mouse if integrated.
 
   // Use a simple string array to track unique keys
   char **seenKeys = calloc(count, sizeof(char *));

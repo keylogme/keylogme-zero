@@ -11,6 +11,8 @@ import "C"
 
 import (
 	"fmt"
+	"log/slog"
+	"runtime"
 )
 
 var hidManager = map[int]map[int]chan inputEvent{}
@@ -18,20 +20,40 @@ var hidManager = map[int]map[int]chan inputEvent{}
 type keylogger struct {
 	vendorID  int
 	productID int
+	loop      C.CFRunLoopRef
+	hid       C.IOHIDManagerRef
 }
 
 func newKeylogger(productID string) (*keylogger, error) {
-	fmt.Println("heeheheheeee")
-	C.ListConnectedHIDDevices()
-	// match keyboard, mouse and trackpad devices
-	C.setupDevice(0x4653, 0x0001)
-
+	slog.Debug("new keylogger corne.....")
+	// C.ListConnectedHIDDevices()
+	deviceExists := make(chan bool)
+	k := &keylogger{vendorID: 0x4653, productID: 0x0001}
 	go func() {
-		C.Start()
+		runtime.LockOSThread()
+		fmt.Printf("loop go : %p\n", k.loop)
+		fmt.Printf("hid go : %p\n", k.hid)
+		exists := C.setupDevice(&k.hid, 0x4653, 0x0001)
+		deviceExists <- bool(exists)
+		if !exists {
+			// TODO: handle error no found
+			// return &keylogger{}, fmt.Errorf("Device not available\n")
+			return
+		}
+		k.loop = C.CFRunLoopGetCurrent()
+		fmt.Printf("hid go : %p\n", k.hid)
+		C.Start(k.hid, k.loop)
+		fmt.Println("Run loop has exited...")
 	}()
+
+	// wait for device to be found
+	if !<-deviceExists {
+		fmt.Println("Device not found")
+		return nil, fmt.Errorf("Device not available\n")
+	}
 	fmt.Println("keylogger started.............")
 
-	return &keylogger{vendorID: 0x4653, productID: 0x0001}, nil
+	return k, nil
 }
 
 func (k *keylogger) Read() chan inputEvent {
@@ -58,6 +80,7 @@ func (k *keylogger) Close() error {
 		return nil
 	}
 	delete(hidManager[k.vendorID], k.productID)
+	C.stopDevice(k.loop, k.hid)
 	return nil
 }
 
@@ -67,9 +90,11 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	pID := int(productID)
 
 	if _, ok := hidManager[vID]; !ok {
+		slog.Debug("Vendor id not in HIDManager")
 		return
 	}
 	if _, ok := hidManager[vID][pID]; !ok {
+		slog.Debug("Vendor id and product id not in HIDManager")
 		return
 	}
 	pressed := int32(value)
@@ -92,6 +117,17 @@ func GoHandleDeviceEvent(vendorID, productID, connected C.int) {
 	status := "disconnected"
 	if connected != 0 {
 		status = "connected"
+		// INFO: Read will add device to hidManager
+		return
 	}
+	// disconnect
 	fmt.Printf("[Device] %s: VID=0x%04x, PID=0x%04x\n", status, vendorID, productID)
+
+	if _, ok := hidManager[int(vendorID)]; !ok {
+		return
+	}
+	if _, ok := hidManager[int(vendorID)][int(productID)]; ok {
+		close(hidManager[int(vendorID)][int(productID)]) // close channel
+		delete(hidManager[int(vendorID)], int(productID))
+	}
 }
