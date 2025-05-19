@@ -69,6 +69,7 @@ func Start(
 			// slog.Info(
 			// 	fmt.Sprintf("Key :%d %s (release ? %t)\n", i.Code, i.KeyString(), i.KeyRelease()),
 			// )
+			// INFO: print info of shifted code and layer
 			if ssd.IsDetected() && ssd.Auto {
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
@@ -87,6 +88,7 @@ func Start(
 					)
 				}
 			}
+			// INFO: block save keylog if shifted code is possible
 			if ss.blockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
 				slog.Debug(
 					fmt.Sprintf("Blocked keylog save | %t %t\n", ss.blockSaveKeylog(), ssd.Auto),

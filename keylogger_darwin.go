@@ -25,14 +25,15 @@ type keylogger struct {
 }
 
 func newKeylogger(productID string) (*keylogger, error) {
-	slog.Debug("new keylogger corne.....")
 	// C.ListConnectedHIDDevices()
 	deviceExists := make(chan bool)
 	k := &keylogger{vendorID: 0x4653, productID: 0x0001}
 	go func() {
+		// INFO: lock goroutine to thread so CFRunLoopRun is in
+		// same goroutine's thread
 		runtime.LockOSThread()
-		fmt.Printf("loop go : %p\n", k.loop)
-		fmt.Printf("hid go : %p\n", k.hid)
+		defer runtime.UnlockOSThread()
+
 		exists := C.setupDevice(&k.hid, 0x4653, 0x0001)
 		deviceExists <- bool(exists)
 		if !exists {
@@ -41,34 +42,28 @@ func newKeylogger(productID string) (*keylogger, error) {
 			return
 		}
 		k.loop = C.CFRunLoopGetCurrent()
-		fmt.Printf("hid go : %p\n", k.hid)
 		C.Start(k.hid, k.loop)
 		fmt.Println("Run loop has exited...")
 	}()
 
 	// wait for device to be found
 	if !<-deviceExists {
-		fmt.Println("Device not found")
-		return nil, fmt.Errorf("Device not available\n")
+		slog.Debug("Device not found")
+		return nil, fmt.Errorf("Device not available")
 	}
-	fmt.Println("keylogger started.............")
-
+	slog.Debug("keylogger MacOS started")
 	return k, nil
 }
 
 func (k *keylogger) Read() chan inputEvent {
-	fmt.Println(hidManager)
 	if _, ok := hidManager[k.vendorID]; !ok {
-		fmt.Println(1)
 		hidManager[k.vendorID] = map[int]chan inputEvent{}
 	}
 	if _, ok := hidManager[k.vendorID][k.productID]; !ok {
-		fmt.Println(2)
 		event := make(chan inputEvent)
 		hidManager[k.vendorID][k.productID] = event
 		fmt.Println("Created channel keylogger....")
 	}
-	fmt.Println(3)
 	return hidManager[k.vendorID][k.productID]
 }
 
@@ -101,13 +96,13 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	fmt.Printf(
-		"[Event] code=%d, value=%d, VID=0x%04x, PID=0x%04x\n",
-		code,
-		value,
-		vendorID,
-		productID,
-	)
+	// fmt.Printf(
+	// 	"[Event] code=%d, value=%d, VID=0x%04x, PID=0x%04x\n",
+	// 	code,
+	// 	value,
+	// 	vendorID,
+	// 	productID,
+	// )
 	// c := uint16(code)
 	hidManager[vID][pID] <- inputEvent{Type: evKey, Code: uint16(code), Value: int32(value)}
 }

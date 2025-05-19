@@ -24,11 +24,11 @@ void HIDCallback(void *context, IOReturn result, void *sender,
   CFIndex pressed = IOHIDValueGetIntegerValue(value);
 
   if (usagePage == kHIDPage_KeyboardOrKeypad && usage >= 4 && usage <= 231) {
-    printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
+    // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
 
     GoHandleKeyEvent(usage, (int)pressed, ctx->vendorID, ctx->productID);
   } else if (usagePage == kHIDPage_Button && usage >= 1 && usage <= 8) {
-    printf("Click usage: 0x%x, pressed: %ld\n", usage, pressed);
+    // printf("Click usage: 0x%x, pressed: %ld\n", usage, pressed);
     GoHandleKeyEvent(usage, (int)pressed, ctx->vendorID, ctx->productID);
   }
 }
@@ -72,7 +72,7 @@ void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
 // integrated, etc )
 void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
                             IOHIDDeviceRef device) {
-  printf("Device matching callback\n");
+  // printf("Device matching callback\n");
   CFNumberRef vendorRef =
       IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVendorIDKey));
   CFNumberRef productRef =
@@ -117,8 +117,8 @@ CFMutableDictionaryRef CreateMatchingDict(int vendorID, int productID) {
 }
 
 bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
-  printf("setup device .... CFRunLoopGetCurrent() = %p\n",
-         CFRunLoopGetCurrent());
+  // printf("setup device .... CFRunLoopGetCurrent() = %p\n",
+  // CFRunLoopGetCurrent());
   *hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
   IOHIDManagerRegisterDeviceMatchingCallback(*hidManager,
                                              DeviceMatchingCallback, NULL);
@@ -187,9 +187,9 @@ bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
 }
 
 void Start(IOHIDManagerRef hidManager, CFRunLoopRef runLoop) {
-  printf("Starting run loop...\n");
-  printf("Start : = loop %p \n", runLoop);
-  printf("hid %p\n", hidManager);
+  // printf("Starting run loop...\n");
+  // printf("Start : = loop %p \n", runLoop);
+  // printf("hid %p\n", hidManager);
   IOHIDManagerScheduleWithRunLoop(hidManager, runLoop, kCFRunLoopDefaultMode);
   // CFRunLoopPerformBlock(*runLoop,
   // kCFRunLoopDefaultMode, ^{
