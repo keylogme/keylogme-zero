@@ -67,7 +67,7 @@ func TestWithPermission(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != "permission denied. run with root permission or use a user with access to /dev/tty0" {
+	if err.Error() != "permission denied. run with root permission" {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

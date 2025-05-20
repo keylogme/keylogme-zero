@@ -45,7 +45,8 @@ func TestDisconnectionDevice(t *testing.T) {
 	}
 	// disconnect device
 	slog.Info("Disconnecting device")
-	err = disconnectDeviceFile(df)
+	kl, _ := d.keylogger.(*keyLogger) // cast interface to struct
+	err = disconnectDeviceFile(kl.fd)
 	if err != nil {
 		t.Fatal(err)
 	}
