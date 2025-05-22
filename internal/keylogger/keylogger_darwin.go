@@ -1,4 +1,4 @@
-package keylog
+package keylogger
 
 /*
 // -I include current directory for headers
@@ -12,6 +12,7 @@ import "C"
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/keylogme/keylogme-zero/types"
 )
@@ -21,14 +22,14 @@ type KeyloggerInput struct {
 	ProductID types.Hex `json:"product_id"`
 }
 
-var hidManager = map[int]map[int]chan inputEvent{}
+var hidManager = map[int]map[int]chan InputEvent{}
 
 type keylogger struct {
 	vendorID  int
 	productID int
 }
 
-func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
+func NewKeylogger(kInput KeyloggerInput) (*keylogger, error) {
 	// C.ListConnectedHIDDevices()
 	exists := C.checkDeviceIsConnected(C.int(kInput.VendorID), C.int(kInput.ProductID))
 	if !exists {
@@ -49,12 +50,12 @@ func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
 	return k, nil
 }
 
-func (k *keylogger) Read() chan inputEvent {
+func (k *keylogger) Read() chan InputEvent {
 	if _, ok := hidManager[k.vendorID]; !ok {
-		hidManager[k.vendorID] = map[int]chan inputEvent{}
+		hidManager[k.vendorID] = map[int]chan InputEvent{}
 	}
 	if _, ok := hidManager[k.vendorID][k.productID]; !ok {
-		event := make(chan inputEvent)
+		event := make(chan InputEvent)
 		hidManager[k.vendorID][k.productID] = event
 		fmt.Println("Created channel keylogger....")
 	}
@@ -96,7 +97,7 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	hidManager[vID][pID] <- inputEvent{Type: evKey, Code: uint16(code), Value: int32(value)}
+	hidManager[vID][pID] <- InputEvent{Time: time.Now(), Code: uint16(code), Value: int32(value)}
 }
 
 //export GoHandleDeviceEvent

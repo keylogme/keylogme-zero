@@ -1,4 +1,4 @@
-package keylog
+package keylogger
 
 import (
 	"bytes"
@@ -8,9 +8,32 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"syscall"
+	"time"
+	"unsafe"
 
 	"github.com/keylogme/keylogme-zero/utils"
 )
+
+const (
+	// evKey is used to describe state changes of keyboards, buttons, or other key-like devices.
+	evKey eventType = 0x01
+)
+
+// eventType are groupings of codes under a logical input construct.
+// Each type has a set of applicable codes to be used in generating events.
+// See the ev section for details on valid codes for each type
+type eventType uint16
+
+// eventsize is size of structure of Inputevent
+var eventsize = int(unsafe.Sizeof(InputEvent{}))
+
+type inputEvent struct {
+	Time  syscall.Timeval
+	Type  eventType
+	Code  uint16
+	Value int32
+}
 
 type KeyloggerInput struct {
 	UsbName string `json:"usb_name"`
@@ -89,7 +112,7 @@ func wrapErrorRoot(err error) error {
 }
 
 // NewKeylogger creates a new keylogger for a device path
-func newKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
+func NewKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
 	k := &keyLogger{}
 	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", utils.IsRoot()))
 	if _, err := os.Stat(kInput.UsbName); err == nil {
@@ -106,9 +129,9 @@ func newKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
 // Read from file descriptor
 // Blocking call, returns channel
 // Make sure to close channel when finish
-func (k *keyLogger) Read() chan inputEvent {
-	event := make(chan inputEvent)
-	go func(event chan inputEvent) {
+func (k *keyLogger) Read() chan InputEvent {
+	event := make(chan InputEvent)
+	go func(event chan InputEvent) {
 		for {
 			e, err := k.read()
 			if err != nil {
@@ -126,7 +149,7 @@ func (k *keyLogger) Read() chan inputEvent {
 }
 
 // read from file description and parse binary into go struct
-func (k *keyLogger) read() (*inputEvent, error) {
+func (k *keyLogger) read() (*InputEvent, error) {
 	buffer := make([]byte, eventsize)
 	n, err := k.fd.Read(buffer)
 	// bypass EOF, maybe keyboard is connected
@@ -145,10 +168,22 @@ func (k *keyLogger) read() (*inputEvent, error) {
 }
 
 // eventFromBuffer parser bytes into InputEvent struct
-func (k *keyLogger) eventFromBuffer(buffer []byte) (*inputEvent, error) {
+func (k *keyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
 	event := &inputEvent{}
 	err := binary.Read(bytes.NewBuffer(buffer), binary.LittleEndian, event)
-	return event, err
+	if err != nil {
+		slog.Debug(fmt.Sprintf("error parsing buffer %s: %s\n", k.fd.Name(), err.Error()))
+		return nil, err
+	}
+	if event.Type != evKey {
+		slog.Debug(fmt.Sprintf("event type %d is not evKey\n", event.Type))
+		return nil, nil
+	}
+	return &InputEvent{
+		Time:  time.Unix(event.Time.Sec, event.Time.Usec*1000),
+		Code:  event.Code,
+		Value: KeyEvent(event.Value),
+	}, err
 }
 
 // Close file descriptor

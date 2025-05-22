@@ -1,6 +1,7 @@
 package keylog
 
 import (
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 	"github.com/keylogme/keylogme-zero/storage"
 	"github.com/keylogme/keylogme-zero/types"
 )
@@ -11,9 +12,9 @@ type KeylogmeZeroConfig struct {
 }
 
 type Config struct {
-	Devices        []DeviceInput   `json:"devices"`
-	ShortcutGroups []ShortcutGroup `json:"shortcut_groups"`
-	ShiftState     ShiftState      `json:"shift_state"`
+	Devices        []keylogger.DeviceInput `json:"devices"`
+	ShortcutGroups []ShortcutGroup         `json:"shortcut_groups"`
+	ShiftState     ShiftState              `json:"shift_state"`
 }
 
 type ShiftState struct {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 type LayerCode struct {
@@ -33,7 +35,7 @@ type layerDetector struct {
 	mapKeys       map[uint16]bool
 }
 
-func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
+func (ld *layerDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetected {
 	sd := ld.shiftDetector.handleKeyEvent(ke)
 	if sd.IsDetected() && sd.Auto {
 		return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId, Id: sd.ShortcutId}
@@ -59,7 +61,10 @@ type layersDetector struct {
 	currentLayerDetected *layerDetector
 }
 
-func NewLayerDetector(devices []DeviceInput, shiftStateConfig ShiftState) *layersDetector {
+func NewLayerDetector(
+	devices []keylogger.DeviceInput,
+	shiftStateConfig ShiftState,
+) *layersDetector {
 	l := map[string][]layerDetector{}
 	for _, dev := range devices {
 		l[dev.DeviceId] = []layerDetector{}
@@ -103,7 +108,7 @@ func NewLayerDetector(devices []DeviceInput, shiftStateConfig ShiftState) *layer
 	return &layersDetector{layers: l}
 }
 
-func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
+func (lsd *layersDetector) isLayerChangeDetected(ke keylogger.DeviceEvent) LayerDetected {
 	oldLayerId := lsd.GetCurrentLayerId()
 	ld := lsd.handleKeyEvent(ke)
 	if ld.IsDetected() {
@@ -118,7 +123,7 @@ func (lsd *layersDetector) isLayerChangeDetected(ke DeviceEvent) LayerDetected {
 	return LayerDetected{}
 }
 
-func (lsd *layersDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
+func (lsd *layersDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetected {
 	numBlockedLayers := 0
 	idxPossible := 0
 	possibleDetection := LayerDetected{}

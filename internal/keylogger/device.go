@@ -1,10 +1,12 @@
-package keylog
+package keylogger
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 	"time"
+
+	keylog "github.com/keylogme/keylogme-zero"
 )
 
 const (
@@ -19,14 +21,14 @@ type Device struct {
 }
 
 type DeviceInput struct {
-	DeviceId string  `json:"device_id"`
-	Name     string  `json:"name"`
-	Layers   []Layer `json:"layers"`
+	DeviceId string         `json:"device_id"`
+	Name     string         `json:"name"`
+	Layers   []keylog.Layer `json:"layers"`
 	KeyloggerInput
 }
 
 type DeviceEvent struct {
-	inputEvent
+	InputEvent
 	DeviceId string
 	ExecTime time.Time
 }
@@ -68,7 +70,7 @@ func (d *Device) start() bool {
 				now.Format("2006-01-02 15:04:05.000000"),
 			))
 
-			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
+			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
 			d.sendInput <- de
 		}
 	}
@@ -81,7 +83,7 @@ func (d *Device) IsConnected() bool {
 func (d *Device) handleReconnects() {
 	for {
 		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
-		newK, err := newKeylogger(d.KeyloggerInput)
+		newK, err := NewKeylogger(d.KeyloggerInput)
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {

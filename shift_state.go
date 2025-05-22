@@ -3,6 +3,8 @@ package keylog
 import (
 	"fmt"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 // Auto is true when the shift state is triggered by the microcontroller
@@ -98,7 +100,7 @@ func (skd *shiftStateDetector) blockSaveKeylog() bool {
 	return skd.possibleAutoShiftState.IsDetected()
 }
 
-func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected {
+func (skd *shiftStateDetector) handleKeyEvent(ke keylogger.DeviceEvent) shiftStateDetected {
 	sd := skd.holdDetector.handleKeyEvent(ke)
 	skd.setTimes(ke)
 	if sd.IsDetected() && skd.isHolded() {
@@ -135,7 +137,7 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 	return shiftStateDetected{}
 }
 
-func (skd *shiftStateDetector) setTimes(ke DeviceEvent) {
+func (skd *shiftStateDetector) setTimes(ke keylogger.DeviceEvent) {
 	t := ke.ExecTime
 
 	if skd.isHolded() && skd.lastModPressTime == 0 {

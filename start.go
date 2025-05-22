@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 	"github.com/keylogme/keylogme-zero/storage"
 )
 
 func Start(
-	chEvt chan DeviceEvent,
-	devices *[]Device,
+	chEvt chan keylogger.DeviceEvent,
+	devices *[]keylogger.Device,
 	sd *shortcutsDetector,
 	ss *shiftStateDetector,
 	ld *layersDetector,
@@ -95,7 +96,7 @@ func Start(
 				)
 				continue
 			}
-			if i.Type == evKey && i.KeyRelease() {
+			if i.KeyRelease() {
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
 						fmt.Sprintf(

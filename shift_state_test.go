@@ -3,6 +3,8 @@ package keylog
 import (
 	"testing"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 func TestShiftStateDetectorMCU(t *testing.T) {
@@ -12,26 +14,26 @@ func TestShiftStateDetectorMCU(t *testing.T) {
 	devId := "1"
 	shiftKey := uint16(42)
 
-	ev := getFakeEvent(devId, shiftKey, KeyPress)
+	ev := getFakeEvent(devId, shiftKey, keylogger.KeyPress)
 	ssDect := ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	time.Sleep(config.ThresholdAuto.Duration / 2)
 	// press second key
-	ev = getFakeEvent(devId, 2, KeyPress)
+	ev = getFakeEvent(devId, 2, keylogger.KeyPress)
 	ssDect = ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	// release second key
-	ev = getFakeEvent(devId, 2, KeyRelease)
+	ev = getFakeEvent(devId, 2, keylogger.KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	time.Sleep(config.ThresholdAuto.Duration / 2)
-	ev = getFakeEvent(devId, shiftKey, KeyRelease)
+	ev = getFakeEvent(devId, shiftKey, keylogger.KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if !ssDect.IsDetected() {
 		t.Fatal("Detection expected")
@@ -48,7 +50,7 @@ func TestShiftStateDetectorHuman_PressSlow(t *testing.T) {
 	devId := "1"
 	shiftKey := uint16(42)
 
-	ev := getFakeEvent(devId, shiftKey, KeyPress)
+	ev := getFakeEvent(devId, shiftKey, keylogger.KeyPress)
 	ssDect := ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
@@ -56,13 +58,13 @@ func TestShiftStateDetectorHuman_PressSlow(t *testing.T) {
 
 	time.Sleep(config.ThresholdAuto.Duration + 1*time.Millisecond)
 	// press second key
-	ev = getFakeEvent(devId, 2, KeyPress)
+	ev = getFakeEvent(devId, 2, keylogger.KeyPress)
 	ssDect = ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	// release second key
-	ev = getFakeEvent(devId, 2, KeyRelease)
+	ev = getFakeEvent(devId, 2, keylogger.KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if !ssDect.IsDetected() {
 		t.Fatal("Detection expected")
@@ -80,7 +82,7 @@ func TestShiftStateDetectorHuman_ReleaseSlow(t *testing.T) {
 	devId := "1"
 	shiftKey := uint16(42)
 
-	ev := getFakeEvent(devId, shiftKey, KeyPress)
+	ev := getFakeEvent(devId, shiftKey, keylogger.KeyPress)
 	ssDect := ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
@@ -88,19 +90,19 @@ func TestShiftStateDetectorHuman_ReleaseSlow(t *testing.T) {
 
 	time.Sleep(config.ThresholdAuto.Duration / 2)
 	// press second key
-	ev = getFakeEvent(devId, 2, KeyPress)
+	ev = getFakeEvent(devId, 2, keylogger.KeyPress)
 	ssDect = ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	// release second key
-	ev = getFakeEvent(devId, 2, KeyRelease)
+	ev = getFakeEvent(devId, 2, keylogger.KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if ssDect.IsDetected() {
 		t.Fatal("Detection not expected")
 	}
 	time.Sleep(config.ThresholdAuto.Duration + 1*time.Millisecond)
-	ev = getFakeEvent(devId, shiftKey, KeyRelease)
+	ev = getFakeEvent(devId, shiftKey, keylogger.KeyRelease)
 	ssDect = ssd.handleKeyEvent(ev)
 	if !ssDect.IsDetected() {
 		t.Fatal("Detection expected")
@@ -119,25 +121,25 @@ func TestShiftStateBlockKeylog(t *testing.T) {
 	shiftKey := uint16(42)
 
 	// keypress
-	ev := getFakeEvent(devId, shiftKey, KeyPress)
+	ev := getFakeEvent(devId, shiftKey, keylogger.KeyPress)
 	ssd.handleKeyEvent(ev)
 	if ssd.blockSaveKeylog() {
 		t.Fatal("Block not expected")
 	}
 	time.Sleep(config.ThresholdAuto.Duration / 2)
-	ev = getFakeEvent(devId, 2, KeyPress)
+	ev = getFakeEvent(devId, 2, keylogger.KeyPress)
 	ssd.handleKeyEvent(ev)
 	if ssd.blockSaveKeylog() {
 		t.Fatal("Block not expected")
 	}
 	// keyrelease
-	ev = getFakeEvent(devId, 2, KeyRelease)
+	ev = getFakeEvent(devId, 2, keylogger.KeyRelease)
 	ssd.handleKeyEvent(ev)
 	if !ssd.blockSaveKeylog() {
 		t.Fatal("Block expected")
 	}
 	time.Sleep(config.ThresholdAuto.Duration + 1*time.Millisecond)
-	ev = getFakeEvent(devId, shiftKey, KeyRelease)
+	ev = getFakeEvent(devId, shiftKey, keylogger.KeyRelease)
 	sd := ssd.handleKeyEvent(ev)
 	if ssd.blockSaveKeylog() {
 		t.Fatal("Block not expected")
@@ -149,7 +151,7 @@ func TestShiftStateBlockKeylog(t *testing.T) {
 		t.Fatal("Auto not expected")
 	}
 	// press shift again
-	ev = getFakeEvent(devId, shiftKey, KeyPress)
+	ev = getFakeEvent(devId, shiftKey, keylogger.KeyPress)
 	ssd.handleKeyEvent(ev)
 	if ssd.blockSaveKeylog() {
 		t.Fatal("Block not expected")

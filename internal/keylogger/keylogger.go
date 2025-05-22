@@ -1,6 +1,6 @@
-package keylog
+package keylogger
 
 type Keylogger interface {
-	Read() chan inputEvent
+	Read() chan InputEvent
 	Close() error
 }

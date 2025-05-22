@@ -9,6 +9,7 @@ import (
 	"time"
 
 	k0 "github.com/keylogme/keylogme-zero"
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 	"github.com/keylogme/keylogme-zero/storage"
 	"github.com/keylogme/keylogme-zero/utils"
 )
@@ -21,6 +22,14 @@ import (
 // See readme
 
 func main() {
+	// // Create a TextHandler with debug level
+	// handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+	// 	Level: slog.LevelDebug, // Set minimum log level to Debug
+	// })
+	// logger := slog.New(handler)
+	//
+	// // Replace the default logger if needed
+	// slog.SetDefault(logger)
 	// Get config
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {
@@ -29,6 +38,7 @@ func main() {
 	var config k0.KeylogmeZeroConfig
 	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
+		log.Fatal(err.Error())
 		log.Fatal("Could not parse config file")
 	}
 
@@ -36,10 +46,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	ffs := storage.MustGetNewFileStorage(ctx, config.Storage)
 
-	chEvt := make(chan k0.DeviceEvent)
-	devices := []k0.Device{}
+	chEvt := make(chan keylogger.DeviceEvent)
+	devices := []keylogger.Device{}
 	for _, dev := range config.Keylog.Devices {
-		d := k0.GetDevice(ctx, dev, chEvt)
+		d := keylogger.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
 	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)

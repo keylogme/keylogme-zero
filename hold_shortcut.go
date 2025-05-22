@@ -2,6 +2,8 @@ package keylog
 
 import (
 	"slices"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 type holdShortcutDetector struct {
@@ -53,11 +55,11 @@ func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
 	hd.shortcuts = newS
 }
 
-func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
-	if ke.Type == evKey && ke.KeyRelease() && hd.isHolded() {
+func (hd *holdShortcutDetector) handleKeyEvent(ke keylogger.DeviceEvent) ShortcutDetected {
+	if ke.KeyRelease() && hd.isHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
 	}
-	if ke.Type == evKey && ke.KeyPress() &&
+	if ke.KeyPress() &&
 		slices.Contains(hd.modifiers, ke.Code) &&
 		!slices.Contains(hd.modPress, ke.Code) {
 		hd.modPress = append(hd.modPress, ke.Code)

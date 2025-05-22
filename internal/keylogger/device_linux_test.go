@@ -1,4 +1,4 @@
-package keylog
+package keylogger
 
 import (
 	"context"
@@ -6,11 +6,13 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/utils"
 )
 
 func TestDisconnectionDevice(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer checkGoroutineLeak(t, before)
+	defer utils.CheckGoroutineLeak(t, before)
 
 	df, err := initDeviceFile()
 	if err != nil {
@@ -22,9 +24,9 @@ func TestDisconnectionDevice(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	intputDevice := DeviceInput{
-		DeviceId: "device1",
-		Name:     "device1",
-		UsbName:  filepath,
+		DeviceId:       "device1",
+		Name:           "device1",
+		KeyloggerInput: KeyloggerInput{UsbName: filepath},
 	}
 
 	chEvt := make(chan DeviceEvent, 10)

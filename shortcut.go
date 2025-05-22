@@ -3,6 +3,8 @@ package keylog
 import (
 	"fmt"
 	"log"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 type ShortcutType string
@@ -78,7 +80,7 @@ func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
 	return scs, nil
 }
 
-func (sd *shortcutsDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
+func (sd *shortcutsDetector) handleKeyEvent(ke keylogger.DeviceEvent) ShortcutDetected {
 	sdect := sd.SeqDetector.handleKeyEvent(ke)
 	if sdect.ShortcutId != "" {
 		return sdect
