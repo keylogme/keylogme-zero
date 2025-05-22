@@ -23,6 +23,9 @@ void HIDCallback(void *context, IOReturn result, void *sender,
   uint32_t usage = IOHIDElementGetUsage(element);
   CFIndex pressed = IOHIDValueGetIntegerValue(value);
 
+  // printf("HIDCallback: usagePage: %d, usage: %d, pressed: %ld\n", usagePage,
+  //        usage, pressed);
+  // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
   if (usagePage == kHIDPage_KeyboardOrKeypad && usage >= 4 && usage <= 231) {
     // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
 
@@ -53,7 +56,7 @@ void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
   if (!ctx)
     return;
 
-  IOHIDDeviceUnscheduleFromRunLoop(ctx->device, CFRunLoopGetCurrent(),
+  IOHIDDeviceUnscheduleFromRunLoop(ctx->device, ctx->runLoop,
                                    kCFRunLoopDefaultMode);
 
   GoHandleDeviceEvent(ctx->vendorID, ctx->productID, 0); // disconnected
@@ -91,8 +94,7 @@ void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
   ctx->runLoop = CFRunLoopGetCurrent();
 
   IOHIDDeviceRegisterInputValueCallback(device, HIDCallback, ctx);
-  IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetCurrent(),
-                                 kCFRunLoopDefaultMode);
+  IOHIDDeviceScheduleWithRunLoop(device, ctx->runLoop, kCFRunLoopDefaultMode);
   IOHIDDeviceRegisterRemovalCallback(device, DeviceRemovalCallback, ctx);
 
   GoHandleDeviceEvent(v, p, 1); // connected
@@ -116,6 +118,51 @@ CFMutableDictionaryRef CreateMatchingDict(int vendorID, int productID) {
   return dict;
 }
 
+CFMutableDictionaryRef CreateMatchingKbds() {
+  CFMutableDictionaryRef dict = CFDictionaryCreateMutable(
+      kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
+      &kCFTypeDictionaryValueCallBacks);
+  int usagePage = kHIDPage_GenericDesktop;
+  CFNumberRef genericDesktop =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usagePage);
+  int usage = kHIDUsage_GD_Keyboard;
+  CFNumberRef keyboard =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
+
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsagePageKey), genericDesktop);
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsageKey), keyboard);
+
+  CFRelease(genericDesktop);
+  CFRelease(keyboard);
+  return dict;
+}
+
+CFMutableDictionaryRef
+CreateMatchingDictByProductName(const char *productName) {
+  if (productName == NULL) {
+    return NULL;
+  }
+
+  // Convert C string to CFStringRef
+  CFStringRef cfProductName = CFStringCreateWithCString(
+      kCFAllocatorDefault, productName, kCFStringEncodingUTF8);
+  if (!cfProductName) {
+    return NULL;
+  }
+
+  // Create dictionary
+  CFMutableDictionaryRef dict = CFDictionaryCreateMutable(
+      kCFAllocatorDefault, 1, &kCFTypeDictionaryKeyCallBacks,
+      &kCFTypeDictionaryValueCallBacks);
+
+  if (dict) {
+    CFDictionarySetValue(dict, CFSTR(kIOHIDProductKey), cfProductName);
+  }
+
+  CFRelease(cfProductName);
+  return dict;
+}
+
 bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
   // printf("setup device .... CFRunLoopGetCurrent() = %p\n",
   // CFRunLoopGetCurrent());
@@ -131,8 +178,16 @@ bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
     return false;
   }
   // setup listener device
-  CFDictionaryRef dict = CreateMatchingDict(vendorID, productID);
-  // use MatchingMultiple because SetDeviceMatching overrides prev matches
+  // CFDictionaryRef dict = CreateMatchingDict(vendorID, productID);
+  CFDictionaryRef dict = CreateMatchingKbds();
+
+  //****************
+  // CFDictionaryRef dict =
+  //     CreateMatchingDictByProductName("Apple Internal Keyboard / Trackpad");
+  // IOHIDManagerSetDeviceMatching(*hidManager, dict);
+  //****************
+
+  // INFO: use MatchingMultiple because SetDeviceMatching overrides prev matches
   IOHIDManagerSetDeviceMatchingMultiple(
       *hidManager,
       CFArrayCreate(NULL, (const void **)&dict, 1, &kCFTypeArrayCallBacks));
@@ -261,8 +316,8 @@ void ListConnectedHIDDevices() {
       continue;
 
     // Print and record new key
-    printf("Device: %s | Vendor ID: 0x%04x | Product ID: 0x%04x\n", name, vid,
-           pid);
+    printf("Device: %s | Vendor ID: 0x%04x | Product ID: 0x%04x %d %d\n", name,
+           vid, pid, vid, pid);
     seenKeys[seenCount++] = strdup(key);
   }
 
