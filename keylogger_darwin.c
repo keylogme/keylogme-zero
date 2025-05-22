@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+static IOHIDManagerRef hidManager = NULL;
+static CFRunLoopRef runLoop = NULL;
+static bool runLoopStarted = false;
+
 typedef struct {
   IOHIDDeviceRef device;
   int vendorID;
@@ -19,16 +23,19 @@ void HIDCallback(void *context, IOReturn result, void *sender,
                  IOHIDValueRef value) {
   HIDDeviceContext *ctx = (HIDDeviceContext *)context;
   IOHIDElementRef element = IOHIDValueGetElement(value);
+  if (!ctx || !element) {
+    printf("HIDCallback: context or element is NULL\n");
+    return;
+  }
   uint32_t usagePage = IOHIDElementGetUsagePage(element);
   uint32_t usage = IOHIDElementGetUsage(element);
   CFIndex pressed = IOHIDValueGetIntegerValue(value);
 
   // printf("HIDCallback: usagePage: %d, usage: %d, pressed: %ld\n", usagePage,
   //        usage, pressed);
-  // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
+  // printf("Key usage: 0x%x 0x%x, pressed: %ld\n", usagePage, usage, pressed);
   if (usagePage == kHIDPage_KeyboardOrKeypad && usage >= 4 && usage <= 231) {
     // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
-
     GoHandleKeyEvent(usage, (int)pressed, ctx->vendorID, ctx->productID);
   } else if (usagePage == kHIDPage_Button && usage >= 1 && usage <= 8) {
     // printf("Click usage: 0x%x, pressed: %ld\n", usage, pressed);
@@ -36,19 +43,19 @@ void HIDCallback(void *context, IOReturn result, void *sender,
   }
 }
 
-void stopDevice(CFRunLoopRef runLoop, IOHIDManagerRef manager) {
-
-  IOHIDManagerUnscheduleFromRunLoop(manager, runLoop, kCFRunLoopDefaultMode);
-  IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
-  CFRelease(manager);
-
-  // Stop loop
-  CFRunLoopPerformBlock(runLoop, kCFRunLoopDefaultMode, ^{
-    CFRunLoopStop(runLoop);
-  });
-  CFRunLoopWakeUp(runLoop);
-  printf("Finished stopping device\n");
-}
+// void stopDevice(CFRunLoopRef runLoop, IOHIDManagerRef manager) {
+//
+//   IOHIDManagerUnscheduleFromRunLoop(manager, runLoop, kCFRunLoopDefaultMode);
+//   IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
+//   CFRelease(manager);
+//
+//   // Stop loop
+//   CFRunLoopPerformBlock(runLoop, kCFRunLoopDefaultMode, ^{
+//     CFRunLoopStop(runLoop);
+//   });
+//   CFRunLoopWakeUp(runLoop);
+//   printf("Finished stopping device\n");
+// }
 
 void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
   HIDDeviceContext *ctx = (HIDDeviceContext *)context;
@@ -58,11 +65,12 @@ void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
 
   IOHIDDeviceUnscheduleFromRunLoop(ctx->device, ctx->runLoop,
                                    kCFRunLoopDefaultMode);
+  IOHIDDeviceClose(ctx->device, kIOHIDOptionsTypeNone);
 
   GoHandleDeviceEvent(ctx->vendorID, ctx->productID, 0); // disconnected
 
   // cleanup
-  stopDevice(ctx->runLoop, ctx->manager);
+  // stopDevice(ctx->runLoop, ctx->manager);
 }
 
 void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
@@ -75,7 +83,7 @@ void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
 // integrated, etc )
 void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
                             IOHIDDeviceRef device) {
-  // printf("Device matching callback\n");
+  printf("Device matching callback\n");
   CFNumberRef vendorRef =
       IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVendorIDKey));
   CFNumberRef productRef =
@@ -93,8 +101,15 @@ void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
   ctx->manager = (IOHIDManagerRef)sender;
   ctx->runLoop = CFRunLoopGetCurrent();
 
+  IOReturn openResult = IOHIDDeviceOpen(device, kIOHIDOptionsTypeNone);
+  if (openResult != kIOReturnSuccess) {
+    printf("IOHIDDeviceOpen failed: %d\n", openResult);
+    free(ctx);
+    return;
+  }
   IOHIDDeviceRegisterInputValueCallback(device, HIDCallback, ctx);
-  IOHIDDeviceScheduleWithRunLoop(device, ctx->runLoop, kCFRunLoopDefaultMode);
+  IOHIDDeviceScheduleWithRunLoop(device, CFRunLoopGetCurrent(),
+                                 kCFRunLoopDefaultMode);
   IOHIDDeviceRegisterRemovalCallback(device, DeviceRemovalCallback, ctx);
 
   GoHandleDeviceEvent(v, p, 1); // connected
@@ -118,7 +133,7 @@ CFMutableDictionaryRef CreateMatchingDict(int vendorID, int productID) {
   return dict;
 }
 
-CFMutableDictionaryRef CreateMatchingKbds() {
+CFMutableDictionaryRef CreateMatchingKeyboard() {
   CFMutableDictionaryRef dict = CFDictionaryCreateMutable(
       kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
       &kCFTypeDictionaryValueCallBacks);
@@ -134,6 +149,44 @@ CFMutableDictionaryRef CreateMatchingKbds() {
 
   CFRelease(genericDesktop);
   CFRelease(keyboard);
+  return dict;
+}
+
+CFMutableDictionaryRef CreateMatchingPointer() {
+  CFMutableDictionaryRef dict = CFDictionaryCreateMutable(
+      kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
+      &kCFTypeDictionaryValueCallBacks);
+  int usagePage = kHIDPage_GenericDesktop;
+  CFNumberRef genericDesktop =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usagePage);
+  int usage = kHIDUsage_GD_Pointer;
+  CFNumberRef pointer =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
+
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsagePageKey), genericDesktop);
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsageKey), pointer);
+
+  CFRelease(genericDesktop);
+  CFRelease(pointer);
+  return dict;
+}
+
+CFMutableDictionaryRef CreateMatchingMouse() {
+  CFMutableDictionaryRef dict = CFDictionaryCreateMutable(
+      kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks,
+      &kCFTypeDictionaryValueCallBacks);
+  int usagePage = kHIDPage_GenericDesktop;
+  CFNumberRef genericDesktop =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usagePage);
+  int usage = kHIDUsage_GD_Mouse;
+  CFNumberRef mouse =
+      CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
+
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsagePageKey), genericDesktop);
+  CFDictionarySetValue(dict, CFSTR(kIOHIDDeviceUsageKey), mouse);
+
+  CFRelease(genericDesktop);
+  CFRelease(mouse);
   return dict;
 }
 
@@ -163,52 +216,104 @@ CreateMatchingDictByProductName(const char *productName) {
   return dict;
 }
 
-bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
+void Start() {
+  // printf("%d\n", runLoopStarted);
+  if (hidManager) {
+    printf("Run loop already started, not setting up device again.\n");
+    return;
+  }
   // printf("setup device .... CFRunLoopGetCurrent() = %p\n",
   // CFRunLoopGetCurrent());
-  *hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
-  IOHIDManagerRegisterDeviceMatchingCallback(*hidManager,
-                                             DeviceMatchingCallback, NULL);
-  IOHIDManagerRegisterDeviceRemovalCallback(*hidManager,
+  hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+  IOHIDManagerRegisterDeviceMatchingCallback(hidManager, DeviceMatchingCallback,
+                                             NULL);
+  IOHIDManagerRegisterDeviceRemovalCallback(hidManager,
                                             ManagerDeviceRemovalCallback, NULL);
-  IOReturn ret = IOHIDManagerOpen(*hidManager, kIOHIDOptionsTypeNone);
+  IOReturn ret = IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
   if (ret != kIOReturnSuccess) {
     printf("IOHIDManagerOpen failed: %d\n", ret);
-    CFRelease(*hidManager);
-    return false;
+    CFRelease(hidManager);
+    return;
   }
   // setup listener device
-  // CFDictionaryRef dict = CreateMatchingDict(vendorID, productID);
-  CFDictionaryRef dict = CreateMatchingKbds();
+  CFMutableArrayRef matchingArray =
+      CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+  CFDictionaryRef dictKeyboard = CreateMatchingKeyboard();
+  CFArrayAppendValue(matchingArray, dictKeyboard);
+  CFRelease(dictKeyboard);
+  CFDictionaryRef dictPointer = CreateMatchingPointer();
+  CFArrayAppendValue(matchingArray, dictPointer);
+  CFRelease(dictPointer);
+  CFDictionaryRef dictMouse = CreateMatchingMouse();
+  CFArrayAppendValue(matchingArray, dictMouse);
+  CFRelease(dictMouse);
 
-  //****************
-  // CFDictionaryRef dict =
-  //     CreateMatchingDictByProductName("Apple Internal Keyboard / Trackpad");
-  // IOHIDManagerSetDeviceMatching(*hidManager, dict);
-  //****************
+  // INFO: use MatchingMultiple because SetDeviceMatching overrides prev
+  // matches
+  IOHIDManagerSetDeviceMatchingMultiple(hidManager, matchingArray);
+  CFRelease(matchingArray);
+  // Start
+  runLoop = CFRunLoopGetCurrent();
+  IOHIDManagerScheduleWithRunLoop(hidManager, runLoop, kCFRunLoopDefaultMode);
+  runLoopStarted = true;
 
-  // INFO: use MatchingMultiple because SetDeviceMatching overrides prev matches
-  IOHIDManagerSetDeviceMatchingMultiple(
-      *hidManager,
-      CFArrayCreate(NULL, (const void **)&dict, 1, &kCFTypeArrayCallBacks));
-  // IOHIDManagerSetDeviceMatching(hidManager, dict);
-  CFRelease(dict);
-  // check  if device is available now
-  CFSetRef deviceSet = IOHIDManagerCopyDevices(*hidManager);
+  // Blocking call
+  printf("Starting run loop...\n");
+  printf("%d\n", runLoopStarted);
+  CFRunLoopRun();
+
+  // cleanup
+  Stop();
+  runLoopStarted = false;
+  hidManager = NULL;
+  runLoop = NULL;
+}
+
+void Stop() {
+  if (!runLoopStarted) {
+    return;
+  }
+  if (hidManager && runLoop) {
+    IOHIDManagerUnscheduleFromRunLoop(hidManager, runLoop,
+                                      kCFRunLoopDefaultMode);
+    IOHIDManagerClose(hidManager, kIOHIDOptionsTypeNone);
+    CFRelease(hidManager);
+    hidManager = NULL;
+    printf("Run loop unscheduled and HID manager released.\n");
+    CFRunLoopStop(runLoop);
+    runLoop = NULL;
+    runLoopStarted = false;
+    printf("Run loop stopped.\n");
+  }
+}
+
+bool checkDeviceIsConnected(int vendorID, int productID) {
+  IOHIDManagerRef mgr =
+      IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+  IOHIDManagerOpen(mgr, kIOHIDOptionsTypeNone);
+
+  // match
+  CFMutableArrayRef matchingArray =
+      CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+  CFDictionaryRef dictKeyboard = CreateMatchingKeyboard();
+  CFArrayAppendValue(matchingArray, dictKeyboard);
+  CFRelease(dictKeyboard);
+  CFDictionaryRef dictPointer = CreateMatchingPointer();
+  CFArrayAppendValue(matchingArray, dictPointer);
+  CFRelease(dictPointer);
+  CFDictionaryRef dictMouse = CreateMatchingMouse();
+  CFArrayAppendValue(matchingArray, dictMouse);
+  CFRelease(dictMouse);
+
+  IOHIDManagerSetDeviceMatchingMultiple(mgr, matchingArray);
+  CFRelease(matchingArray);
+  //
+
+  CFSetRef deviceSet = IOHIDManagerCopyDevices(mgr);
   if (!deviceSet) {
     printf("No HID devices found.\n");
-    CFRelease(*hidManager);
     return false;
   }
-
-  if (!deviceSet || CFSetGetCount(deviceSet) == 0) {
-    if (deviceSet) {
-      CFRelease(deviceSet);
-    }
-    CFRelease(*hidManager);
-    return false;
-  }
-
   bool deviceFound = false;
   IOHIDDeviceRef *devices =
       malloc(sizeof(IOHIDDeviceRef) * CFSetGetCount(deviceSet));
@@ -229,30 +334,17 @@ bool setupDevice(IOHIDManagerRef *hidManager, int vendorID, int productID) {
 
     if (vid == vendorID && pid == productID) {
       deviceFound = true;
+      break;
     }
   }
   free(devices);
   CFRelease(deviceSet);
+  CFRelease(mgr);
 
   if (deviceFound == false) {
-    CFRelease(*hidManager);
     return false;
   }
   return true;
-}
-
-void Start(IOHIDManagerRef hidManager, CFRunLoopRef runLoop) {
-  // printf("Starting run loop...\n");
-  // printf("Start : = loop %p \n", runLoop);
-  // printf("hid %p\n", hidManager);
-  IOHIDManagerScheduleWithRunLoop(hidManager, runLoop, kCFRunLoopDefaultMode);
-  // CFRunLoopPerformBlock(*runLoop,
-  // kCFRunLoopDefaultMode, ^{
-  //   printf("Starting run loop...\n");
-  //   CFRunLoopRun();
-  // });
-  // CFRunLoopWakeUp(*runLoop);
-  CFRunLoopRun();
 }
 
 void ListConnectedHIDDevices() {
@@ -316,8 +408,8 @@ void ListConnectedHIDDevices() {
       continue;
 
     // Print and record new key
-    printf("Device: %s | Vendor ID: 0x%04x | Product ID: 0x%04x %d %d\n", name,
-           vid, pid, vid, pid);
+    printf("Device: %s | Product ID: 0x%04x | Vendor ID: 0x%04x | %d %d\n",
+           name, pid, vid, pid, vid);
     seenKeys[seenCount++] = strdup(key);
   }
 

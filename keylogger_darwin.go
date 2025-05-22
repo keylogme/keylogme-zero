@@ -12,7 +12,6 @@ import "C"
 import (
 	"fmt"
 	"log/slog"
-	"runtime"
 
 	"github.com/keylogme/keylogme-zero/types"
 )
@@ -27,50 +26,26 @@ var hidManager = map[int]map[int]chan inputEvent{}
 type keylogger struct {
 	vendorID  int
 	productID int
-	loop      C.CFRunLoopRef
-	hid       C.IOHIDManagerRef
 }
 
 func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
-	C.ListConnectedHIDDevices()
-	deviceExists := make(chan bool)
-	k := &keylogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
-	slog.Debug(
-		fmt.Sprintf(
-			"Opening keylogger for device VID=0x%04x, PID=0x%04x\n",
-			k.vendorID,
-			k.productID,
-		),
-	)
-	go func() {
-		// INFO: lock goroutine to thread so CFRunLoopRun is in
-		// same goroutine's thread
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-
-		exists := C.setupDevice(
-			&k.hid,
-			C.int(k.vendorID),
-			C.int(k.productID),
-		)
-		deviceExists <- bool(exists)
-		if !exists {
-			// TODO: handle error no found
-			// return &keylogger{}, fmt.Errorf("Device not available\n")
-			return
-		}
-		k.loop = C.CFRunLoopGetCurrent()
-		C.Start(k.hid, k.loop)
-		fmt.Println("Run loop has exited...")
-	}()
-
-	// wait for device to be found
-	if !<-deviceExists {
+	// C.ListConnectedHIDDevices()
+	exists := C.checkDeviceIsConnected(C.int(kInput.VendorID), C.int(kInput.ProductID))
+	if !exists {
 		slog.Debug("Device not found")
 		return nil, fmt.Errorf("Device not available")
 	}
-	close(deviceExists)
-	slog.Debug("keylogger MacOS started")
+	k := &keylogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
+
+	go func() {
+		// INFO: lock goroutine to thread so CFRunLoopRun is in
+		// same goroutine's thread
+		// runtime.LockOSThread()
+		// defer runtime.UnlockOSThread()
+
+		// TODO: add mutex to prevent multiple calls
+		C.Start()
+	}()
 	return k, nil
 }
 
@@ -94,7 +69,13 @@ func (k *keylogger) Close() error {
 		return nil
 	}
 	delete(hidManager[k.vendorID], k.productID)
-	C.stopDevice(k.loop, k.hid)
+	if len(hidManager[k.vendorID]) == 0 {
+		delete(hidManager, k.vendorID)
+	}
+	// stop if no devices left
+	if len(hidManager) == 0 {
+		C.Stop()
+	}
 	return nil
 }
 
@@ -115,14 +96,6 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	// fmt.Printf(
-	// 	"[Event] code=%d, value=%d, VID=0x%04x, PID=0x%04x\n",
-	// 	code,
-	// 	value,
-	// 	vendorID,
-	// 	productID,
-	// )
-	// c := uint16(code)
 	hidManager[vID][pID] <- inputEvent{Type: evKey, Code: uint16(code), Value: int32(value)}
 }
 
@@ -144,5 +117,12 @@ func GoHandleDeviceEvent(vendorID, productID, connected C.int) {
 	if _, ok := hidManager[int(vendorID)][int(productID)]; ok {
 		close(hidManager[int(vendorID)][int(productID)]) // close channel
 		delete(hidManager[int(vendorID)], int(productID))
+		if len(hidManager[int(vendorID)]) == 0 {
+			delete(hidManager, int(vendorID))
+		}
+	}
+	// stop if no devices left
+	if len(hidManager) == 0 {
+		C.Stop()
 	}
 }

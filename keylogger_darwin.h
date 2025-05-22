@@ -5,9 +5,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-bool setupDevice(IOHIDManagerRef *hid, int vendorID, int productID);
-void stopDevice(CFRunLoopRef runLoop, IOHIDManagerRef manager);
-void Start(IOHIDManagerRef hid, CFRunLoopRef runLoop);
+bool checkDeviceIsConnected(int vendorID, int productID);
+void Stop();
+void Start();
 extern void GoHandleKeyEvent(int code, int value, int vendorID, int productID);
 extern void GoHandleDeviceEvent(int vendorID, int productID,
                                 int connected); // 1=connected, 0=disconnected
