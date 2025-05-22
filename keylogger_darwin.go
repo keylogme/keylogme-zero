@@ -13,7 +13,14 @@ import (
 	"fmt"
 	"log/slog"
 	"runtime"
+
+	"github.com/keylogme/keylogme-zero/types"
 )
+
+type KeyloggerInput struct {
+	VendorID  types.Hex `json:"vendor_id"`
+	ProductID types.Hex `json:"product_id"`
+}
 
 var hidManager = map[int]map[int]chan inputEvent{}
 
@@ -24,17 +31,28 @@ type keylogger struct {
 	hid       C.IOHIDManagerRef
 }
 
-func newKeylogger(productID string) (*keylogger, error) {
-	// C.ListConnectedHIDDevices()
+func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
+	C.ListConnectedHIDDevices()
 	deviceExists := make(chan bool)
-	k := &keylogger{vendorID: 0x4653, productID: 0x0001}
+	k := &keylogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
+	slog.Debug(
+		fmt.Sprintf(
+			"Opening keylogger for device VID=0x%04x, PID=0x%04x\n",
+			k.vendorID,
+			k.productID,
+		),
+	)
 	go func() {
 		// INFO: lock goroutine to thread so CFRunLoopRun is in
 		// same goroutine's thread
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
 
-		exists := C.setupDevice(&k.hid, 0x4653, 0x0001)
+		exists := C.setupDevice(
+			&k.hid,
+			C.int(k.vendorID),
+			C.int(k.productID),
+		)
 		deviceExists <- bool(exists)
 		if !exists {
 			// TODO: handle error no found
@@ -51,6 +69,7 @@ func newKeylogger(productID string) (*keylogger, error) {
 		slog.Debug("Device not found")
 		return nil, fmt.Errorf("Device not available")
 	}
+	close(deviceExists)
 	slog.Debug("keylogger MacOS started")
 	return k, nil
 }
@@ -113,6 +132,7 @@ func GoHandleDeviceEvent(vendorID, productID, connected C.int) {
 	if connected != 0 {
 		status = "connected"
 		// INFO: Read will add device to hidManager
+		fmt.Printf("[Device] %s: VID=0x%04x, PID=0x%04x\n", status, vendorID, productID)
 		return
 	}
 	// disconnect

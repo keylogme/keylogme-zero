@@ -1,0 +1,46 @@
+{
+    "keylog": {
+        "devices": [
+            {"device_id": "1", "name": "kbd macbook","product_id": "0x0000",  "vendor_id":"0x0000", "layers":[]}
+        ],
+        "shortcut_groups": [
+            {
+                "id": "A",
+                "name": "Clipboard ✏️",
+                "shortcuts": [
+                    {
+                        "id": "1A",
+                        "name": "Copy 📎",
+                        "codes": [
+                            29,
+                            46
+                        ],
+                        "type": "hold"
+                    }
+                ]
+            },
+            {
+                "id": "B",
+                "name": "Nvim 🕶️",
+                "shortcuts": [
+                    {
+                        "id": "1B",
+                        "name": "Save 💾",
+                        "codes": [
+                            36,
+                            31
+                        ],
+                        "type": "seq"
+                    }
+                ]
+            }
+        ],
+        "shift_state": {
+            "threshold_auto": "5ms"
+        }
+    },
+    "storage": {
+        "file_output": "output_keylogme_zero_v1.json",
+        "periodic_save": "20s"
+    }
+}

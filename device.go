@@ -21,8 +21,8 @@ type Device struct {
 type DeviceInput struct {
 	DeviceId string  `json:"device_id"`
 	Name     string  `json:"name"`
-	UsbName  string  `json:"usb_name"`
 	Layers   []Layer `json:"layers"`
+	KeyloggerInput
 }
 
 type DeviceEvent struct {
@@ -81,7 +81,7 @@ func (d *Device) IsConnected() bool {
 func (d *Device) handleReconnects() {
 	for {
 		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
-		newK, err := newKeylogger(d.UsbName)
+		newK, err := newKeylogger(d.KeyloggerInput)
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {

@@ -12,6 +12,10 @@ import (
 	"github.com/keylogme/keylogme-zero/utils"
 )
 
+type KeyloggerInput struct {
+	UsbName string `json:"usb_name"`
+}
+
 // findKeyboardDevice by going through each device registered on OS
 // Mostly it will contain keyword - keyboard
 // Returns the file path which contains events
@@ -85,18 +89,18 @@ func wrapErrorRoot(err error) error {
 }
 
 // NewKeylogger creates a new keylogger for a device path
-func newKeylogger(devPathOrName string) (*keyLogger, error) {
+func newKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
 	k := &keyLogger{}
 	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", utils.IsRoot()))
-	if _, err := os.Stat(devPathOrName); err == nil {
-		fd, err := openDeviceFile(devPathOrName)
+	if _, err := os.Stat(kInput.UsbName); err == nil {
+		fd, err := openDeviceFile(kInput.UsbName)
 		if err != nil {
 			return nil, err
 		}
 		k.fd = fd
 		return k, nil
 	}
-	return getKeyLogger(devPathOrName)
+	return getKeyLogger(kInput.UsbName)
 }
 
 // Read from file descriptor
