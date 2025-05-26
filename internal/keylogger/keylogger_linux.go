@@ -11,8 +11,6 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
-
-	"github.com/keylogme/keylogme-zero/utils"
 )
 
 const (
@@ -103,7 +101,7 @@ type keyLogger struct {
 }
 
 func wrapErrorRoot(err error) error {
-	if os.IsPermission(err) && !utils.IsRoot() {
+	if os.IsPermission(err) && !isRoot() {
 		return errors.New(
 			"permission denied. run with root permission",
 		)
@@ -114,7 +112,7 @@ func wrapErrorRoot(err error) error {
 // NewKeylogger creates a new keylogger for a device path
 func NewKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
 	k := &keyLogger{}
-	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", utils.IsRoot()))
+	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", isRoot()))
 	if _, err := os.Stat(kInput.UsbName); err == nil {
 		fd, err := openDeviceFile(kInput.UsbName)
 		if err != nil {
@@ -192,4 +190,9 @@ func (k *keyLogger) Close() error {
 		return nil
 	}
 	return k.fd.Close()
+}
+
+// isRoot checks if the process is run with root permission
+func isRoot() bool {
+	return syscall.Getuid() == 0 && syscall.Geteuid() == 0
 }

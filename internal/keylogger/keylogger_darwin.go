@@ -14,7 +14,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/types"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
 type KeyloggerInput struct {
@@ -97,7 +97,7 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	hidManager[vID][pID] <- InputEvent{Time: time.Now(), Code: uint16(code), Value: int32(value)}
+	hidManager[vID][pID] <- InputEvent{Time: time.Now(), Code: uint16(code), Value: KeyEvent(value)}
 }
 
 //export GoHandleDeviceEvent

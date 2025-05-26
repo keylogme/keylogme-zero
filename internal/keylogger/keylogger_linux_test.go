@@ -10,8 +10,6 @@ import (
 	"runtime"
 	"testing"
 	"time"
-
-	"github.com/keylogme/keylogme-zero/utils"
 )
 
 func TestFileDescriptor(t *testing.T) {
@@ -124,7 +122,7 @@ func writeKeyDeviceFile(fd *os.File, code uint16) error {
 
 func TestKeylog(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer utils.CheckGoroutineLeak(t, before)
+	defer checkGoroutineLeak(t, before)
 
 	df, err := initDeviceFile()
 	if err != nil {
@@ -170,7 +168,7 @@ func TestKeylog(t *testing.T) {
 // when you remove a usb device from the computer, the device file is removed
 func TestDisconnectionKeylogger(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer utils.CheckGoroutineLeak(t, before)
+	defer checkGoroutineLeak(t, before)
 
 	fd, err := initDeviceFile()
 	if err != nil {

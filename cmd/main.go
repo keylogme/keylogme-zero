@@ -8,12 +8,14 @@ import (
 	"os/signal"
 	"time"
 
-	k0 "github.com/keylogme/keylogme-zero"
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
-	"github.com/keylogme/keylogme-zero/storage"
-	"github.com/keylogme/keylogme-zero/utils"
+	"github.com/keylogme/keylogme-zero/internal/layer"
+	"github.com/keylogme/keylogme-zero/internal/shift"
+	"github.com/keylogme/keylogme-zero/internal/shortcut"
+	"github.com/keylogme/keylogme-zero/pkg/k0"
 )
 
+// Linux keylogger
 // Use lsinput to see the usb_name to be used
 // apt install input-utils
 // sudo lsinput
@@ -36,7 +38,7 @@ func main() {
 		log.Fatal("CONFIG_FILE is not set")
 	}
 	var config k0.KeylogmeZeroConfig
-	err := utils.ParseFromFile(file_config, &config)
+	err := k0.ParseFromFile(file_config, &config)
 	if err != nil {
 		log.Fatal(err.Error())
 		log.Fatal("Could not parse config file")
@@ -44,7 +46,7 @@ func main() {
 
 	// Start logger
 	ctx, cancel := context.WithCancel(context.Background())
-	ffs := storage.MustGetNewFileStorage(ctx, config.Storage)
+	ffs := k0.MustGetNewFileStorage(ctx, config.Storage)
 
 	chEvt := make(chan keylogger.DeviceEvent)
 	devices := []keylogger.Device{}
@@ -52,11 +54,11 @@ func main() {
 		d := keylogger.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
-	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
+	sd := shortcut.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
-	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
+	ss := shift.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := k0.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
+	ld := layer.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
 
 	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
 

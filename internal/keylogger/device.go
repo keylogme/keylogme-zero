@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	keylog "github.com/keylogme/keylogme-zero"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
 const (
@@ -21,16 +21,26 @@ type Device struct {
 }
 
 type DeviceInput struct {
-	DeviceId string         `json:"device_id"`
-	Name     string         `json:"name"`
-	Layers   []keylog.Layer `json:"layers"`
+	DeviceId string        `json:"device_id"`
+	Name     string        `json:"name"`
+	Layers   []types.Layer `json:"layers"`
 	KeyloggerInput
 }
 
 type DeviceEvent struct {
 	InputEvent
 	DeviceId string
-	ExecTime time.Time
+}
+
+func GetFakeEvent(deviceId string, code uint16, keyevent KeyEvent) DeviceEvent {
+	return DeviceEvent{
+		InputEvent: InputEvent{
+			Time:  time.Now(),
+			Code:  code,
+			Value: keyevent,
+		},
+		DeviceId: deviceId,
+	}
 }
 
 func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
@@ -59,18 +69,15 @@ func (d *Device) start() bool {
 				slog.Debug(fmt.Sprintf("Invalid input event %+v\n", i))
 				continue
 			}
-			// Get current time with microsecond precision
-			now := time.Now()
-
 			// Get Unix timestamp with nanoseconds and format with microseconds precision
 			slog.Debug(fmt.Sprintf(
 				"Current time of %d %d (microsecond precision): %s\n",
 				i.Code,
 				i.Value,
-				now.Format("2006-01-02 15:04:05.000000"),
+				i.Time.Format("2006-01-02 15:04:05.000000"),
 			))
 
-			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
+			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId}
 			d.sendInput <- de
 		}
 	}

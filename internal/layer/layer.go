@@ -1,4 +1,4 @@
-package keylog
+package layer
 
 import (
 	"fmt"
@@ -6,65 +6,48 @@ import (
 	"slices"
 
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/internal/shift"
+	"github.com/keylogme/keylogme-zero/internal/shortcut"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
-type LayerCode struct {
-	Code     uint16 `json:"code"`
-	Modifier uint16 `json:"modifier,omitempty"`
-}
-
-type Layer struct {
-	Id    int64       `json:"id"`
-	Name  string      `json:"name"`
-	Codes []LayerCode `json:"codes"`
-}
-
-type LayerDetected struct {
-	Id       string
-	DeviceId string
-	LayerId  int64
-}
-
-func (ld *LayerDetected) IsDetected() bool {
-	return ld.LayerId != 0 && ld.DeviceId != ""
-}
-
 type layerDetector struct {
-	Layer         Layer
-	shiftDetector *shiftStateDetector
+	Layer         types.Layer
+	shiftDetector *shift.ShiftStateDetector
 	mapKeys       map[uint16]bool
 }
 
-func (ld *layerDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetected {
-	sd := ld.shiftDetector.handleKeyEvent(ke)
+func (ld *layerDetector) handleKeyEvent(ke keylogger.DeviceEvent) types.LayerDetected {
+	sd := ld.shiftDetector.HandleKeyEvent(ke)
 	if sd.IsDetected() && sd.Auto {
-		return LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId, Id: sd.ShortcutId}
+		return types.LayerDetected{LayerId: ld.Layer.Id, DeviceId: ke.DeviceId, Id: sd.ShortcutId}
 	}
-	if ld.shiftDetector.blockSaveKeylog() {
+	if ld.shiftDetector.BlockSaveKeylog() {
 		//  there is a potential shift state (auto) that needs to be confirmed
-		return LayerDetected{}
+		return types.LayerDetected{}
 	}
 	if ke.KeyRelease() {
 		if _, ok := ld.mapKeys[ke.Code]; ok {
-			return LayerDetected{
+			return types.LayerDetected{
 				LayerId:  ld.Layer.Id,
 				DeviceId: ke.DeviceId,
 				Id:       fmt.Sprintf("%d", ke.Code),
 			}
 		}
 	}
-	return LayerDetected{}
+	return types.LayerDetected{}
 }
 
-type layersDetector struct {
+// One layer detector per each layer your device has
+type LayersDetector struct {
 	layers               map[string][]layerDetector
 	currentLayerDetected *layerDetector
 }
 
 func NewLayerDetector(
 	devices []keylogger.DeviceInput,
-	shiftStateConfig ShiftState,
-) *layersDetector {
+	shiftStateConfig types.ShiftStateInput,
+) *LayersDetector {
 	l := map[string][]layerDetector{}
 	for _, dev := range devices {
 		l[dev.DeviceId] = []layerDetector{}
@@ -72,7 +55,7 @@ func NewLayerDetector(
 		for _, layer := range dev.Layers {
 			// for single codes we will use a map to detect
 			mk := map[uint16]bool{}
-			shiftedCodes := []ShortcutCodes{}
+			shiftedCodes := []types.ShortcutCodes{}
 			shiftKeys := []uint16{}
 			for _, lc := range layer.Codes {
 				if lc.Modifier == 0 {
@@ -83,20 +66,20 @@ func NewLayerDetector(
 				fakeIDName := fmt.Sprintf("%d_%d", lc.Modifier, lc.Code)
 				shiftedCodes = append(
 					shiftedCodes,
-					ShortcutCodes{
+					types.ShortcutCodes{
 						Id:    fakeIDName,
 						Name:  fakeIDName,
 						Codes: []uint16{lc.Modifier, lc.Code},
-						Type:  HoldShortcutType,
+						Type:  types.HoldShortcutType,
 					},
 				)
 				if !slices.Contains(shiftKeys, lc.Modifier) {
 					shiftKeys = append(shiftKeys, lc.Modifier)
 				}
 			}
-			hsd := newHoldShortcutDetector(shiftedCodes, shiftKeys)
+			hsd := shortcut.NewHoldShortcutDetector(shiftedCodes, shiftKeys)
 			// for shifted states (auto) we will use a shift state detector
-			ssd := NewShiftStateDetectorWithHoldSD(hsd, shiftStateConfig)
+			ssd := shift.NewShiftStateDetectorWithHoldSD(hsd, shiftStateConfig)
 			ld := layerDetector{
 				Layer:         layer,
 				shiftDetector: ssd,
@@ -105,28 +88,28 @@ func NewLayerDetector(
 			l[dev.DeviceId] = append(l[dev.DeviceId], ld)
 		}
 	}
-	return &layersDetector{layers: l}
+	return &LayersDetector{layers: l}
 }
 
-func (lsd *layersDetector) isLayerChangeDetected(ke keylogger.DeviceEvent) LayerDetected {
+func (lsd *LayersDetector) IsLayerChangeDetected(ke keylogger.DeviceEvent) types.LayerDetected {
 	oldLayerId := lsd.GetCurrentLayerId()
-	ld := lsd.handleKeyEvent(ke)
+	ld := lsd.HandleKeyEvent(ke)
 	if ld.IsDetected() {
 		newLayer := lsd.GetCurrentLayerId()
 		slog.Debug(fmt.Sprintf("Old layer %d - New layer %d", oldLayerId, newLayer))
 		if oldLayerId == newLayer {
-			return LayerDetected{}
+			return types.LayerDetected{}
 		}
 		// if not equal then there was a change of layer
 		return ld
 	}
-	return LayerDetected{}
+	return types.LayerDetected{}
 }
 
-func (lsd *layersDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetected {
+func (lsd *LayersDetector) HandleKeyEvent(ke keylogger.DeviceEvent) types.LayerDetected {
 	numBlockedLayers := 0
 	idxPossible := 0
-	possibleDetection := LayerDetected{}
+	possibleDetection := types.LayerDetected{}
 	for idx := range lsd.layers[ke.DeviceId] {
 		l := &lsd.layers[ke.DeviceId][idx]
 		ld := l.handleKeyEvent(ke)
@@ -134,12 +117,12 @@ func (lsd *layersDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetecte
 			idxPossible = idx
 			possibleDetection = ld
 		}
-		if l.shiftDetector.blockSaveKeylog() {
+		if l.shiftDetector.BlockSaveKeylog() {
 			numBlockedLayers++
 		}
 	}
 	if numBlockedLayers > 0 {
-		return LayerDetected{}
+		return types.LayerDetected{}
 	}
 	if possibleDetection.IsDetected() {
 		lsd.currentLayerDetected = &lsd.layers[ke.DeviceId][idxPossible]
@@ -151,7 +134,7 @@ func (lsd *layersDetector) handleKeyEvent(ke keylogger.DeviceEvent) LayerDetecte
 	return possibleDetection
 }
 
-func (lsd *layersDetector) GetCurrentLayerId() int64 {
+func (lsd *LayersDetector) GetCurrentLayerId() int64 {
 	if lsd.currentLayerDetected == nil {
 		return 0
 	}

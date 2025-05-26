@@ -1,16 +1,18 @@
-package keylog
+package shortcut
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
 func TestSeqShortcut_Detect(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 31, 30}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	scDetected := ds.Detect("1", 30) // rand key
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -40,11 +42,11 @@ func TestSeqShortcut_Detect(t *testing.T) {
 }
 
 func TestSeqShortcut_diffDevice_after_shortcut(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 31, 30}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	scDetected := ds.Detect("1", 36) // first key shortcut
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -69,11 +71,11 @@ func TestSeqShortcut_diffDevice_after_shortcut(t *testing.T) {
 }
 
 func TestSeqShortcut_diffDevice_after_shortcut_2(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 31, 30}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	scDetected := ds.Detect("1", 36) // first key shortcut
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -100,11 +102,11 @@ func TestSeqShortcut_diffDevice_after_shortcut_2(t *testing.T) {
 }
 
 func TestSeqShortcut_diffDevice_after_shortcut_3(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 31, 30}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 31, 30}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	scDetected := ds.Detect("1", 36) // first key shortcut
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -129,11 +131,11 @@ func TestSeqShortcut_diffDevice_after_shortcut_3(t *testing.T) {
 }
 
 func TestSeqShortcut_Detect_Not_Expected(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 48, 35}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 31, 34}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 48, 35}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 31, 34}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	detected := ds.Detect("1", 36)
 	if detected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -155,12 +157,12 @@ func TestSeqShortcut_Detect_Not_Expected(t *testing.T) {
 }
 
 func TestSeqShortcut_Detect_Multiple_Possible(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 30}, Type: SequentialShortcutType},
-		{Id: "3", Codes: []uint16{36, 31, 34}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 30}, Type: types.SequentialShortcutType},
+		{Id: "3", Codes: []uint16{36, 31, 34}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	detected := ds.Detect("1", 30)
 	if detected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
@@ -184,11 +186,11 @@ func TestSeqShortcut_Detect_Multiple_Possible(t *testing.T) {
 }
 
 func TestSeqShortcut_Detect_ReAttempt(t *testing.T) {
-	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{36, 31}, Type: SequentialShortcutType},
-		{Id: "2", Codes: []uint16{36, 30}, Type: SequentialShortcutType},
+	sl := []types.ShortcutCodes{
+		{Id: "1", Codes: []uint16{36, 31}, Type: types.SequentialShortcutType},
+		{Id: "2", Codes: []uint16{36, 30}, Type: types.SequentialShortcutType},
 	}
-	ds := newSeqShortcutDetector(sl)
+	ds := NewSeqShortcutDetector(sl)
 	detected := ds.Detect("1", 36)
 	if detected.ShortcutId != "" {
 		t.Fatal("Detection not expected")

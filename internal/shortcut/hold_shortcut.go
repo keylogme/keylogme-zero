@@ -1,13 +1,14 @@
-package keylog
+package shortcut
 
 import (
 	"slices"
 
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
-type holdShortcutDetector struct {
-	shortcuts []ShortcutCodes
+type HoldShortcutDetector struct {
+	shortcuts []types.ShortcutCodes
 	modifiers []uint16
 	modPress  []uint16
 }
@@ -29,9 +30,12 @@ func getAllHoldModifiers() []uint16 {
 }
 
 // detects hold shortcuts like Ctrl+C, Ctrl+Alt+Del, Shift+C
-func newHoldShortcutDetector(shortcuts []ShortcutCodes, modifiers []uint16) holdShortcutDetector {
-	hsd := holdShortcutDetector{
-		shortcuts: []ShortcutCodes{},
+func NewHoldShortcutDetector(
+	shortcuts []types.ShortcutCodes,
+	modifiers []uint16,
+) HoldShortcutDetector {
+	hsd := HoldShortcutDetector{
+		shortcuts: []types.ShortcutCodes{},
 		modifiers: modifiers,
 		modPress:  []uint16{},
 	}
@@ -39,14 +43,14 @@ func newHoldShortcutDetector(shortcuts []ShortcutCodes, modifiers []uint16) hold
 	return hsd
 }
 
-func (hd *holdShortcutDetector) isHolded() bool {
+func (hd *HoldShortcutDetector) IsHolded() bool {
 	return len(hd.modPress) > 0
 }
 
-func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
-	newS := []ShortcutCodes{}
+func (hd *HoldShortcutDetector) setShortcuts(shortcuts []types.ShortcutCodes) {
+	newS := []types.ShortcutCodes{}
 	for _, s := range shortcuts {
-		if s.Type == HoldShortcutType && len(s.Codes) > 1 {
+		if s.Type == types.HoldShortcutType && len(s.Codes) > 1 {
 			// sort codes (Important for detect function)
 			slices.Sort(s.Codes)
 			newS = append(newS, s)
@@ -55,8 +59,8 @@ func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
 	hd.shortcuts = newS
 }
 
-func (hd *holdShortcutDetector) handleKeyEvent(ke keylogger.DeviceEvent) ShortcutDetected {
-	if ke.KeyRelease() && hd.isHolded() {
+func (hd *HoldShortcutDetector) HandleKeyEvent(ke keylogger.DeviceEvent) types.ShortcutDetected {
+	if ke.KeyRelease() && hd.IsHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
 	}
 	if ke.KeyPress() &&
@@ -64,16 +68,16 @@ func (hd *holdShortcutDetector) handleKeyEvent(ke keylogger.DeviceEvent) Shortcu
 		!slices.Contains(hd.modPress, ke.Code) {
 		hd.modPress = append(hd.modPress, ke.Code)
 	}
-	return ShortcutDetected{}
+	return types.ShortcutDetected{}
 }
 
-func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDetected {
+func (hd *HoldShortcutDetector) detect(deviceId string, code uint16) types.ShortcutDetected {
 	// cleanup old modifiers
 	hd.modPress = slices.DeleteFunc(hd.modPress, func(v uint16) bool {
 		return v == code
 	})
 	if len(hd.modPress) == 0 {
-		return ShortcutDetected{}
+		return types.ShortcutDetected{}
 	}
 	tempCodes := slices.Clone(hd.modPress)
 	tempCodes = append(tempCodes, code)
@@ -84,13 +88,13 @@ func (hd *holdShortcutDetector) detect(deviceId string, code uint16) ShortcutDet
 		// slog.Info(fmt.Sprintf("shortcut %v  vs  %v\n", s, tempCodes))
 		isEqual := slices.Equal(tempCodes, s.Codes)
 		if isEqual {
-			return ShortcutDetected{
+			return types.ShortcutDetected{
 				ShortcutId: s.Id,
 				DeviceId:   deviceId,
 			}
 		}
 	}
-	return ShortcutDetected{}
+	return types.ShortcutDetected{}
 }
 
 // func (hd *holdShortcutDetector) reset() {

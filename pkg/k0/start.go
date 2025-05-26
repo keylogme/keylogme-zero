@@ -1,25 +1,27 @@
-package keylog
+package k0
 
 import (
 	"fmt"
 	"log/slog"
 
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
-	"github.com/keylogme/keylogme-zero/storage"
+	"github.com/keylogme/keylogme-zero/internal/layer"
+	"github.com/keylogme/keylogme-zero/internal/shift"
+	"github.com/keylogme/keylogme-zero/internal/shortcut"
 )
 
 func Start(
 	chEvt chan keylogger.DeviceEvent,
 	devices *[]keylogger.Device,
-	sd *shortcutsDetector,
-	ss *shiftStateDetector,
-	ld *layersDetector,
-	store storage.Storage,
+	sd *shortcut.ShortcutsDetector,
+	ss *shift.ShiftStateDetector,
+	ld *layer.LayersDetector,
+	store Storage,
 ) {
 	slog.Info("Listening...")
 	go func() {
 		for i := range chEvt {
-			sd := sd.handleKeyEvent(i)
+			sd := sd.HandleKeyEvent(i)
 			if sd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
@@ -33,7 +35,7 @@ func Start(
 					slog.Error(fmt.Sprintf("Error storing shortcut : %s\n", err.Error()))
 				}
 			}
-			ssd := ss.handleKeyEvent(i)
+			ssd := ss.HandleKeyEvent(i)
 			if ssd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
@@ -51,7 +53,7 @@ func Start(
 				}
 
 			}
-			ldd := ld.isLayerChangeDetected(i)
+			ldd := ld.IsLayerChangeDetected(i)
 			if ldd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
@@ -90,9 +92,9 @@ func Start(
 				}
 			}
 			// INFO: block save keylog if shifted code is possible
-			if ss.blockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
+			if ss.BlockSaveKeylog() || (ssd.IsDetected() && ssd.Auto) {
 				slog.Debug(
-					fmt.Sprintf("Blocked keylog save | %t %t\n", ss.blockSaveKeylog(), ssd.Auto),
+					fmt.Sprintf("Blocked keylog save | %t %t\n", ss.BlockSaveKeylog(), ssd.Auto),
 				)
 				continue
 			}

@@ -1,4 +1,4 @@
-package storage
+package k0
 
 import (
 	"context"
@@ -12,8 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/types"
-	"github.com/keylogme/keylogme-zero/utils"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
 type ConfigStorage struct {
@@ -250,7 +249,7 @@ func (f *FileStorage) prepareDataToSave() error {
 	if errors.Is(err, os.ErrNotExist) {
 		slog.Info(fmt.Sprintf("File %s not exist, it will be created", f.config.FileOutput))
 	} else {
-		err := utils.ParseFromFile(f.config.FileOutput, dataFile)
+		err := ParseFromFile(f.config.FileOutput, dataFile)
 		if err != nil {
 			return err
 		}

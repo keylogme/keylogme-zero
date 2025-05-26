@@ -1,4 +1,31 @@
-package keylog
+package keylogger
+
+import "slices"
+
+var NUM_CODES = []uint16{2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+
+var LETTER_CODES = []uint16{
+	16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+	30, 31, 32, 33, 34, 35, 36, 37, 38,
+	44, 45, 46, 47, 48, 49, 50,
+}
+
+var SYMBOL_CODES = []uint16{
+	12, 13,
+	26, 27,
+	39, 40, 41, 43,
+	51, 52, 53,
+}
+
+var ALL_CODES = slices.Concat(NUM_CODES, LETTER_CODES, SYMBOL_CODES)
+
+var SHIFT_CODES = []uint16{42, 54}
+
+var CTRL_CODES = []uint16{29, 97}
+
+var ALT_CODES = []uint16{56, 100}
+
+var GUI_CODES = []uint16{125, 126}
 
 var keyCodeMap = map[uint16]string{
 	1:   "ESCAPE",

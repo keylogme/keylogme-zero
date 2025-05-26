@@ -1,4 +1,24 @@
-package keylog
+package keylogger
+
+import "slices"
+
+var NUM_CODES = []uint16{30, 31, 32, 33, 34, 35, 36, 37, 38, 39}
+
+var LETTER_CODES = []uint16{
+	4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+}
+
+var SYMBOL_CODES = []uint16{}
+
+var ALL_CODES = slices.Concat(NUM_CODES, LETTER_CODES, SYMBOL_CODES)
+
+var SHIFT_CODES = []uint16{225, 229}
+
+var CTRL_CODES = []uint16{224, 228}
+
+var ALT_CODES = []uint16{226, 230}
+
+var GUI_CODES = []uint16{227, 231}
 
 var keyCodeMap = map[uint16]string{
 	4:   "A",

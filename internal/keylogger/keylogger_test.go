@@ -1,4 +1,4 @@
-package utils
+package keylogger
 
 import (
 	"runtime"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func CheckGoroutineLeak(t *testing.T, before int) {
+func checkGoroutineLeak(t *testing.T, before int) {
 	time.Sleep(2 * time.Second)
 	after := runtime.NumGoroutine()
 	if after > before {

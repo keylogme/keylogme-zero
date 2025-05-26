@@ -1,4 +1,4 @@
-package storage
+package k0
 
 import (
 	"context"
@@ -11,8 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/types"
-	"github.com/keylogme/keylogme-zero/utils"
+	"github.com/keylogme/keylogme-zero/internal/types"
 )
 
 // test to replicate the issue "concurrent map writes"
@@ -75,7 +74,7 @@ func TestPeriodicSave(t *testing.T) {
 	// open content of fd.Name() file
 
 	dataFile := newDataFile()
-	err = utils.ParseFromFile(filepath, dataFile)
+	err = ParseFromFile(filepath, dataFile)
 	if err != nil {
 		t.Fatal(err)
 	}

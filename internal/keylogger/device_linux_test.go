@@ -6,13 +6,11 @@ import (
 	"runtime"
 	"testing"
 	"time"
-
-	"github.com/keylogme/keylogme-zero/utils"
 )
 
 func TestDisconnectionDevice(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer utils.CheckGoroutineLeak(t, before)
+	defer checkGoroutineLeak(t, before)
 
 	df, err := initDeviceFile()
 	if err != nil {
