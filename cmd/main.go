@@ -8,11 +8,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/internal/keylogger"
-	"github.com/keylogme/keylogme-zero/internal/layer"
-	"github.com/keylogme/keylogme-zero/internal/shift"
-	"github.com/keylogme/keylogme-zero/internal/shortcut"
-	"github.com/keylogme/keylogme-zero/pkg/k0"
+	k0 "github.com/keylogme/keylogme-zero"
+	"github.com/keylogme/keylogme-zero/storage"
+	"github.com/keylogme/keylogme-zero/utils"
 )
 
 // Linux keylogger
@@ -38,7 +36,7 @@ func main() {
 		log.Fatal("CONFIG_FILE is not set")
 	}
 	var config k0.KeylogmeZeroConfig
-	err := k0.ParseFromFile(file_config, &config)
+	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
 		log.Fatal(err.Error())
 		log.Fatal("Could not parse config file")
@@ -46,19 +44,19 @@ func main() {
 
 	// Start logger
 	ctx, cancel := context.WithCancel(context.Background())
-	ffs := k0.MustGetNewFileStorage(ctx, config.Storage)
+	ffs := storage.MustGetNewFileStorage(ctx, config.Storage)
 
-	chEvt := make(chan keylogger.DeviceEvent)
-	devices := []keylogger.Device{}
+	chEvt := make(chan k0.DeviceEvent)
+	devices := []k0.Device{}
 	for _, dev := range config.Keylog.Devices {
-		d := keylogger.GetDevice(ctx, dev, chEvt)
+		d := k0.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
-	sd := shortcut.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
+	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
-	ss := shift.NewShiftStateDetector(config.Keylog.ShiftState)
+	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := layer.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
+	ld := k0.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
 
 	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
 
