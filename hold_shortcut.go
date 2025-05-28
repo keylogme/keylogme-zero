@@ -1,4 +1,4 @@
-package keylog
+package k0
 
 import (
 	"slices"
@@ -10,24 +10,11 @@ type holdShortcutDetector struct {
 	modPress  []uint16
 }
 
-func getCtrlKeys() []uint16 {
-	return []uint16{29, 97}
-}
-
-func getShiftKeys() []uint16 {
-	return []uint16{42, 54}
-}
-
-func getAltKeys() []uint16 {
-	return []uint16{56, 100}
-}
-
-func getAllHoldModifiers() []uint16 {
-	return slices.Concat(getCtrlKeys(), getShiftKeys(), getAltKeys())
-}
-
 // detects hold shortcuts like Ctrl+C, Ctrl+Alt+Del, Shift+C
-func newHoldShortcutDetector(shortcuts []ShortcutCodes, modifiers []uint16) holdShortcutDetector {
+func NewHoldShortcutDetector(
+	shortcuts []ShortcutCodes,
+	modifiers []uint16,
+) holdShortcutDetector {
 	hsd := holdShortcutDetector{
 		shortcuts: []ShortcutCodes{},
 		modifiers: modifiers,
@@ -54,10 +41,10 @@ func (hd *holdShortcutDetector) setShortcuts(shortcuts []ShortcutCodes) {
 }
 
 func (hd *holdShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
-	if ke.Type == evKey && ke.KeyRelease() && hd.isHolded() {
+	if ke.KeyRelease() && hd.isHolded() {
 		return hd.detect(ke.DeviceId, ke.Code)
 	}
-	if ke.Type == evKey && ke.KeyPress() &&
+	if ke.KeyPress() &&
 		slices.Contains(hd.modifiers, ke.Code) &&
 		!slices.Contains(hd.modPress, ke.Code) {
 		hd.modPress = append(hd.modPress, ke.Code)

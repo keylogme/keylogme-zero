@@ -1,4 +1,4 @@
-package keylog
+package k0
 
 import (
 	"context"
@@ -6,13 +6,16 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 func TestDisconnectionDevice(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer checkGoroutineLeak(t, before)
+	defer keylogger.CheckGoroutineLeak(t, before)
 
-	df, err := initDeviceFile()
+	df, err := keylogger.InitDeviceFile()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,9 +25,9 @@ func TestDisconnectionDevice(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	intputDevice := DeviceInput{
-		DeviceId: "device1",
-		Name:     "device1",
-		UsbName:  filepath,
+		DeviceId:       "device1",
+		Name:           "device1",
+		KeyloggerInput: types.KeyloggerInputAllOS{UsbName: filepath},
 	}
 
 	chEvt := make(chan DeviceEvent, 10)
@@ -33,7 +36,7 @@ func TestDisconnectionDevice(t *testing.T) {
 
 	time.Sleep(50 * time.Millisecond)
 	// press keys
-	err = writeKeyDeviceFile(df, uint16(1))
+	err = keylogger.WriteKeyDeviceFile(df, uint16(1))
 	if err != nil {
 		t.Fatalf("error writing: %s\n", err.Error())
 	}
@@ -45,8 +48,8 @@ func TestDisconnectionDevice(t *testing.T) {
 	}
 	// disconnect device
 	slog.Info("Disconnecting device")
-	kl, _ := d.keylogger.(*keyLogger) // cast interface to struct
-	err = disconnectDeviceFile(kl.fd)
+	kl := d.keylogger
+	err = keylogger.DisconnectDeviceFile(kl.FD)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +59,7 @@ func TestDisconnectionDevice(t *testing.T) {
 	}
 	// reconnect device
 	slog.Info("Reconnecting device")
-	err = reconnectDeviceFile(df)
+	err = keylogger.ReconnectDeviceFile(df)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +68,7 @@ func TestDisconnectionDevice(t *testing.T) {
 		t.Fatal("device should be connected")
 	}
 	// press keys
-	err = writeKeyDeviceFile(df, uint16(1))
+	err = keylogger.WriteKeyDeviceFile(df, uint16(1))
 	if err != nil {
 		t.Fatalf("error writing: %s\n", err.Error())
 	}

@@ -1,4 +1,9 @@
-package keylog
+package k0
+
+type shortcutDevice struct {
+	ShortcutCodes
+	DeviceId string
+}
 
 type seqShortcutDetector struct {
 	shortcuts                  []ShortcutCodes
@@ -9,7 +14,7 @@ type seqShortcutDetector struct {
 	// lastKeyTimestamp           time.Time
 }
 
-func newSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {
+func NewSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {
 	shortsSeq := []ShortcutCodes{}
 	for _, s := range shortcuts {
 		if s.Type == SequentialShortcutType && len(s.Codes) > 1 {
@@ -24,13 +29,13 @@ func newSeqShortcutDetector(shortcuts []ShortcutCodes) seqShortcutDetector {
 }
 
 func (sd *seqShortcutDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
-	if ke.Type == evKey && ke.KeyRelease() {
-		return sd.Detect(ke.DeviceId, ke.Code)
+	if ke.KeyRelease() {
+		return sd.detect(ke.DeviceId, ke.Code)
 	}
 	return *new(ShortcutDetected)
 }
 
-func (sd *seqShortcutDetector) Detect(deviceId string, kp uint16) ShortcutDetected {
+func (sd *seqShortcutDetector) detect(deviceId string, kp uint16) ShortcutDetected {
 	if sdet := sd.handleChangeOfDevice(deviceId, kp); sdet.ShortcutId != "" {
 		return sdet
 	}
@@ -72,7 +77,10 @@ func (sd *seqShortcutDetector) handleFirstKey(deviceId string, kp uint16) {
 	}
 }
 
-func (sd *seqShortcutDetector) handleChangeOfDevice(deviceId string, kp uint16) ShortcutDetected {
+func (sd *seqShortcutDetector) handleChangeOfDevice(
+	deviceId string,
+	kp uint16,
+) ShortcutDetected {
 	if len(sd.currPossibleShortcuts) > 0 &&
 		sd.currPossibleShortcuts[0].DeviceId != deviceId {
 		if sd.prevShortcutDeviceDetected.ShortcutId != "" {

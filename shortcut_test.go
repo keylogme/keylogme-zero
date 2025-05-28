@@ -1,13 +1,25 @@
-package keylog
+package k0
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGetNewShortcutDetector(t *testing.T) {
-	sgs := []ShortcutGroup{
+	sgs := []ShortcutGroupInput{
 		{
 			Id: "1", Name: "test1", Shortcuts: []ShortcutCodes{
-				{Id: "1", Name: "dummy1", Codes: []uint16{1, 2, 3}, Type: SequentialShortcutType},
-				{Id: "2", Name: "dummy2", Codes: []uint16{4, 5}, Type: SequentialShortcutType},
+				{
+					Id:    "1",
+					Name:  "dummy1",
+					Codes: []uint16{1, 2, 3},
+					Type:  SequentialShortcutType,
+				},
+				{
+					Id:    "2",
+					Name:  "dummy2",
+					Codes: []uint16{4, 5},
+					Type:  SequentialShortcutType,
+				},
 			},
 		},
 		{
@@ -20,11 +32,21 @@ func TestGetNewShortcutDetector(t *testing.T) {
 }
 
 func TestGetShortcutsFromGroups(t *testing.T) {
-	sgs := []ShortcutGroup{
+	sgs := []ShortcutGroupInput{
 		{
 			Id: "1", Name: "test1", Shortcuts: []ShortcutCodes{
-				{Id: "1", Name: "dummy1", Codes: []uint16{1, 2, 3}, Type: SequentialShortcutType},
-				{Id: "2", Name: "dummy2", Codes: []uint16{4, 5}, Type: SequentialShortcutType},
+				{
+					Id:    "1",
+					Name:  "dummy1",
+					Codes: []uint16{1, 2, 3},
+					Type:  SequentialShortcutType,
+				},
+				{
+					Id:    "2",
+					Name:  "dummy2",
+					Codes: []uint16{4, 5},
+					Type:  SequentialShortcutType,
+				},
 			},
 		},
 		{
@@ -45,11 +67,21 @@ func TestGetShortcutsFromGroups(t *testing.T) {
 }
 
 func TestDuplicateShortcutGroupIds(t *testing.T) {
-	sgs := []ShortcutGroup{
+	sgs := []ShortcutGroupInput{
 		{
 			Id: "1", Name: "test1", Shortcuts: []ShortcutCodes{
-				{Id: "1", Name: "dummy1", Codes: []uint16{1, 2, 3}, Type: SequentialShortcutType},
-				{Id: "2", Name: "dummy2", Codes: []uint16{4, 5}, Type: SequentialShortcutType},
+				{
+					Id:    "1",
+					Name:  "dummy1",
+					Codes: []uint16{1, 2, 3},
+					Type:  SequentialShortcutType,
+				},
+				{
+					Id:    "2",
+					Name:  "dummy2",
+					Codes: []uint16{4, 5},
+					Type:  SequentialShortcutType,
+				},
 			},
 		},
 		{
@@ -65,11 +97,21 @@ func TestDuplicateShortcutGroupIds(t *testing.T) {
 }
 
 func TestDuplicateShortcutIds(t *testing.T) {
-	sgs := []ShortcutGroup{
+	sgs := []ShortcutGroupInput{
 		{
 			Id: "1", Name: "test1", Shortcuts: []ShortcutCodes{
-				{Id: "1", Name: "dummy1", Codes: []uint16{1, 2, 3}, Type: SequentialShortcutType},
-				{Id: "2", Name: "dummy2", Codes: []uint16{4, 5}, Type: SequentialShortcutType},
+				{
+					Id:    "1",
+					Name:  "dummy1",
+					Codes: []uint16{1, 2, 3},
+					Type:  SequentialShortcutType,
+				},
+				{
+					Id:    "2",
+					Name:  "dummy2",
+					Codes: []uint16{4, 5},
+					Type:  SequentialShortcutType,
+				},
 			},
 		},
 		{

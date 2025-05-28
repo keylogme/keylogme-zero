@@ -1,4 +1,4 @@
-package keylog
+package k0
 
 import (
 	"fmt"
@@ -95,7 +95,7 @@ func Start(
 				)
 				continue
 			}
-			if i.Type == evKey && i.KeyRelease() {
+			if i.KeyRelease() {
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
 						fmt.Sprintf(

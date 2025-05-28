@@ -1,10 +1,13 @@
-package keylog
+package k0
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 const (
@@ -14,24 +17,27 @@ const (
 type Device struct {
 	DeviceInput
 	ctx       context.Context
-	keylogger Keylogger
+	keylogger *keylogger.KeyLogger
 	sendInput chan DeviceEvent
 }
 
 type DeviceInput struct {
-	DeviceId string  `json:"device_id"`
-	Name     string  `json:"name"`
-	Layers   []Layer `json:"layers"`
-	KeyloggerInput
+	DeviceId       string       `json:"device_id"`
+	Name           string       `json:"name"`
+	Layers         []LayerInput `json:"layers"`
+	KeyloggerInput types.KeyloggerInputAllOS
 }
 
 type DeviceEvent struct {
-	inputEvent
+	keylogger.InputEvent
 	DeviceId string
-	ExecTime time.Time
 }
 
-func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
+func GetDevice(
+	ctx context.Context,
+	input DeviceInput,
+	inputChan chan DeviceEvent,
+) *Device {
 	device := &Device{ctx: ctx, DeviceInput: input, keylogger: nil, sendInput: inputChan}
 	go device.handleReconnects()
 	return device
@@ -57,18 +63,15 @@ func (d *Device) start() bool {
 				slog.Debug(fmt.Sprintf("Invalid input event %+v\n", i))
 				continue
 			}
-			// Get current time with microsecond precision
-			now := time.Now()
-
 			// Get Unix timestamp with nanoseconds and format with microseconds precision
 			slog.Debug(fmt.Sprintf(
 				"Current time of %d %d (microsecond precision): %s\n",
 				i.Code,
 				i.Value,
-				now.Format("2006-01-02 15:04:05.000000"),
+				i.Time.Format("2006-01-02 15:04:05.000000"),
 			))
 
-			de := DeviceEvent{inputEvent: i, DeviceId: d.DeviceId, ExecTime: now}
+			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId}
 			d.sendInput <- de
 		}
 	}
@@ -81,7 +84,7 @@ func (d *Device) IsConnected() bool {
 func (d *Device) handleReconnects() {
 	for {
 		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
-		newK, err := newKeylogger(d.KeyloggerInput)
+		newK, err := keylogger.NewKeylogger(d.KeyloggerInput.GetDeviceInput())
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {

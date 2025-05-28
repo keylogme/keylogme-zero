@@ -1,7 +1,10 @@
 {
     "keylog": {
         "devices": [
-            {"device_id": "1", "name": "kbd macbook","product_id": "0x0000",  "vendor_id":"0x0000", "layers":[]}
+            {"device_id": "1", "name": "kbd macbook","product_id": "0x0000",  "vendor_id":"0x0000", "layers":[]},
+            {"device_id": "2", "name": "corne","product_id": "0x0001",  "vendor_id":"0x4653", "layers":[]},
+            {"device_id": "3", "name": "trackpad","product_id": "0x0265",  "vendor_id":"0x004c", "layers":[]},
+            {"device_id": "4", "name": "mouse","product_id": "0x4c01",  "vendor_id":"0x062a", "layers":[]}
         ],
         "shortcut_groups": [
             {

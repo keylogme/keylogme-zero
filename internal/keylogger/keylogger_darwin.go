@@ -1,4 +1,4 @@
-package keylog
+package keylogger
 
 /*
 // -I include current directory for headers
@@ -12,30 +12,26 @@ import "C"
 import (
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/keylogme/keylogme-zero/types"
 )
 
-type KeyloggerInput struct {
-	VendorID  types.Hex `json:"vendor_id"`
-	ProductID types.Hex `json:"product_id"`
-}
+var hidManager = map[int]map[int]chan InputEvent{}
 
-var hidManager = map[int]map[int]chan inputEvent{}
-
-type keylogger struct {
+type KeyLogger struct {
 	vendorID  int
 	productID int
 }
 
-func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
+func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 	// C.ListConnectedHIDDevices()
 	exists := C.checkDeviceIsConnected(C.int(kInput.VendorID), C.int(kInput.ProductID))
 	if !exists {
 		slog.Debug("Device not found")
 		return nil, fmt.Errorf("Device not available")
 	}
-	k := &keylogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
+	k := &KeyLogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
 
 	go func() {
 		// INFO: lock goroutine to thread so CFRunLoopRun is in
@@ -49,19 +45,19 @@ func newKeylogger(kInput KeyloggerInput) (*keylogger, error) {
 	return k, nil
 }
 
-func (k *keylogger) Read() chan inputEvent {
+func (k *KeyLogger) Read() chan InputEvent {
 	if _, ok := hidManager[k.vendorID]; !ok {
-		hidManager[k.vendorID] = map[int]chan inputEvent{}
+		hidManager[k.vendorID] = map[int]chan InputEvent{}
 	}
 	if _, ok := hidManager[k.vendorID][k.productID]; !ok {
-		event := make(chan inputEvent)
+		event := make(chan InputEvent)
 		hidManager[k.vendorID][k.productID] = event
 		fmt.Println("Created channel keylogger....")
 	}
 	return hidManager[k.vendorID][k.productID]
 }
 
-func (k *keylogger) Close() error {
+func (k *KeyLogger) Close() error {
 	if _, ok := hidManager[k.vendorID]; !ok {
 		return nil
 	}
@@ -96,7 +92,7 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	hidManager[vID][pID] <- inputEvent{Type: evKey, Code: uint16(code), Value: int32(value)}
+	hidManager[vID][pID] <- InputEvent{Time: time.Now(), Code: uint16(code), Value: KeyEvent(value)}
 }
 
 //export GoHandleDeviceEvent

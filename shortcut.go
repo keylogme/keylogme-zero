@@ -1,8 +1,10 @@
-package keylog
+package k0
 
 import (
 	"fmt"
 	"log"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 type ShortcutType string
@@ -12,7 +14,7 @@ const (
 	HoldShortcutType       = "hold"
 )
 
-type ShortcutGroup struct {
+type ShortcutGroupInput struct {
 	Id        string          `json:"id"`
 	Name      string          `json:"name"`
 	Shortcuts []ShortcutCodes `json:"shortcuts"`
@@ -25,11 +27,6 @@ type ShortcutCodes struct {
 	Type  ShortcutType `json:"type"`
 }
 
-type shortcutDevice struct {
-	ShortcutCodes
-	DeviceId string
-}
-
 type ShortcutDetected struct {
 	ShortcutId string
 	DeviceId   string
@@ -40,24 +37,24 @@ func (sd ShortcutDetected) IsDetected() bool {
 }
 
 type shortcutsDetector struct {
-	SeqDetector  seqShortcutDetector
-	HoldDetector holdShortcutDetector
+	seqDetector  seqShortcutDetector
+	holdDetector holdShortcutDetector
 }
 
-func MustGetNewShortcutsDetector(sgs []ShortcutGroup) *shortcutsDetector {
+func MustGetNewShortcutsDetector(sgs []ShortcutGroupInput) *shortcutsDetector {
 	s, err := getShortcutsFromGroups(sgs)
 	if err != nil {
 		log.Fatalf("Error getting shortcuts from groups: %s", err.Error())
 	}
 
 	return &shortcutsDetector{
-		SeqDetector:  newSeqShortcutDetector(s),
-		HoldDetector: newHoldShortcutDetector(s, getAllHoldModifiers()),
+		seqDetector:  NewSeqShortcutDetector(s),
+		holdDetector: NewHoldShortcutDetector(s, keylogger.GetAllModifierCodes()),
 	}
 }
 
 // check duplicate ids
-func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
+func getShortcutsFromGroups(s []ShortcutGroupInput) ([]ShortcutCodes, error) {
 	scgIds := map[string]bool{}
 	scIds := map[string]bool{}
 	scs := []ShortcutCodes{}
@@ -79,9 +76,9 @@ func getShortcutsFromGroups(s []ShortcutGroup) ([]ShortcutCodes, error) {
 }
 
 func (sd *shortcutsDetector) handleKeyEvent(ke DeviceEvent) ShortcutDetected {
-	sdect := sd.SeqDetector.handleKeyEvent(ke)
+	sdect := sd.seqDetector.handleKeyEvent(ke)
 	if sdect.ShortcutId != "" {
 		return sdect
 	}
-	return sd.HoldDetector.handleKeyEvent(ke)
+	return sd.holdDetector.handleKeyEvent(ke)
 }

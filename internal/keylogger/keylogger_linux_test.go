@@ -1,19 +1,17 @@
-package keylog
+package keylogger
 
 import (
-	"encoding/binary"
 	"fmt"
-	"log/slog"
-	"math/rand"
 	"os"
-	"path"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 func TestFileDescriptor(t *testing.T) {
-	k := &keyLogger{}
+	k := &KeyLogger{}
 
 	err := k.Close()
 	if err != nil {
@@ -23,7 +21,7 @@ func TestFileDescriptor(t *testing.T) {
 }
 
 func TestBufferParser(t *testing.T) {
-	k := &keyLogger{}
+	k := &KeyLogger{}
 
 	// keyboard
 	input, err := k.eventFromBuffer(
@@ -33,20 +31,20 @@ func TestBufferParser(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if input == nil {
-		t.Error("Event is empty, expected parsed event")
+	if input != nil {
+		t.Error("Event should be empty because it is not an event key")
 		return
 	}
 
-	if input.KeyString() != "3" {
-		t.Errorf("wrong input key. got %v, expected %v", input.KeyString(), "3")
-		return
-	}
+	// if input.KeyString() != "3" {
+	// 	t.Errorf("wrong input key. got %v, expected %v", input.KeyString(), "3")
+	// 	return
+	// }
 
-	if input.Type != evMsc {
-		t.Errorf("wrong event type. expected key press but got %v", input.Type)
-		return
-	}
+	// if input.Type != evMsc {
+	// 	t.Errorf("wrong event type. expected key press but got %v", input.Type)
+	// 	return
+	// }
 }
 
 func TestWithPermission(t *testing.T) {
@@ -55,7 +53,7 @@ func TestWithPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := newKeylogger(fd.Name())
+	k, err := NewKeylogger(types.KeyloggerInput{UsbName: fd.Name()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +61,7 @@ func TestWithPermission(t *testing.T) {
 	fd.Close()
 
 	// try to create new keylogger with file descriptor which has no permission
-	_, err = newKeylogger("/dev/tty0")
+	_, err = NewKeylogger(types.KeyloggerInput{UsbName: "/dev/tty0"})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -72,72 +70,24 @@ func TestWithPermission(t *testing.T) {
 	}
 }
 
-func initDeviceFile() (*os.File, error) {
-	tf, err := os.MkdirTemp("", "device_test")
-	if err != nil {
-		return &os.File{}, err
-	}
-	filename := fmt.Sprintf("device_%d", rand.Int())
-	filepath := path.Join(tf, filename)
-	// INFO: 0666 everyone can read and write so tests does not need to run with root privileges
-	fd, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, os.ModePerm)
-	if err != nil {
-		return &os.File{}, err
-	}
-	return fd, nil
-}
-
-func disconnectDeviceFile(df *os.File) error {
-	// INFO: removing file will not close the file descriptor of keylogger
-	// because if any process has the file open when this happens,
-	// deletion is postponed until all processes have closed the file.
-	// source: https://www.gnu.org/software/libc/manual/html_node/Deleting-Files.html
-	// For simulating device disconnection, we close file descriptor
-	err := df.Close()
-	if err != nil {
-		return err
-	}
-	return os.Remove(df.Name())
-}
-
-func reconnectDeviceFile(df *os.File) error {
-	fd, err := os.OpenFile(df.Name(), os.O_RDWR|os.O_CREATE, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	*df = *fd
-	return nil
-}
-
-func writeKeyDeviceFile(fd *os.File, code uint16) error {
-	for _, i := range []int32{int32(KeyPress), int32(KeyRelease)} {
-		slog.Info(fmt.Sprintf("writing key: %d, isRelease %d\n", code, i))
-		err := binary.Write(fd, binary.LittleEndian, inputEvent{Type: evKey, Code: code, Value: i})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func TestKeylog(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer checkGoroutineLeak(t, before)
+	defer CheckGoroutineLeak(t, before)
 
-	df, err := initDeviceFile()
+	df, err := InitDeviceFile()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer df.Close()
 	deviceFile := df.Name()
 
-	k, err := newKeylogger(deviceFile)
+	k, err := NewKeylogger(types.KeyloggerInput{UsbName: deviceFile})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer k.Close()
 	// run goroutine to receive keypress
-	recEvt := make(chan inputEvent, 1)
+	recEvt := make(chan InputEvent, 1)
 	go func() {
 		t.Log("Starting goroutine")
 		for i := range k.Read() {
@@ -149,7 +99,7 @@ func TestKeylog(t *testing.T) {
 	// test
 	time.Sleep(200 * time.Millisecond)
 	t.Log("writing..")
-	err = writeKeyDeviceFile(df, uint16(1))
+	err = WriteKeyDeviceFile(df, uint16(1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -165,27 +115,19 @@ func TestKeylog(t *testing.T) {
 	}
 }
 
-func checkGoroutineLeak(t *testing.T, before int) {
-	time.Sleep(2 * time.Second)
-	after := runtime.NumGoroutine()
-	if after > before {
-		t.Fatalf("Goroutines leak. Before: %d, After: %d", before, after)
-	}
-}
-
 // when you remove a usb device from the computer, the device file is removed
 func TestDisconnectionKeylogger(t *testing.T) {
 	before := runtime.NumGoroutine()
-	defer checkGoroutineLeak(t, before)
+	defer CheckGoroutineLeak(t, before)
 
-	fd, err := initDeviceFile()
+	fd, err := InitDeviceFile()
 	if err != nil {
 		t.Fatal(err)
 	}
 	deviceFile := fd.Name()
 
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := newKeylogger(deviceFile)
+	k, err := NewKeylogger(types.KeyloggerInput{UsbName: deviceFile})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -201,7 +143,7 @@ func TestDisconnectionKeylogger(t *testing.T) {
 	}()
 	time.Sleep(200 * time.Millisecond)
 	// disconnect
-	err = disconnectDeviceFile(k.fd)
+	err = DisconnectDeviceFile(k.FD)
 	if err != nil {
 		t.Fatal(err)
 	}

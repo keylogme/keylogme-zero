@@ -1,12 +1,19 @@
-package keylog
+package k0
 
 import (
 	"fmt"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
+type ShiftStateInput struct {
+	ThresholdAuto types.Duration `json:"threshold_auto"`
+}
+
 // Auto is true when the shift state is triggered by the microcontroller
-type shiftStateDetected struct {
+type ShiftStateDetected struct {
 	ShortcutId           string
 	DeviceId             string
 	Modifier             uint16
@@ -16,7 +23,7 @@ type shiftStateDetected struct {
 	DiffTimeReleaseMicro int64
 }
 
-func (ssd *shiftStateDetected) IsDetected() bool {
+func (ssd *ShiftStateDetected) IsDetected() bool {
 	return ssd.DeviceId != ""
 }
 
@@ -39,52 +46,31 @@ type shiftStateDetector struct {
 	lastKeyReleaseTime     int64 // unix micro
 	lastModReleaseTime     int64 // unix micro
 	thresholdAuto          time.Duration
-	possibleAutoShiftState shiftStateDetected
+	possibleAutoShiftState ShiftStateDetected
+	mapIdToCodes           map[string]Key
 }
 
-func getShiftCodeKey(shiftCode, code uint16) string {
-	return fmt.Sprintf("%d_%d", shiftCode, code)
-}
-
-func getShortcutCodesForShiftState(shiftCodes []uint16) []ShortcutCodes {
-	numCodes := []uint16{2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-	lettersCodes := []uint16{
-		16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-		30, 31, 32, 33, 34, 35, 36, 37, 38, 44, 45, 46, 47, 48, 49, 50,
-	}
-	symbolsCodes := []uint16{12, 13, 26, 27, 28, 39, 40, 41, 43, 51, 52, 53}
-	allCodes := append(numCodes, append(lettersCodes, symbolsCodes...)...)
-	listSS := []ShortcutCodes{}
-	for _, sc := range shiftCodes {
-		for _, c := range allCodes {
-			scKey := getShiftCodeKey(sc, c)
-			ssc := ShortcutCodes{
-				Id:    scKey,
-				Codes: []uint16{sc, c},
-				Type:  HoldShortcutType,
-			}
-			listSS = append(listSS, ssc)
-		}
-	}
-	return listSS
-}
-
-func NewShiftStateDetector(config ShiftState) *shiftStateDetector {
-	shiftMods := []uint16{42, 54}
-	scs := getShortcutCodesForShiftState(shiftMods)
+// New shift state detector with default config (shift of all codes)
+func NewShiftStateDetector(config ShiftStateInput) *shiftStateDetector {
+	scs := getShortcutCodesForShiftState()
+	mapId := getMapIdToCodes()
 	return &shiftStateDetector{
-		holdDetector:  newHoldShortcutDetector(scs, shiftMods),
+		holdDetector:  NewHoldShortcutDetector(scs, keylogger.GetShiftCodes()),
 		thresholdAuto: config.ThresholdAuto.Duration,
+		mapIdToCodes:  mapId,
 	}
 }
 
-func NewShiftStateDetectorWithHoldSD(
+// new shift state detector that accepts a hold shortcut detector as input
+func newShiftStateDetectorWithHoldSD(
 	hd holdShortcutDetector,
-	config ShiftState,
+	mapIdToCodes map[string]Key,
+	config ShiftStateInput,
 ) *shiftStateDetector {
 	return &shiftStateDetector{
 		holdDetector:  hd,
 		thresholdAuto: config.ThresholdAuto.Duration,
+		mapIdToCodes:  mapIdToCodes,
 	}
 }
 
@@ -98,25 +84,29 @@ func (skd *shiftStateDetector) blockSaveKeylog() bool {
 	return skd.possibleAutoShiftState.IsDetected()
 }
 
-func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected {
+func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) ShiftStateDetected {
 	sd := skd.holdDetector.handleKeyEvent(ke)
 	skd.setTimes(ke)
 	if sd.IsDetected() && skd.isHolded() {
-		mod := skd.holdDetector.modPress[0] // by default first element is the modifier
+		k, ok := skd.mapIdToCodes[sd.ShortcutId]
+		if !ok {
+			skd.possibleAutoShiftState = ShiftStateDetected{}
+			return ShiftStateDetected{}
+		}
 		auto := false
 		diffTimeMicro := skd.lastKeyPressTime - skd.lastModPressTime
-		sdetect := shiftStateDetected{
+		sdetect := ShiftStateDetected{
 			ShortcutId:         sd.ShortcutId,
 			DeviceId:           ke.DeviceId,
-			Modifier:           mod,
-			Code:               ke.Code,
+			Modifier:           k.Modifier,
+			Code:               k.Code,
 			Auto:               auto,
 			DiffTimePressMicro: diffTimeMicro,
 		}
 		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
 			// auto shift needs confirmation on shift release
 			skd.possibleAutoShiftState = sdetect
-			return shiftStateDetected{}
+			return ShiftStateDetected{}
 		}
 		return sdetect
 	}
@@ -125,18 +115,18 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) shiftStateDetected
 		result := skd.possibleAutoShiftState
 		result.Auto = false
 		result.DiffTimeReleaseMicro = diffTimeMicro
-		skd.possibleAutoShiftState = shiftStateDetected{}
+		skd.possibleAutoShiftState = ShiftStateDetected{}
 		if time.Duration(time.Microsecond*time.Duration(diffTimeMicro)) < skd.thresholdAuto {
 			// confirm auto shift state
 			result.Auto = true
 		}
 		return result
 	}
-	return shiftStateDetected{}
+	return ShiftStateDetected{}
 }
 
 func (skd *shiftStateDetector) setTimes(ke DeviceEvent) {
-	t := ke.ExecTime
+	t := ke.Time
 
 	if skd.isHolded() && skd.lastModPressTime == 0 {
 		skd.reset()
@@ -165,5 +155,40 @@ func (skd *shiftStateDetector) reset() {
 	skd.lastKeyReleaseTime = 0
 	skd.lastKeyPressTime = 0
 	skd.lastModReleaseTime = 0
-	skd.possibleAutoShiftState = shiftStateDetected{}
+	skd.possibleAutoShiftState = ShiftStateDetected{}
+}
+
+func getShiftCodeKey(shiftCode, code uint16) string {
+	return fmt.Sprintf("%d_%d", shiftCode, code)
+}
+
+func getShortcutCodesForShiftState() []ShortcutCodes {
+	listSS := []ShortcutCodes{}
+	shiftCodes := keylogger.GetShiftCodes()
+	allCodes := keylogger.GetAllCodes()
+	for _, sc := range shiftCodes {
+		for _, c := range allCodes {
+			scKey := getShiftCodeKey(sc, c)
+			ssc := ShortcutCodes{
+				Id:    scKey,
+				Codes: []uint16{sc, c},
+				Type:  HoldShortcutType,
+			}
+			listSS = append(listSS, ssc)
+		}
+	}
+	return listSS
+}
+
+func getMapIdToCodes() map[string]Key {
+	mapIdToCodes := make(map[string]Key)
+	shiftCodes := keylogger.GetShiftCodes()
+	allCodes := keylogger.GetAllCodes()
+	for _, sc := range shiftCodes {
+		for _, c := range allCodes {
+			scKey := getShiftCodeKey(sc, c)
+			mapIdToCodes[scKey] = Key{Code: c, Modifier: sc}
+		}
+	}
+	return mapIdToCodes
 }

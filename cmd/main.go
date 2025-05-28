@@ -13,12 +13,19 @@ import (
 	"github.com/keylogme/keylogme-zero/utils"
 )
 
+// Linux keylogger
 // Use lsinput to see the usb_name to be used
 // apt install input-utils
 // sudo lsinput
 // If your keyboard name appeared multiple times,
 // try with all of them
 // See readme
+
+// Mac keylogger
+// See System Information to get Product ID and Vendor ID of keyboard and mouse devices:
+// - USB
+// - Bluetooth
+// - SPI (Apple internal keyboard / trackpad)
 
 func main() {
 	// Get config
@@ -29,6 +36,7 @@ func main() {
 	var config k0.KeylogmeZeroConfig
 	err := utils.ParseFromFile(file_config, &config)
 	if err != nil {
+		log.Fatal(err.Error())
 		log.Fatal("Could not parse config file")
 	}
 
@@ -46,7 +54,7 @@ func main() {
 
 	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
 
-	ld := k0.NewLayerDetector(config.Keylog.Devices, config.Keylog.ShiftState)
+	ld := k0.NewLayersDetector(config.Keylog.Devices, config.Keylog.ShiftState)
 
 	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
 

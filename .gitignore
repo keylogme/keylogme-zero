@@ -5,3 +5,5 @@ deploy/*tar.gz
 deploy/keylogme/*
 
 output*.json
+
+pkg/k0/*.json

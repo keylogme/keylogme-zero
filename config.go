@@ -1,8 +1,7 @@
-package keylog
+package k0
 
 import (
 	"github.com/keylogme/keylogme-zero/storage"
-	"github.com/keylogme/keylogme-zero/types"
 )
 
 type KeylogmeZeroConfig struct {
@@ -11,11 +10,7 @@ type KeylogmeZeroConfig struct {
 }
 
 type Config struct {
-	Devices        []DeviceInput   `json:"devices"`
-	ShortcutGroups []ShortcutGroup `json:"shortcut_groups"`
-	ShiftState     ShiftState      `json:"shift_state"`
-}
-
-type ShiftState struct {
-	ThresholdAuto types.Duration `json:"threshold_auto"`
+	Devices        []DeviceInput        `json:"devices"`
+	ShortcutGroups []ShortcutGroupInput `json:"shortcut_groups"`
+	ShiftState     ShiftStateInput      `json:"shift_state"`
 }
