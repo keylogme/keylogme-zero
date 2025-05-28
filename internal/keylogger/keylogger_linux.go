@@ -1,4 +1,4 @@
-package k0
+package keylogger
 
 import (
 	"bytes"
@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 const (
@@ -31,10 +33,6 @@ type inputEvent struct {
 	Type  eventType
 	Code  uint16
 	Value int32
-}
-
-type KeyloggerInput struct {
-	UsbName string `json:"usb_name"`
 }
 
 // findKeyboardDevice by going through each device registered on OS
@@ -72,18 +70,18 @@ func getPathDevice(name string) string {
 	return name
 }
 
-func getKeyLogger(name string) (*keyLogger, error) {
+func getKeyLogger(name string) (*KeyLogger, error) {
 	pathDevice := getPathDevice(name)
 	if pathDevice == "" {
 		return nil, fmt.Errorf("Device with name %s not found\n", name)
 	}
-	k := &keyLogger{}
+	k := &KeyLogger{}
 	slog.Debug(fmt.Sprintf("Opening %s\n", pathDevice))
 	fd, err := openDeviceFile(pathDevice)
 	if err != nil {
 		return nil, err
 	}
-	k.fd = fd
+	k.FD = fd
 	return k, nil
 }
 
@@ -95,9 +93,9 @@ func openDeviceFile(devPath string) (*os.File, error) {
 	return fd, nil
 }
 
-// keyLogger wrapper around file descriptior
-type keyLogger struct {
-	fd *os.File
+// KeyLogger wrapper around file descriptior
+type KeyLogger struct {
+	FD *os.File
 }
 
 func wrapErrorRoot(err error) error {
@@ -110,15 +108,15 @@ func wrapErrorRoot(err error) error {
 }
 
 // NewKeylogger creates a new keylogger for a device path
-func NewKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
-	k := &keyLogger{}
+func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
+	k := &KeyLogger{}
 	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", isRoot()))
 	if _, err := os.Stat(kInput.UsbName); err == nil {
 		fd, err := openDeviceFile(kInput.UsbName)
 		if err != nil {
 			return nil, err
 		}
-		k.fd = fd
+		k.FD = fd
 		return k, nil
 	}
 	return getKeyLogger(kInput.UsbName)
@@ -127,7 +125,7 @@ func NewKeylogger(kInput KeyloggerInput) (*keyLogger, error) {
 // Read from file descriptor
 // Blocking call, returns channel
 // Make sure to close channel when finish
-func (k *keyLogger) Read() chan InputEvent {
+func (k *KeyLogger) Read() chan InputEvent {
 	event := make(chan InputEvent)
 	go func(event chan InputEvent) {
 		for {
@@ -147,14 +145,14 @@ func (k *keyLogger) Read() chan InputEvent {
 }
 
 // read from file description and parse binary into go struct
-func (k *keyLogger) read() (*InputEvent, error) {
+func (k *KeyLogger) read() (*InputEvent, error) {
 	buffer := make([]byte, eventsize)
-	n, err := k.fd.Read(buffer)
+	n, err := k.FD.Read(buffer)
 	// bypass EOF, maybe keyboard is connected
 	// but you don't press any key
 	if err != nil && err != io.EOF {
 		slog.Debug(
-			fmt.Sprintf("error reading from file descriptor %s: %s\n", k.fd.Name(), err.Error()),
+			fmt.Sprintf("error reading from file descriptor %s: %s\n", k.FD.Name(), err.Error()),
 		)
 		return nil, err
 	}
@@ -166,11 +164,11 @@ func (k *keyLogger) read() (*InputEvent, error) {
 }
 
 // eventFromBuffer parser bytes into InputEvent struct
-func (k *keyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
+func (k *KeyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
 	event := &inputEvent{}
 	err := binary.Read(bytes.NewBuffer(buffer), binary.LittleEndian, event)
 	if err != nil {
-		slog.Debug(fmt.Sprintf("error parsing buffer %s: %s\n", k.fd.Name(), err.Error()))
+		slog.Debug(fmt.Sprintf("error parsing buffer %s: %s\n", k.FD.Name(), err.Error()))
 		return nil, err
 	}
 	if event.Type != evKey {
@@ -185,11 +183,11 @@ func (k *keyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
 }
 
 // Close file descriptor
-func (k *keyLogger) Close() error {
-	if k.fd == nil {
+func (k *KeyLogger) Close() error {
+	if k.FD == nil {
 		return nil
 	}
-	return k.fd.Close()
+	return k.FD.Close()
 }
 
 // isRoot checks if the process is run with root permission

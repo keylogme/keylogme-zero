@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 	"github.com/keylogme/keylogme-zero/types"
 )
 
@@ -53,7 +54,7 @@ func NewShiftStateDetector(config ShiftStateInput) *shiftStateDetector {
 	scs := getShortcutCodesForShiftState()
 	mapId := getMapIdToCodes()
 	return &shiftStateDetector{
-		holdDetector:  NewHoldShortcutDetector(scs, SHIFT_CODES),
+		holdDetector:  NewHoldShortcutDetector(scs, keylogger.GetShiftCodes()),
 		thresholdAuto: config.ThresholdAuto.Duration,
 		mapIdToCodes:  mapId,
 	}
@@ -84,6 +85,11 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) ShiftStateDetected
 	sd := skd.holdDetector.handleKeyEvent(ke)
 	skd.setTimes(ke)
 	if sd.IsDetected() && skd.isHolded() {
+		fmt.Printf(
+			"ShiftStateDetector: detected hold shortcut %s for device %s\n",
+			sd.ShortcutId,
+			ke.DeviceId,
+		)
 		k, ok := skd.mapIdToCodes[sd.ShortcutId]
 		if !ok {
 			skd.possibleAutoShiftState = ShiftStateDetected{}
@@ -160,8 +166,10 @@ func getShiftCodeKey(shiftCode, code uint16) string {
 
 func getShortcutCodesForShiftState() []ShortcutCodes {
 	listSS := []ShortcutCodes{}
-	for _, sc := range SHIFT_CODES {
-		for _, c := range ALL_CODES {
+	shiftCodes := keylogger.GetShiftCodes()
+	allCodes := keylogger.GetAllCodes()
+	for _, sc := range shiftCodes {
+		for _, c := range allCodes {
 			scKey := getShiftCodeKey(sc, c)
 			ssc := ShortcutCodes{
 				Id:    scKey,
@@ -176,8 +184,10 @@ func getShortcutCodesForShiftState() []ShortcutCodes {
 
 func getMapIdToCodes() map[string]Key {
 	mapIdToCodes := make(map[string]Key)
-	for _, sc := range SHIFT_CODES {
-		for _, c := range ALL_CODES {
+	shiftCodes := keylogger.GetShiftCodes()
+	allCodes := keylogger.GetAllCodes()
+	for _, sc := range shiftCodes {
+		for _, c := range allCodes {
 			scKey := getShiftCodeKey(sc, c)
 			mapIdToCodes[scKey] = Key{Code: c, Modifier: sc}
 		}

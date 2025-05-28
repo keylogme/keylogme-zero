@@ -1,4 +1,4 @@
-package k0
+package keylogger
 
 import (
 	"time"

@@ -2,26 +2,34 @@ package k0
 
 import (
 	"testing"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
+)
+
+var (
+	CTRL_CODES         = keylogger.GetCtrlCodes()
+	ALT_CODES          = keylogger.GetAltCodes()
+	ALL_MODIFIER_CODES = keylogger.GetAllModifierCodes()
 )
 
 func TestHoldShortcut_Detect(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
-		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType},
+		{Id: "2", Codes: []uint16{CTRL_CODES[0], 47}, Type: HoldShortcutType},
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 28, KeyRelease) // rand key
+	ev := getFakeEvent("1", 28, keylogger.KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
@@ -30,27 +38,27 @@ func TestHoldShortcut_Detect(t *testing.T) {
 
 func TestHoldShortcut_DetectMultiple_OnlyOne(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
-		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType},
+		{Id: "2", Codes: []uint16{CTRL_CODES[0], 47}, Type: HoldShortcutType},
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 28, KeyRelease) // rand key
+	ev := getFakeEvent("1", 28, keylogger.KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 51, KeyRelease) // key not in shortcuts
+	ev = getFakeEvent("1", 51, keylogger.KeyRelease) // key not in shortcuts
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
@@ -60,27 +68,27 @@ func TestHoldShortcut_DetectMultiple_OnlyOne(t *testing.T) {
 // test for copy/paste ;)
 func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType}, // copy
-		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType}, // paste
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType}, // copy
+		{Id: "2", Codes: []uint16{CTRL_CODES[0], 47}, Type: HoldShortcutType}, // paste
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 28, KeyRelease) // rand key
+	ev := getFakeEvent("1", 28, keylogger.KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 46, KeyRelease) // second key shortcut (id 1)
+	ev = getFakeEvent("1", 46, keylogger.KeyRelease) // second key shortcut (id 1)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "1" {
 		t.Fatal("Detection expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut (id 2)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
@@ -90,48 +98,48 @@ func TestHoldShortcut_DetectMultiple_Both(t *testing.T) {
 // test for paste paste paste
 func TestHoldShortcut_DetectConsecutive(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType}, // copy
-		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType}, // paste
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType}, // copy
+		{Id: "2", Codes: []uint16{CTRL_CODES[0], 47}, Type: HoldShortcutType}, // paste
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 28, KeyRelease) // rand key
+	ev := getFakeEvent("1", 28, keylogger.KeyRelease) // rand key
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut (id 2)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut (id 2)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut (id 2)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
 	}
 	// Now release and press again ctrl
-	ev = GetFakeEvent("1", 29, KeyRelease)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyRelease)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut (id 2)
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut (id 2)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
@@ -140,21 +148,21 @@ func TestHoldShortcut_DetectConsecutive(t *testing.T) {
 
 func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 56, 111}, Type: HoldShortcutType},
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], ALT_CODES[0], 111}, Type: HoldShortcutType},
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev := getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 56, KeyPress) // second key shortcut (hold)
+	ev = getFakeEvent("1", ALT_CODES[0], keylogger.KeyPress) // second key shortcut (hold)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 111, KeyRelease) // last key press
+	ev = getFakeEvent("1", 111, keylogger.KeyRelease) // last key press
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "1" {
 		t.Fatal("Detection expected")
@@ -163,29 +171,29 @@ func TestHoldShortcut_DetectThreeKeys(t *testing.T) {
 
 func TestHoldShortcut_Aborted(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType},
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev := getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 50, KeyRelease) // rand key
+	ev = getFakeEvent("1", 50, keylogger.KeyRelease) // rand key
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyRelease) // aborted (ctrl key released)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyRelease) // aborted (ctrl key released)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent(
+	ev = getFakeEvent(
 		"1",
 		46,
-		KeyRelease,
+		keylogger.KeyRelease,
 	) // second key pressed but ctrl was released
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
@@ -195,22 +203,22 @@ func TestHoldShortcut_Aborted(t *testing.T) {
 
 func TestHoldShortcut_ModPressEmpty(t *testing.T) {
 	sl := []ShortcutCodes{
-		{Id: "1", Codes: []uint16{29, 46}, Type: HoldShortcutType},
-		{Id: "2", Codes: []uint16{29, 47}, Type: HoldShortcutType},
+		{Id: "1", Codes: []uint16{CTRL_CODES[0], 46}, Type: HoldShortcutType},
+		{Id: "2", Codes: []uint16{CTRL_CODES[0], 47}, Type: HoldShortcutType},
 	}
 	ds := NewHoldShortcutDetector(sl, ALL_MODIFIER_CODES)
 
-	ev := GetFakeEvent("1", 29, KeyPress) // first key shortcut (hold)
+	ev := getFakeEvent("1", CTRL_CODES[0], keylogger.KeyPress) // first key shortcut (hold)
 	scDetected := ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	ev = GetFakeEvent("1", 47, KeyRelease) // second key shortcut
+	ev = getFakeEvent("1", 47, keylogger.KeyRelease) // second key shortcut
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "2" {
 		t.Fatal("Detection expected")
 	}
-	ev = GetFakeEvent("1", 29, KeyRelease)
+	ev = getFakeEvent("1", CTRL_CODES[0], keylogger.KeyRelease)
 	scDetected = ds.handleKeyEvent(ev)
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")

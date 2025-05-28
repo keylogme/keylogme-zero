@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 const (
@@ -14,7 +17,7 @@ const (
 type Device struct {
 	DeviceInput
 	ctx       context.Context
-	keylogger Keylogger
+	keylogger *keylogger.KeyLogger
 	sendInput chan DeviceEvent
 }
 
@@ -22,17 +25,17 @@ type DeviceInput struct {
 	DeviceId       string       `json:"device_id"`
 	Name           string       `json:"name"`
 	Layers         []LayerInput `json:"layers"`
-	keyloggerInput KeyloggerInput
+	KeyloggerInput types.KeyloggerInputAllOS
 }
 
 type DeviceEvent struct {
-	InputEvent
+	keylogger.InputEvent
 	DeviceId string
 }
 
-func GetFakeEvent(deviceId string, code uint16, keyevent KeyEvent) DeviceEvent {
+func getFakeEvent(deviceId string, code uint16, keyevent keylogger.KeyEvent) DeviceEvent {
 	return DeviceEvent{
-		InputEvent: InputEvent{
+		InputEvent: keylogger.InputEvent{
 			Time:  time.Now(),
 			Code:  code,
 			Value: keyevent,
@@ -41,7 +44,11 @@ func GetFakeEvent(deviceId string, code uint16, keyevent KeyEvent) DeviceEvent {
 	}
 }
 
-func GetDevice(ctx context.Context, input DeviceInput, inputChan chan DeviceEvent) *Device {
+func GetDevice(
+	ctx context.Context,
+	input DeviceInput,
+	inputChan chan DeviceEvent,
+) *Device {
 	device := &Device{ctx: ctx, DeviceInput: input, keylogger: nil, sendInput: inputChan}
 	go device.handleReconnects()
 	return device
@@ -88,7 +95,7 @@ func (d *Device) IsConnected() bool {
 func (d *Device) handleReconnects() {
 	for {
 		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
-		newK, err := NewKeylogger(d.keyloggerInput)
+		newK, err := keylogger.NewKeylogger(d.KeyloggerInput.GetDeviceInput())
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {

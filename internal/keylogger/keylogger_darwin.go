@@ -1,4 +1,4 @@
-package k0
+package keylogger
 
 /*
 // -I include current directory for headers
@@ -17,26 +17,21 @@ import (
 	"github.com/keylogme/keylogme-zero/types"
 )
 
-type KeyloggerInput struct {
-	VendorID  types.Hex `json:"vendor_id"`
-	ProductID types.Hex `json:"product_id"`
-}
-
 var hidManager = map[int]map[int]chan InputEvent{}
 
-type keylogger struct {
+type KeyLogger struct {
 	vendorID  int
 	productID int
 }
 
-func NewKeylogger(kInput KeyloggerInput) (*keylogger, error) {
+func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 	// C.ListConnectedHIDDevices()
 	exists := C.checkDeviceIsConnected(C.int(kInput.VendorID), C.int(kInput.ProductID))
 	if !exists {
 		slog.Debug("Device not found")
 		return nil, fmt.Errorf("Device not available")
 	}
-	k := &keylogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
+	k := &KeyLogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
 
 	go func() {
 		// INFO: lock goroutine to thread so CFRunLoopRun is in
@@ -50,7 +45,7 @@ func NewKeylogger(kInput KeyloggerInput) (*keylogger, error) {
 	return k, nil
 }
 
-func (k *keylogger) Read() chan InputEvent {
+func (k *KeyLogger) Read() chan InputEvent {
 	if _, ok := hidManager[k.vendorID]; !ok {
 		hidManager[k.vendorID] = map[int]chan InputEvent{}
 	}
@@ -62,7 +57,7 @@ func (k *keylogger) Read() chan InputEvent {
 	return hidManager[k.vendorID][k.productID]
 }
 
-func (k *keylogger) Close() error {
+func (k *KeyLogger) Close() error {
 	if _, ok := hidManager[k.vendorID]; !ok {
 		return nil
 	}

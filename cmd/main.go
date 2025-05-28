@@ -21,15 +21,13 @@ import (
 // try with all of them
 // See readme
 
+// Mac keylogger
+// See System Information to get Product ID and Vendor ID of keyboard and mouse devices:
+// - USB
+// - Bluetooth
+// - SPI (Apple internal keyboard / trackpad)
+
 func main() {
-	// // Create a TextHandler with debug level
-	// handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-	// 	Level: slog.LevelDebug, // Set minimum log level to Debug
-	// })
-	// logger := slog.New(handler)
-	//
-	// // Replace the default logger if needed
-	// slog.SetDefault(logger)
 	// Get config
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {

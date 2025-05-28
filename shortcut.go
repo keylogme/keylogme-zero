@@ -3,6 +3,8 @@ package k0
 import (
 	"fmt"
 	"log"
+
+	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 type ShortcutType string
@@ -47,7 +49,7 @@ func MustGetNewShortcutsDetector(sgs []ShortcutGroupInput) *shortcutsDetector {
 
 	return &shortcutsDetector{
 		seqDetector:  NewSeqShortcutDetector(s),
-		holdDetector: NewHoldShortcutDetector(s, ALL_MODIFIER_CODES),
+		holdDetector: NewHoldShortcutDetector(s, keylogger.GetAllModifierCodes()),
 	}
 }
 
