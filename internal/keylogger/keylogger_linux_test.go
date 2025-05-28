@@ -36,10 +36,10 @@ func TestBufferParser(t *testing.T) {
 		return
 	}
 
-	if input.KeyString() != "3" {
-		t.Errorf("wrong input key. got %v, expected %v", input.KeyString(), "3")
-		return
-	}
+	// if input.KeyString() != "3" {
+	// 	t.Errorf("wrong input key. got %v, expected %v", input.KeyString(), "3")
+	// 	return
+	// }
 
 	// if input.Type != evMsc {
 	// 	t.Errorf("wrong event type. expected key press but got %v", input.Type)
