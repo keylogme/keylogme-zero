@@ -2,15 +2,29 @@ package k0
 
 import (
 	"testing"
+	"time"
 
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
 )
 
 var (
+	ALL_CODES          = keylogger.GetAllCodes()
 	CTRL_CODES         = keylogger.GetCtrlCodes()
 	ALT_CODES          = keylogger.GetAltCodes()
+	SHIFT_CODES        = keylogger.GetShiftCodes()
 	ALL_MODIFIER_CODES = keylogger.GetAllModifierCodes()
 )
+
+func getFakeEvent(deviceId string, code uint16, keyevent keylogger.KeyEvent) DeviceEvent {
+	return DeviceEvent{
+		InputEvent: keylogger.InputEvent{
+			Time:  time.Now(),
+			Code:  code,
+			Value: keyevent,
+		},
+		DeviceId: deviceId,
+	}
+}
 
 func TestHoldShortcut_Detect(t *testing.T) {
 	sl := []ShortcutCodes{

@@ -28,6 +28,46 @@ type layerDetector struct {
 	mapKeys       map[uint16]bool
 }
 
+func newLayerDetector(layerInput LayerInput, shiftStateConfig ShiftStateInput) layerDetector {
+	// for single codes we will use a map to detect
+	mk := map[uint16]bool{}
+	shiftedCodes := []ShortcutCodes{}
+	shiftKeys := []uint16{}
+	mapIdToCodes := make(map[string]Key)
+	for _, lc := range layerInput.Codes {
+		if lc.Modifier == 0 {
+			mk[lc.Code] = true
+			continue
+		}
+
+		IDName := fmt.Sprintf("%d_%d", lc.Modifier, lc.Code)
+		shiftedCodes = append(
+			shiftedCodes,
+			ShortcutCodes{
+				Id:    IDName,
+				Name:  IDName,
+				Codes: []uint16{lc.Modifier, lc.Code},
+				Type:  HoldShortcutType,
+			},
+		)
+		if !slices.Contains(shiftKeys, lc.Modifier) {
+			shiftKeys = append(shiftKeys, lc.Modifier)
+		}
+		mapIdToCodes[IDName] = Key{
+			Code:     lc.Code,
+			Modifier: lc.Modifier,
+		}
+	}
+	hsd := NewHoldShortcutDetector(shiftedCodes, shiftKeys)
+	// for shifted states (auto) we will use a shift state detector
+	ssd := newShiftStateDetectorWithHoldSD(hsd, mapIdToCodes, shiftStateConfig)
+	return layerDetector{
+		Layer:         layerInput,
+		shiftDetector: ssd,
+		mapKeys:       mk,
+	}
+}
+
 func (ld *layerDetector) handleKeyEvent(ke DeviceEvent) LayerDetected {
 	sd := ld.shiftDetector.handleKeyEvent(ke)
 	if sd.IsDetected() && sd.Auto {
@@ -55,7 +95,7 @@ type layersDetector struct {
 	currentLayerDetected *layerDetector
 }
 
-func NewLayerDetector(
+func NewLayersDetector(
 	devices []DeviceInput,
 	shiftStateConfig ShiftStateInput,
 ) *layersDetector {
@@ -64,38 +104,7 @@ func NewLayerDetector(
 		l[dev.DeviceId] = []layerDetector{}
 		// each layer will have its own detector
 		for _, layer := range dev.Layers {
-			// for single codes we will use a map to detect
-			mk := map[uint16]bool{}
-			shiftedCodes := []ShortcutCodes{}
-			shiftKeys := []uint16{}
-			for _, lc := range layer.Codes {
-				if lc.Modifier == 0 {
-					mk[lc.Code] = true
-					continue
-				}
-
-				fakeIDName := fmt.Sprintf("%d_%d", lc.Modifier, lc.Code)
-				shiftedCodes = append(
-					shiftedCodes,
-					ShortcutCodes{
-						Id:    fakeIDName,
-						Name:  fakeIDName,
-						Codes: []uint16{lc.Modifier, lc.Code},
-						Type:  HoldShortcutType,
-					},
-				)
-				if !slices.Contains(shiftKeys, lc.Modifier) {
-					shiftKeys = append(shiftKeys, lc.Modifier)
-				}
-			}
-			hsd := NewHoldShortcutDetector(shiftedCodes, shiftKeys)
-			// for shifted states (auto) we will use a shift state detector
-			ssd := NewShiftStateDetectorWithHoldSD(hsd, shiftStateConfig)
-			ld := layerDetector{
-				Layer:         layer,
-				shiftDetector: ssd,
-				mapKeys:       mk,
-			}
+			ld := newLayerDetector(layer, shiftStateConfig)
 			l[dev.DeviceId] = append(l[dev.DeviceId], ld)
 		}
 	}

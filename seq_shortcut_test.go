@@ -1,7 +1,6 @@
 package k0
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -117,8 +116,8 @@ func TestSeqShortcut_diffDevice_after_shortcut_3(t *testing.T) {
 	if scDetected.ShortcutId != "" {
 		t.Fatal("Detection not expected")
 	}
-	fmt.Println(ds.currPossibleShortcuts)
-	fmt.Printf("%#v\n", ds.prevShortcutDeviceDetected)
+	// fmt.Println(ds.currPossibleShortcuts)
+	// fmt.Printf("%#v\n", ds.prevShortcutDeviceDetected)
 	scDetected = ds.detect("2", 46) // third  key confirms detection shortcut
 	if scDetected.ShortcutId != "1" {
 		t.Fatal("Detection expected")

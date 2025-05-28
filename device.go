@@ -33,17 +33,6 @@ type DeviceEvent struct {
 	DeviceId string
 }
 
-func getFakeEvent(deviceId string, code uint16, keyevent keylogger.KeyEvent) DeviceEvent {
-	return DeviceEvent{
-		InputEvent: keylogger.InputEvent{
-			Time:  time.Now(),
-			Code:  code,
-			Value: keyevent,
-		},
-		DeviceId: deviceId,
-	}
-}
-
 func GetDevice(
 	ctx context.Context,
 	input DeviceInput,

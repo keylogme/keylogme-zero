@@ -50,6 +50,7 @@ type shiftStateDetector struct {
 	mapIdToCodes           map[string]Key
 }
 
+// New shift state detector with default config (shift of all codes)
 func NewShiftStateDetector(config ShiftStateInput) *shiftStateDetector {
 	scs := getShortcutCodesForShiftState()
 	mapId := getMapIdToCodes()
@@ -60,14 +61,16 @@ func NewShiftStateDetector(config ShiftStateInput) *shiftStateDetector {
 	}
 }
 
-// TODO: add documentation
-func NewShiftStateDetectorWithHoldSD(
+// new shift state detector that accepts a hold shortcut detector as input
+func newShiftStateDetectorWithHoldSD(
 	hd holdShortcutDetector,
+	mapIdToCodes map[string]Key,
 	config ShiftStateInput,
 ) *shiftStateDetector {
 	return &shiftStateDetector{
 		holdDetector:  hd,
 		thresholdAuto: config.ThresholdAuto.Duration,
+		mapIdToCodes:  mapIdToCodes,
 	}
 }
 
@@ -85,11 +88,6 @@ func (skd *shiftStateDetector) handleKeyEvent(ke DeviceEvent) ShiftStateDetected
 	sd := skd.holdDetector.handleKeyEvent(ke)
 	skd.setTimes(ke)
 	if sd.IsDetected() && skd.isHolded() {
-		fmt.Printf(
-			"ShiftStateDetector: detected hold shortcut %s for device %s\n",
-			sd.ShortcutId,
-			ke.DeviceId,
-		)
 		k, ok := skd.mapIdToCodes[sd.ShortcutId]
 		if !ok {
 			skd.possibleAutoShiftState = ShiftStateDetected{}
