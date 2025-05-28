@@ -21,7 +21,7 @@ var ctrlCodes = []uint16{29, 97}
 
 var altCodes = []uint16{56, 100}
 
-var guiCodes = []uint16{125, 126}
+// var guiCodes = []uint16{125, 126}
 
 var keyCodeMap = map[uint16]string{
 	1:   "ESCAPE",

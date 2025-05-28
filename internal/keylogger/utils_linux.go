@@ -58,12 +58,12 @@ func ReconnectDeviceFile(df *os.File) error {
 }
 
 func WriteKeyDeviceFile(fd *os.File, code uint16) error {
-	for _, i := range []KeyEvent{KeyPress, KeyRelease} {
+	for _, i := range []int32{int32(KeyPress), int32(KeyRelease)} {
 		slog.Info(fmt.Sprintf("writing key: %d, isRelease %d\n", code, i))
 		err := binary.Write(
 			fd,
 			binary.LittleEndian,
-			InputEvent{Code: code, Value: i, Time: time.Now()},
+			inputEvent{Type: evKey, Code: code, Value: i},
 		)
 		if err != nil {
 			return err

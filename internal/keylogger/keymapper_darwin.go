@@ -17,7 +17,7 @@ var ctrlCodes = []uint16{224, 228}
 
 var altCodes = []uint16{226, 230}
 
-var guiCodes = []uint16{227, 231}
+// var guiCodes = []uint16{227, 231}
 
 var keyCodeMap = map[uint16]string{
 	4:   "A",
