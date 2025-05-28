@@ -31,8 +31,8 @@ func TestBufferParser(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if input == nil {
-		t.Error("Event is empty, expected parsed event")
+	if input != nil {
+		t.Error("Event should be empty because it is not an event key")
 		return
 	}
 
