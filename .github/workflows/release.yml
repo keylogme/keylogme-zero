@@ -30,16 +30,21 @@ jobs:
           version: v1.64
           args: -E gofumpt
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{matrix.os}}
     needs: lint
+    strategy:
+      matrix:
+        #windows-latest, macos-latest later
+        os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      - run: go test -v ./...
+      - name: Run Go tests on ${{ matrix.os }}
+        run: go test -v ./...
   release:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:

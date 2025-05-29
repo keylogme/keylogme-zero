@@ -109,16 +109,6 @@ func wrapErrorRoot(err error) error {
 
 // NewKeylogger creates a new keylogger for a device path
 func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
-	k := &KeyLogger{}
-	slog.Debug(fmt.Sprintf("creating keylogger with root? %t\n", isRoot()))
-	if _, err := os.Stat(kInput.UsbName); err == nil {
-		fd, err := openDeviceFile(kInput.UsbName)
-		if err != nil {
-			return nil, err
-		}
-		k.FD = fd
-		return k, nil
-	}
 	return getKeyLogger(kInput.UsbName)
 }
 

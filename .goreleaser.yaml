@@ -14,6 +14,8 @@ before:
 
 builds:
   - main: ./cmd/main.go
+    env:
+      - CGO_ENABLED=1
     goos:
       - linux
       - darwin
