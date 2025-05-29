@@ -12,12 +12,71 @@ import "C"
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/keylogme/keylogme-zero/types"
 )
 
-var hidManager = map[int]map[int]chan InputEvent{}
+// var hidManager = map[int]map[int]chan InputEvent{}
+
+type hidManager struct {
+	mapVendorProductChan map[int]map[int]chan InputEvent
+	mu                   sync.Mutex
+}
+
+var hid = hidManager{
+	mapVendorProductChan: make(map[int]map[int]chan InputEvent),
+	mu:                   sync.Mutex{},
+}
+
+func (h *hidManager) exists(vendorID, productID int) (chan InputEvent, bool) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if _, ok := h.mapVendorProductChan[vendorID]; !ok {
+		return nil, false
+	}
+	if _, ok := h.mapVendorProductChan[vendorID][productID]; !ok {
+		return nil, false
+	}
+	return h.mapVendorProductChan[vendorID][productID], true
+}
+
+func (h *hidManager) setChannel(vendorID, productID int) chan InputEvent {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if _, ok := h.mapVendorProductChan[vendorID]; !ok {
+		h.mapVendorProductChan[vendorID] = map[int]chan InputEvent{}
+	}
+	if _, ok := h.mapVendorProductChan[vendorID][productID]; !ok {
+		event := make(chan InputEvent)
+		h.mapVendorProductChan[vendorID][productID] = event
+	}
+	return h.mapVendorProductChan[vendorID][productID]
+}
+
+func (h *hidManager) closeChannel(vendorID, productID int) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if _, ok := h.mapVendorProductChan[vendorID]; !ok {
+		return
+	}
+	if _, ok := h.mapVendorProductChan[vendorID][productID]; !ok {
+		return
+	}
+	close(h.mapVendorProductChan[vendorID][productID]) // close channel
+	delete(h.mapVendorProductChan[vendorID], productID)
+
+	// remove vendorID if no products left
+	if len(h.mapVendorProductChan[vendorID]) == 0 {
+		delete(h.mapVendorProductChan, vendorID)
+	}
+	// stop if no devices left
+	if len(h.mapVendorProductChan) == 0 {
+		C.Stop()
+	}
+	return
+}
 
 type KeyLogger struct {
 	vendorID  int
@@ -34,11 +93,6 @@ func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 	k := &KeyLogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
 
 	go func() {
-		// INFO: lock goroutine to thread so CFRunLoopRun is in
-		// same goroutine's thread
-		// runtime.LockOSThread()
-		// defer runtime.UnlockOSThread()
-
 		// TODO: add mutex to prevent multiple calls
 		C.Start()
 	}()
@@ -46,32 +100,11 @@ func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 }
 
 func (k *KeyLogger) Read() chan InputEvent {
-	if _, ok := hidManager[k.vendorID]; !ok {
-		hidManager[k.vendorID] = map[int]chan InputEvent{}
-	}
-	if _, ok := hidManager[k.vendorID][k.productID]; !ok {
-		event := make(chan InputEvent)
-		hidManager[k.vendorID][k.productID] = event
-		fmt.Println("Created channel keylogger....")
-	}
-	return hidManager[k.vendorID][k.productID]
+	return hid.setChannel(k.vendorID, k.productID)
 }
 
 func (k *KeyLogger) Close() error {
-	if _, ok := hidManager[k.vendorID]; !ok {
-		return nil
-	}
-	if _, ok := hidManager[k.vendorID][k.productID]; !ok {
-		return nil
-	}
-	delete(hidManager[k.vendorID], k.productID)
-	if len(hidManager[k.vendorID]) == 0 {
-		delete(hidManager, k.vendorID)
-	}
-	// stop if no devices left
-	if len(hidManager) == 0 {
-		C.Stop()
-	}
+	hid.closeChannel(k.vendorID, k.productID)
 	return nil
 }
 
@@ -80,11 +113,8 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	vID := int(vendorID)
 	pID := int(productID)
 
-	if _, ok := hidManager[vID]; !ok {
-		slog.Debug("Vendor id not in HIDManager")
-		return
-	}
-	if _, ok := hidManager[vID][pID]; !ok {
+	c, ok := hid.exists(vID, pID)
+	if !ok {
 		slog.Debug("Vendor id and product id not in HIDManager")
 		return
 	}
@@ -92,33 +122,21 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	hidManager[vID][pID] <- InputEvent{Time: time.Now(), Code: uint16(code), Value: KeyEvent(value)}
+	c <- InputEvent{Time: time.Now(), Code: uint16(code), Value: KeyEvent(value)}
 }
 
 //export GoHandleDeviceEvent
 func GoHandleDeviceEvent(vendorID, productID, connected C.int) {
+	vID := int(vendorID)
+	pID := int(productID)
 	status := "disconnected"
 	if connected != 0 {
 		status = "connected"
 		// INFO: Read will add device to hidManager
-		fmt.Printf("[Device] %s: VID=0x%04x, PID=0x%04x\n", status, vendorID, productID)
+		// fmt.Printf("[Device] %s: VID=0x%04x, PID=0x%04x\n", status, vendorID, productID)
 		return
 	}
 	// disconnect
 	fmt.Printf("[Device] %s: VID=0x%04x, PID=0x%04x\n", status, vendorID, productID)
-
-	if _, ok := hidManager[int(vendorID)]; !ok {
-		return
-	}
-	if _, ok := hidManager[int(vendorID)][int(productID)]; ok {
-		close(hidManager[int(vendorID)][int(productID)]) // close channel
-		delete(hidManager[int(vendorID)], int(productID))
-		if len(hidManager[int(vendorID)]) == 0 {
-			delete(hidManager, int(vendorID))
-		}
-	}
-	// stop if no devices left
-	if len(hidManager) == 0 {
-		C.Stop()
-	}
+	hid.closeChannel(vID, pID)
 }

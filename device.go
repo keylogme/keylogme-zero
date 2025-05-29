@@ -22,10 +22,10 @@ type Device struct {
 }
 
 type DeviceInput struct {
-	DeviceId       string       `json:"device_id"`
-	Name           string       `json:"name"`
-	Layers         []LayerInput `json:"layers"`
-	KeyloggerInput types.KeyloggerInputAllOS
+	DeviceId       string                    `json:"device_id"`
+	Name           string                    `json:"name"`
+	Layers         []LayerInput              `json:"layers"`
+	KeyloggerInput types.KeyloggerInputAllOS `json:"keylogger"`
 }
 
 type DeviceEvent struct {

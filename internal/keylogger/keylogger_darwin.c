@@ -33,7 +33,6 @@ void HIDCallback(void *context, IOReturn result, void *sender,
 
   // printf("HIDCallback: usagePage: %d, usage: %d, pressed: %ld\n", usagePage,
   //        usage, pressed);
-  // printf("Key usage: 0x%x 0x%x, pressed: %ld\n", usagePage, usage, pressed);
   if (usagePage == kHIDPage_KeyboardOrKeypad && usage >= 4 && usage <= 231) {
     // printf("Key usage: 0x%x, pressed: %ld\n", usage, pressed);
     GoHandleKeyEvent(usage, (int)pressed, ctx->vendorID, ctx->productID);
@@ -83,7 +82,7 @@ void ManagerDeviceRemovalCallback(void *context, IOReturn result, void *sender,
 // integrated, etc )
 void DeviceMatchingCallback(void *context, IOReturn result, void *sender,
                             IOHIDDeviceRef device) {
-  printf("Device matching callback\n");
+  // printf("Device matching callback\n");
   CFNumberRef vendorRef =
       IOHIDDeviceGetProperty(device, CFSTR(kIOHIDVendorIDKey));
   CFNumberRef productRef =
@@ -259,7 +258,6 @@ void Start() {
 
   // Blocking call
   printf("Starting run loop...\n");
-  printf("%d\n", runLoopStarted);
   CFRunLoopRun();
 
   // cleanup

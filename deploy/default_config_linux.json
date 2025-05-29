@@ -4,7 +4,9 @@
             {
                 "device_id": "1",
                 "name": "⌨️✋ crkbd",
-                "usb_name": "foostan Corne",
+                "keylogger": {
+                    "usb_name": "foostan Corne"
+                },
                 "layers": [
                     {
                         "id": 1,
