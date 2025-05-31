@@ -31,7 +31,7 @@ func main() {
 	// Get config
 	file_config := os.Getenv("CONFIG_FILE")
 	if file_config == "" {
-		log.Fatal("CONFIG_FILE is not set")
+		log.Fatal("Env var CONFIG_FILE is not set")
 	}
 	var config k0.KeylogmeZeroConfig
 	err := utils.ParseFromFile(file_config, &config)

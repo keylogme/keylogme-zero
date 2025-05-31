@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.keylogme.keylogme-zero</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/keylogme-zero</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+   <key>EnvironmentVariables</key>
+    <dict>
+        <key>CONFIG_FILE</key>
+        <string>${KEYLOGME_ZERO_CONFIG_FILE_PLACEHOLDER}</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/var/log/keylogme-zero.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/keylogme-zero.error.log</string>
+
+    </dict>
+</plist>
