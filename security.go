@@ -14,10 +14,10 @@ type baggage struct {
 	devices map[string][]uint16
 }
 
-func newBaggage(size int, d map[string][]uint16) *baggage {
+func newBaggage(size int) *baggage {
 	return &baggage{
 		size:    size,
-		devices: d,
+		devices: map[string][]uint16{},
 	}
 }
 
@@ -70,14 +70,13 @@ type security struct {
 }
 
 type SecurityInput struct {
-	BaggageSize   int                 `json:"baggage_size"`
-	Baggage       map[string][]uint16 `json:"baggage_per_device"`
-	GhostingCodes []uint16            `json:"ghosting_codes"`
+	BaggageSize   int      `json:"baggage_size"`
+	GhostingCodes []uint16 `json:"ghosting_codes"`
 }
 
 func NewSecurity(secInput SecurityInput) *security {
 	return &security{
-		baggage:       newBaggage(secInput.BaggageSize, secInput.Baggage),
+		baggage:       newBaggage(secInput.BaggageSize),
 		ghostingCodes: newGhostingCodes(secInput.GhostingCodes),
 	}
 }

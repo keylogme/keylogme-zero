@@ -5,8 +5,9 @@ import (
 )
 
 type KeylogmeZeroConfig struct {
-	Keylog  Config                `json:"keylog"`
-	Storage storage.ConfigStorage `json:"storage"`
+	Keylog   Config                `json:"keylog"`
+	Storage  storage.ConfigStorage `json:"storage"`
+	Security SecurityInput         `json:"security"`
 }
 
 type Config struct {

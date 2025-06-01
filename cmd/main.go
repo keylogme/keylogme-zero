@@ -51,11 +51,7 @@ func main() {
 		devices = append(devices, *d)
 	}
 
-	security := k0.NewSecurity(k0.SecurityInput{
-		BaggageSize:   0,
-		Baggage:       map[string][]uint16{},
-		GhostingCodes: []uint16{},
-	})
+	security := k0.NewSecurity(config.Security)
 
 	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 

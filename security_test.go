@@ -35,7 +35,7 @@ func TestRandSeed(t *testing.T) {
 
 func TestNewBaggage(t *testing.T) {
 	bagggageSize := 3
-	b := newBaggage(bagggageSize, map[string][]uint16{})
+	b := newBaggage(bagggageSize)
 
 	deviceId := "1"
 	de := DeviceEvent{
@@ -69,37 +69,6 @@ func TestNewBaggage(t *testing.T) {
 	}
 }
 
-func TestLoadBaggage(t *testing.T) {
-	bagggageSize := 3
-	deviceId := "1"
-	initialMap := map[string][]uint16{deviceId: {0, 1, 2, 1, 1, 1}}
-	b := newBaggage(bagggageSize, initialMap)
-
-	de := DeviceEvent{
-		DeviceId: deviceId,
-		InputEvent: keylogger.InputEvent{
-			Code: uint16(0),
-			Type: keylogger.KeyPress,
-		},
-	}
-	for i := range bagggageSize {
-		de.Code = uint16(i)
-		isAuth := b.isAuthorized(&de)
-		if !isAuth {
-			t.Fatalf("Expected authorized")
-		}
-	}
-
-	if len(b.devices[deviceId]) != len(initialMap[deviceId]) {
-		t.Fatalf("Expected baggage size to be %d\n", len(initialMap[deviceId]))
-	}
-
-	authorizedCode := uint16(bagggageSize)
-	if de.Code == authorizedCode {
-		t.Fatalf("Expected code being swapped")
-	}
-}
-
 func TestGhostingKeys(t *testing.T) {
 	g := newGhostingCodes([]uint16{1, 2})
 
@@ -127,7 +96,6 @@ func TestSecurity(t *testing.T) {
 	deviceId := "1"
 	si := SecurityInput{
 		BaggageSize:   10,
-		Baggage:       map[string][]uint16{deviceId: {0, 1, 1, 1, 2}},
 		GhostingCodes: []uint16{25, 26, 27},
 	}
 	s := NewSecurity(si)
@@ -141,7 +109,7 @@ func TestSecurity(t *testing.T) {
 	}
 
 	// fill baggage to size - 1
-	numCodesToNotFill := si.BaggageSize - len(si.Baggage[deviceId]) - 1
+	numCodesToNotFill := si.BaggageSize - 1
 	t.Log(numCodesToNotFill)
 	for i := range numCodesToNotFill {
 		de.Code = uint16(i)
