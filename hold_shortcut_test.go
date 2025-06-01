@@ -18,9 +18,9 @@ var (
 func getFakeEvent(deviceId string, code uint16, keyevent keylogger.KeyEvent) DeviceEvent {
 	return DeviceEvent{
 		InputEvent: keylogger.InputEvent{
-			Time:  time.Now(),
-			Code:  code,
-			Value: keyevent,
+			Time: time.Now(),
+			Code: code,
+			Type: keyevent,
 		},
 		DeviceId: deviceId,
 	}

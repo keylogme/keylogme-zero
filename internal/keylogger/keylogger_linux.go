@@ -166,9 +166,9 @@ func (k *KeyLogger) eventFromBuffer(buffer []byte) (*InputEvent, error) {
 		return nil, nil
 	}
 	return &InputEvent{
-		Time:  time.Unix(event.Time.Sec, event.Time.Usec*1000),
-		Code:  event.Code,
-		Value: KeyEvent(event.Value),
+		Time: time.Unix(event.Time.Sec, event.Time.Usec*1000),
+		Code: event.Code,
+		Type: KeyEvent(event.Value),
 	}, err
 }
 

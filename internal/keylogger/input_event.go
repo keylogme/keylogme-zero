@@ -6,9 +6,9 @@ import (
 
 // InputEvent is the keyboard event structure itself
 type InputEvent struct {
-	Time  time.Time
-	Code  uint16
-	Value KeyEvent
+	Time time.Time
+	Code uint16
+	Type KeyEvent
 }
 
 // KeyString returns representation of pressed key as string
@@ -19,12 +19,12 @@ func (i *InputEvent) KeyString() string {
 
 // KeyPress is the value when we press the key on keyboard
 func (i *InputEvent) KeyPress() bool {
-	return i.Value == 1
+	return i.Type == 1
 }
 
 // KeyRelease is the value when we release the key on keyboard
 func (i *InputEvent) KeyRelease() bool {
-	return i.Value == 0
+	return i.Type == 0
 }
 
 func (i *InputEvent) IsValid() bool {
