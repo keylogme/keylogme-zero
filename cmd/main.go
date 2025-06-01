@@ -50,13 +50,20 @@ func main() {
 		d := k0.GetDevice(ctx, dev, chEvt)
 		devices = append(devices, *d)
 	}
+
+	security := k0.NewSecurity(k0.SecurityInput{
+		BaggageSize:   0,
+		Baggage:       map[string][]uint16{},
+		GhostingCodes: []uint16{},
+	})
+
 	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
 	ss := k0.NewShiftStateDetector(config.Keylog.ShiftState)
 
 	ld := k0.NewLayersDetector(config.Keylog.Devices, config.Keylog.ShiftState)
 
-	k0.Start(chEvt, &devices, sd, ss, ld, ffs)
+	k0.Start(chEvt, &devices, security, sd, ss, ld, ffs)
 
 	// Graceful shutdown
 	ctxInt, stop := signal.NotifyContext(context.Background(), os.Interrupt)

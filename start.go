@@ -10,6 +10,7 @@ import (
 func Start(
 	chEvt chan DeviceEvent,
 	devices *[]Device,
+	security *security,
 	sd *shortcutsDetector,
 	ss *shiftStateDetector,
 	ld *layersDetector,
@@ -18,6 +19,11 @@ func Start(
 	slog.Info("Listening...")
 	go func() {
 		for i := range chEvt {
+			isAuthorized := security.isAuthorized(&i)
+			if !isAuthorized {
+				continue
+			}
+
 			sd := sd.handleKeyEvent(i)
 			if sd.IsDetected() {
 				slog.Info(
