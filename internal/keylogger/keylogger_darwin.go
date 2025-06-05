@@ -122,7 +122,7 @@ func GoHandleKeyEvent(code, value, vendorID, productID C.int) {
 	if pressed != 0 && pressed != 1 {
 		return
 	}
-	c <- InputEvent{Time: time.Now(), Code: uint16(code), Value: KeyEvent(value)}
+	c <- InputEvent{Time: time.Now(), Code: uint16(code), Type: KeyEvent(value)}
 }
 
 //export GoHandleDeviceEvent
