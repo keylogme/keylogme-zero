@@ -60,13 +60,13 @@ func getShortcutsFromGroups(s []ShortcutGroupInput) ([]ShortcutCodes, error) {
 	scs := []ShortcutCodes{}
 	for _, sg := range s {
 		if _, ok := scgIds[sg.Id]; ok {
-			return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut group id %s", sg.Id)
+			return []ShortcutCodes{}, fmt.Errorf("repeated shortcut group id %s", sg.Id)
 		}
 		scgIds[sg.Id] = true
 		for _, sc := range sg.Shortcuts {
 			// check uniqueness shortcut ids
 			if _, ok := scIds[sc.Id]; ok {
-				return []ShortcutCodes{}, fmt.Errorf("Repeated shortcut id %s", sg.Id)
+				return []ShortcutCodes{}, fmt.Errorf("repeated shortcut id %s", sg.Id)
 			}
 			scIds[sc.Id] = true
 			scs = append(scs, sc)

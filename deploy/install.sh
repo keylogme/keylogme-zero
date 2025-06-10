@@ -9,7 +9,6 @@ echo "Current interpreter: $(ps -p $$ -o comm=)" # $$ is current PID, comm= is c
 keylogme_version=$1
 file_config_abs_path=$2
 # Check sudo permissions
-echo $EUID
 if [ $EUID != 0 ]; then
     echo "🟡 Running installer with non-sudo permissions."
     echo "   Please run the script with sudo privileges to create keylogme service"
@@ -87,6 +86,20 @@ has_cmd envsubst || {
     echo "🟡 envsubst is not installed. Please install envsubst to set environment variables in service file"
     exit 1
 }
+#######################
+# Check OS
+#######################
+desired_os=0
+os=""
+arch=""
+echo -e "🌏 Detecting your OS ..."
+check_os
+check_arch
+echo "  OS ${os} arch ${arch}"
+
+github_repo="keylogme/keylogme-zero"
+keylogme_folder="${HOME}/.keylogme"
+mkdir -p "$keylogme_folder"
 
 # Check inputs
 # Required
@@ -94,14 +107,33 @@ has_cmd envsubst || {
 
 # Optional
 if [ "$keylogme_version" == "" ]; then
-    echo "keylogme version default to latest"
-    keylogme_version="latest"
+    latest_release_info=$(curl -s "https://api.github.com/repos/$github_repo/releases/latest")
+
+    # Extract the tag name
+    keylogme_version=$(echo "$latest_release_info" | jq -r '.tag_name')
+    echo "Latest keylogme version ${keylogme_version}"
 fi
+
+
 if [ "$file_config_abs_path" == "" ]; then
     dir_name="$(pwd)"
-    default_name="default_config.json"
+    if [ "$os" == "Linux" ] ;then
+        default_name="default_config_linux.json.template"
+    elif [ "$os" == "Darwin" ]; then
+        default_name="default_config_darwin.json.template"
+    fi
+
     file_config_abs_path="${dir_name}/${default_name}"
-    echo "Absolute config file path will be set to ${file_config_abs_path}"
+    echo "Using template config file path"
+
+    output_file="${keylogme_folder}/output.json"
+    export KEYLOGME_OUTPUT_FILE="${output_file}"
+    envsubst < "${file_config_abs_path}" > "${keylogme_folder}/config.json"
+    file_config_abs_path="${keylogme_folder}/config.json"
+    echo "##############################################################################"
+    echo "Output file will be saved to ${output_file}"
+    echo "Config file is saved here: ${file_config_abs_path}"
+    echo "##############################################################################"
 fi
 
 #############################################################################
@@ -109,22 +141,15 @@ fi
 #############################################################################
 
 
-# check OS
-desired_os=0
-os=""
-arch=""
-echo -e "🌏 Detecting your OS ...\n"
-check_os
-check_arch
 
 # download
 echo "⬇️Downloading keylogme-zero ${keylogme_version}..."
 file_compressed="keylogme-zero_${os}_${arch}.tar.gz"
-url="https://github.com/keylogme/keylogme-zero/releases/download/${keylogme_version}/${file_compressed}"
+url="https://github.com/${github_repo}/releases/download/${keylogme_version}/${file_compressed}"
 echo "  File to download: ${url}"
 if has_curl; then
     echo "🟢 Using curl to download keylogme-zero..."
-    curl -v -L ${url} --output ${file_compressed} 
+    curl -s -L ${url} --output ${file_compressed} 
 elif has_wget; then
     echo "🟢 Using wget to download keylogme-zero..."
     wget -q ${url} -O ${file_compressed}
@@ -137,7 +162,7 @@ fi
 echo "🗜️Uncompressing keylogme-zero ${keylogme_version}..."
 mkdir -p keylogme
 if has_tar; then
-    tar -xvzf ${file_compressed} -C keylogme
+    tar -xzf ${file_compressed} -C keylogme
 else
     echo "🟡 tar command not found. Please install tar to extract keylogme-zero."
     exit 1
@@ -145,10 +170,10 @@ fi
 
 # check if service keylogme-zero exists and stop it
 echo "🍏Checking if keylogme-zero service exists..."
-if os="Linux";then
+if [ "$os" == "Linux" ] ;then
     service_file_path="/etc/systemd/system/keylogme-zero.service"
-elif os="Darwin"; then
-    service_file_path="/Library/LaunchDaemons/keylogme-zero.plist"
+elif [ "$os" == "Darwin" ]; then
+    service_file_path="/Library/LaunchDaemons/com.keylogme.keylogme-zero.plist"
 fi
 
 if has_systemctl; then
@@ -156,29 +181,33 @@ if has_systemctl; then
         echo "🟡 keylogme-zero service is running. Stopping the service..."
         sudo systemctl stop keylogme-zero
         sudo systemctl disable keylogme-zero
+        echo "  Service was stopped"
     }
 elif has_launchctl; then
     launchctl list | grep -q keylogme-zero && {
         echo "🟡 keylogme-zero service is running. Stopping the service..."
         sudo launchctl stop com.keylogme.keylogme-zero
         sudo launchctl unload ${service_file_path}
+        echo "  Service was stopped"
+    }
 else
     echo "🟡 Neither systemctl(Linux) nor launchctl(MacOS) command found. Please run this script on a system with systemd or launchd."
     exit 1
-
 fi
 
 
 # try to copy and check if failed
-sudo cp keylogme/keylogme-zero /bin || {
+# TODO: add /usr/local for Rosetta MacOS because /opt/ is for Apple Silicon.
+# Use /bin/ for Ubuntu
+sudo cp ./keylogme/keylogme-zero /opt/ || {
     echo "🟡 Failed to copy keylogme-zero to /bin"
     exit 1
 }
 
+echo "🖥️Setting up service keylogme-zero..."
 export KEYLOGME_ZERO_CONFIG_FILE_PLACEHOLDER=${file_config_abs_path}
-envsubst < keylogme/keylogme-zero.service.template > keylogme-zero.service 
-if os="Linux"; then
-    sudo cp keylogme-zero.service ${service_file_path}
+if [ "$os" == "Linux" ] ;then
+    envsubst < keylogme-zero.service.template > ${service_file_path}
     # Set environment variables in service file
     # echo $"Environment=CONFIG_FILE=${file_config_abs_path}" >> ${service_file_path}
     # reload configurations incase if service file has changed
@@ -191,9 +220,36 @@ if os="Linux"; then
     systemctl is-active --quiet keylogme-zero && {
         echo "🟢 keylogme-zero service is running."
     }
-elif os="Darwin"; then
-    sudo cp keylogme-zero.plist ${service_file_path}
+elif [ "$os" == "Darwin" ]; then
+    envsubst < keylogme-zero.plist.template > ${service_file_path}
+
+    sudo chown root:wheel ${service_file_path}
+    sudo chmod 644 ${service_file_path}
+
+    sudo launchctl load -w ${service_file_path}
+    sudo launchctl start com.keylogme.keylogme-zero
 fi
 
 
+# check service is running
+sleep 5
+
+if has_systemctl; then
+    systemctl is-active --quiet keylogme-zero || {
+        echo "❌ Service is not running"
+        exit 1
+    }
+    echo "🆗 Service is running"
+elif has_launchctl; then
+    launchctl list | grep -q keylogme-zero || {
+        echo "❌ Service is not running"
+        exit 1
+    }
+    echo "🆗 Service is running"
+else
+    echo "🟡 Neither systemctl(Linux) nor launchctl(MacOS) command found. Please run this script on a system with systemd or launchd."
+    exit 1
+fi
+
 echo "🟢 keylogme-zero ${keylogme_version} installed successfully"
+

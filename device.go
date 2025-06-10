@@ -107,7 +107,7 @@ func (d *Device) handleReconnects() {
 
 func (d *Device) Close() {
 	if d.keylogger != nil {
-		d.keylogger.Close()
+		_ = d.keylogger.Close()
 	}
 	d.keylogger = nil
 }

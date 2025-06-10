@@ -24,7 +24,7 @@ func (c *ConfigStorage) Validate() error {
 	if c.FileOutput == "" {
 		return errors.New("file_output is required")
 	}
-	// absPath, err := filepath.Abs(c.FileOutput)
+	// absPath, err := utils.ExpandUserHome(c.FileOutput)
 	// if err != nil {
 	// 	return err
 	// }
@@ -271,7 +271,11 @@ func (f *FileStorage) saveToFile() error {
 	if err != nil {
 		return err
 	}
-	err = os.WriteFile(f.config.FileOutput, pb, os.ModePerm)
+	// Permissions for the new file (e.g., 0644 for read/write for owner, read-only for others)
+	// You can use os.FileMode(0644) or a more readable form like 0o644 (octal literal)
+	permissions := os.FileMode(0o644) // Or 0o644
+
+	err = os.WriteFile(f.config.FileOutput, pb, permissions)
 	if err != nil {
 		return err
 	}

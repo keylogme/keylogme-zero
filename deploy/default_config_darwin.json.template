@@ -66,7 +66,7 @@
         }
     },
     "storage": {
-        "file_output": "~/.keylogme/output_keylogme_zero_v1.json",
+        "file_output": "${KEYLOGME_OUTPUT_FILE}",
         "periodic_save": "20s"
     },
     "security": {
