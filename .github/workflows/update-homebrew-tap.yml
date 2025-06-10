@@ -1,0 +1,150 @@
+# .github/workflows/update-homebrew-tap.yml
+name: Update Homebrew Tap Formula
+
+on:
+  release:
+    types: [published] # Triggers when a new release is published
+
+# Permissions for the default GITHUB_TOKEN (for the project repo itself)
+permissions:
+  contents: read 
+
+jobs:
+  update_formula:
+    runs-on: ubuntu-latest
+
+    # Set outputs for the job (optional, but good for debugging)
+    outputs:
+      tag_name: ${{ steps.get_release_info.outputs.TAG_NAME }}
+      url_darwin_amd64: ${{ steps.get_release_info.outputs.URL_DARWIN_AMD64 }}
+      sha256_darwin_amd64: ${{ steps.get_release_info.outputs.SHA256_DARWIN_AMD64 }}
+      url_darwin_arm64: ${{ steps.get_release_info.outputs.URL_DARWIN_ARM64 }}
+      sha256_darwin_arm64: ${{ steps.get_release_info.outputs.SHA256_DARWIN_ARM64 }}
+      url_linux_amd64: ${{ steps.get_release_info.outputs.URL_LINUX_AMD64 }}
+      sha256_linux_amd64: ${{ steps.get_release_info.outputs.SHA256_LINUX_AMD64 }}
+      url_linux_arm64: ${{ steps.get_release_info.outputs.URL_LINUX_ARM64 }}
+      sha256_linux_arm64: ${{ steps.get_release_info.outputs.SHA256_LINUX_ARM64 }}
+
+    steps:
+      - name: Checkout Project Repository
+        uses: actions/checkout@v4
+        with:
+          # We need to fetch the full history to get the tag_name correctly if using `git describe` etc.
+          # But for github.event.release.tag_name, it's not strictly necessary.
+          fetch-depth: 0
+
+      - name: Install jq and gettext-base (for envsubst)
+        run: sudo apt-get update && sudo apt-get install -y jq gettext-base
+
+      - name: Get Release Info and Calculate SHAs
+        id: get_release_info
+        run: |
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          # Remove 'v' prefix if present for Homebrew version field
+          TAG_NAME_NO_V="${TAG_NAME#v}" 
+
+          # Function to get URL and SHA256 for a specific asset pattern
+          get_asset_info() {
+            local os_arch_pattern="$1" # e.g., "darwin_amd64"
+            local asset_url
+            local asset_sha256
+
+            # Adjust this jq filter to precisely match your release asset names.
+            # Example: myproject_1.0.0_darwin_amd64.tar.gz
+            asset_url=$(echo '${{ github.event.release.assets }}' | jq -r --arg pattern "${os_arch_pattern}" '
+              .[] | select(.name | test("(?i).*" + $pattern + "\\.tar\\.gz$")) | .browser_download_url
+            ')
+
+            if [ -z "$asset_url" ] || [ "$asset_url" == "null" ]; then
+              echo "Error: Could not find asset for pattern: ${os_arch_pattern}. Exiting."
+              exit 1
+            fi
+
+            echo "Found URL for ${os_arch_pattern}: ${asset_url}"
+            asset_sha256=$(curl -sSL "$asset_url" | sha256sum | awk '{print $1}')
+            echo "Calculated SHA256 for ${os_arch_pattern}: ${asset_sha256}"
+
+            # Output values
+            echo "URL_${os_arch_pattern^^}=$asset_url" >> "$GITHUB_OUTPUT"
+            echo "SHA256_${os_arch_pattern^^}=$asset_sha256" >> "$GITHUB_OUTPUT"
+          }
+
+          # Get info for each platform
+          get_asset_info "darwin_amd64"
+          get_asset_info "darwin_arm64"
+          get_asset_info "linux_amd64"
+          get_asset_info "linux_arm64"
+
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "TAG_NAME_NO_V=$TAG_NAME_NO_V" >> "$GITHUB_OUTPUT"
+
+
+      - name: Checkout Homebrew Tap Repository
+        uses: actions/checkout@v4
+        with:
+          repository: yourusername/homebrew-yourproject # IMPORTANT: Replace with your actual tap repo!
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }} # Use the PAT created in GitHub secrets
+          path: homebrew-tap # Checkout the tap repo into this subdirectory
+
+      - name: Generate and Update Formula File
+        working-directory: homebrew-tap # Perform actions within the checked-out tap repo
+        run: |
+          # Define the path to the template (relative to project repo root)
+          TEMPLATE_PATH="../.github/workflows/myproject.rb.tpl"
+          # Define the path where the formula should live in your tap repo
+          FORMULA_PATH="Formula/myproject.rb" # Adjust if your formula is in a subdirectory (e.g., Formula/m/myproject.rb)
+
+          # Use envsubst to substitute placeholders from the template
+          # The variables will be available via the ${{ steps.get_release_info.outputs.<VAR_NAME> }}
+          # We need to explicitly export them for envsubst
+          export TAG_NAME_NO_V=${{ steps.get_release_info.outputs.TAG_NAME_NO_V }}
+          export URL_DARWIN_AMD64=${{ steps.get_release_info.outputs.URL_DARWIN_AMD64 }}
+          export SHA256_DARWIN_AMD64=${{ steps.get_release_info.outputs.SHA256_DARWIN_AMD64 }}
+          export URL_DARWIN_ARM64=${{ steps.get_release_info.outputs.URL_DARWIN_ARM64 }}
+          export SHA256_DARWIN_ARM64=${{ steps.get_release_info.outputs.SHA256_DARWIN_ARM64 }}
+          export URL_LINUX_AMD64=${{ steps.get_release_info.outputs.URL_LINUX_AMD64 }}
+          export SHA256_LINUX_AMD64=${{ steps.get_release_info.outputs.SHA256_LINUX_AMD64 }}
+          export URL_LINUX_ARM64=${{ steps.get_release_info.outputs.URL_LINUX_ARM64 }}
+          export SHA256_LINUX_ARM64=${{ steps.get_release_info.outputs.SHA256_LINUX_ARM64 }}
+
+          # Generate the new formula content
+          envsubst < "$TEMPLATE_PATH" > "$FORMULA_PATH.new"
+
+          # Replace the old formula with the newly generated one
+          mv "$FORMULA_PATH.new" "$FORMULA_PATH"
+
+          echo "Generated formula content:"
+          cat "$FORMULA_PATH"
+
+      - name: Audit and Install Formula (Local Test)
+        working-directory: homebrew-tap
+        run: |
+          # This step acts as a sanity check. It ensures the generated formula is valid.
+          # It requires Homebrew to be set up in the runner, which it generally is.
+          # You might need to add `brew update` here if the runner's Homebrew is stale.
+          
+          # Install your formula directly from the .rb file
+          # --debug and --verbose show detailed output
+          brew install --debug --verbose ./Formula/myproject.rb
+          
+          # Run formula tests
+          brew test myproject
+
+          # Audit the formula for style and common issues
+          brew audit --strict --online ./Formula/myproject.rb
+        env:
+          HOMEBREW_NO_INSTALL_FROM_API: 1 # Disable API to force local formula install
+          HOMEBREW_NO_AUTO_UPDATE: 1     # Prevent brew update during tests
+
+      - name: Commit and Push Changes
+        working-directory: homebrew-tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Only commit and push if there are actual changes
+          git diff --exit-code || \
+          (git add . && \
+           git commit -m "${{ steps.get_release_info.outputs.TAG_NAME }}: update formula for multi-platform binaries" && \
+           git push)
+          echo "Formula update complete or no changes needed."

@@ -7,3 +7,5 @@ WantedBy=multi-user.target
 
 [Service]
 ExecStart=/bin/keylogme-zero
+Restart=always
+Environment="CONFIG_FILE=${KEYLOGME_ZERO_CONFIG_FILE_PLACEHOLDER}"
