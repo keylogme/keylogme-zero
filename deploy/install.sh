@@ -126,10 +126,10 @@ if [ "$file_config_abs_path" == "" ]; then
     file_config_abs_path="${dir_name}/${default_name}"
     echo "Using template config file path"
 
-    output_file="${keylogme_folder}/output.json"
+    output_file="${keylogme_folder}/output-keylogme-zero.json"
     export KEYLOGME_OUTPUT_FILE="${output_file}"
-    envsubst < "${file_config_abs_path}" > "${keylogme_folder}/config.json"
-    file_config_abs_path="${keylogme_folder}/config.json"
+    envsubst < "${file_config_abs_path}" > "${keylogme_folder}/config-keylogme-zero.json"
+    file_config_abs_path="${keylogme_folder}/config-keylogme-zero.json"
     echo "##############################################################################"
     echo "Output file will be saved to ${output_file}"
     echo "Config file is saved here: ${file_config_abs_path}"

@@ -308,8 +308,11 @@ in [keylogme.com/anonymous](https://keylogme.com/anonymous) and play with differ
 - [x] Local storage of stats
 - [ ] Installation script and keylogger compatible with
     - [x] Linux
+    - [x] Mac
     - [ ] Windows
-    - [ ] Mac
+- [x] Security features for not knowing what you write
+    - [x] Baggage (buffer of keys)
+    - [x] Ghost codes (not trackable keys)
 - [x] Shifted keys
 - [x] Layer changes
 - [ ] Performance WPM
