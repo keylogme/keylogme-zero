@@ -67,7 +67,7 @@ func (d *Device) start() bool {
 			slog.Debug(fmt.Sprintf(
 				"Current time of %d %d (microsecond precision): %s\n",
 				i.Code,
-				i.Value,
+				i.Type,
 				i.Time.Format("2006-01-02 15:04:05.000000"),
 			))
 
