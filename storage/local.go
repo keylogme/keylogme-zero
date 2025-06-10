@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -25,12 +24,12 @@ func (c *ConfigStorage) Validate() error {
 	if c.FileOutput == "" {
 		return errors.New("file_output is required")
 	}
-	absPath, err := filepath.Abs(c.FileOutput)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("File will be saved at %s\n", absPath)
-	c.FileOutput = absPath
+	// absPath, err := filepath.Abs(c.FileOutput)
+	// if err != nil {
+	// 	return err
+	// }
+	slog.Info(fmt.Sprintf("File will be saved at %s\n", c.FileOutput))
+	// c.FileOutput = absPath
 	if c.PeriodicSave.Duration == 0 {
 		return errors.New("periodic_save_in_sec is required and non zero")
 	}

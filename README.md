@@ -197,7 +197,7 @@ The config has two main sections:
         - type : type of shortcut. There are two: `hold` for holding shortcuts like copy (CTRL+C)
             and `seq` for sequential shortcuts like used in (neo)vim for shortcuts.
 - storage : config for storage
-    - file_output : abs filepath to store the stats
+    - file_output : absolute filepath to store the stats
     - periodic_save_in_sec : periodic time to save the stats. In seconds.
 
 

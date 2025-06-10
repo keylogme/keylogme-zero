@@ -148,7 +148,7 @@
         }
     },
     "storage": {
-        "file_output": "output_keylogme_zero_v1.json",
+        "file_output": "~/.keylogme/output_keylogme_zero_v1.json",
         "periodic_save": "20s"
     }
 }
