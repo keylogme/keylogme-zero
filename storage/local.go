@@ -273,7 +273,7 @@ func (f *FileStorage) saveToFile() error {
 	}
 	// Permissions for the new file (e.g., 0644 for read/write for owner, read-only for others)
 	// You can use os.FileMode(0644) or a more readable form like 0o644 (octal literal)
-	permissions := os.FileMode(0644) // Or 0o644
+	permissions := os.FileMode(uint32(0644)) // Or 0o644
 
 	err = os.WriteFile(f.config.FileOutput, pb, permissions)
 	if err != nil {
