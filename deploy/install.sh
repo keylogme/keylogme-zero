@@ -199,28 +199,38 @@ fi
 # try to copy and check if failed
 # TODO: add /usr/local for Rosetta MacOS because /opt/ is for Apple Silicon.
 # Use /bin/ for Ubuntu
-sudo cp ./keylogme/keylogme-zero /opt/ || {
-    echo "🟡 Failed to copy keylogme-zero to /bin"
-    exit 1
-}
 
 echo "🖥️Setting up service keylogme-zero..."
 export KEYLOGME_ZERO_CONFIG_FILE_PLACEHOLDER=${file_config_abs_path}
 if [ "$os" == "Linux" ] ;then
+    # copy binary
+    sudo cp ./keylogme/keylogme-zero /bin/ || {
+        echo "🟡 Failed to copy keylogme-zero to /bin"
+        exit 1
+    }
+
+    # setup service
     envsubst < keylogme-zero.service.template > ${service_file_path}
     # Set environment variables in service file
     # echo $"Environment=CONFIG_FILE=${file_config_abs_path}" >> ${service_file_path}
     # reload configurations incase if service file has changed
     sudo systemctl daemon-reload
-    # restart the service
-    sudo systemctl restart keylogme-zero
-    # start of VM restart
     sudo systemctl enable keylogme-zero
+    sudo systemctl restart keylogme-zero
     # check service keylogme-zero is running
     systemctl is-active --quiet keylogme-zero && {
         echo "🟢 keylogme-zero service is running."
     }
 elif [ "$os" == "Darwin" ]; then
+    binary_folder="/usr/local"
+    if [ "$arch" == "arm64" ]; then
+        binary_folder="/opt"
+    fi
+    sudo cp ./keylogme/keylogme-zero "${binary_folder}" || {
+        echo "🟡 Failed to copy keylogme-zero to /bin"
+        exit 1
+    }
+    # setup service
     envsubst < keylogme-zero.plist.template > ${service_file_path}
 
     sudo chown root:wheel ${service_file_path}
