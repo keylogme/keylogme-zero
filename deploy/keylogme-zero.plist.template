@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/keylogme-zero</string>
+    <string>${KEYLOGME_BINARY_PLACEHOLDER}</string>
     </array>
 
     <key>RunAtLoad</key>
