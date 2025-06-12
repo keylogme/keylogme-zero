@@ -135,22 +135,22 @@ check the stats in the output file. The ouput file is defined in config file -> 
    ```sh
    cd deploy && sudo -E ./install.sh
    ```
-<details>
-    <summary>With parameters</summary>
-    If you want to install a specific version:
-    ```sh
-    cd deploy && sudo -E ./install.sh v1.1.0
-    ```
-    If you want to install and use your own config (don't forget the version, in this case latest):
-    ```sh
-    cd deploy && sudo -E ./install.sh latest /absolute/path/to/your/config.json
+    <details>
+        <summary>With parameters</summary>
+        If you want to install a specific version:
+        ```sh
+        cd deploy && sudo -E ./install.sh v1.1.0
         ```
-</details>
+        If you want to install and use your own config (don't forget the version, in this case latest):
+        ```sh
+        cd deploy && sudo -E ./install.sh latest /absolute/path/to/your/config.json
+            ```
+    </details>
 
-Important! Give permissions
-The installation will guide you on how to give permissions of Privacy & security > Input monitoring to binary.
+    Important! Give permissions
+    The installation will guide you on how to give permissions of Privacy & security > Input monitoring to binary.
 
-<video src="images/permissions_mac.mp4" width="320" height="240" controls></video>
+    <img src="images/permissions_mac.gif" alt="Give permissions in MacOS" width="585" height="206">
 
 
 3. Press some keypresses, the output file is periodically saved (default value every 20 seconds) so after some time 
