@@ -5,13 +5,13 @@ import (
 )
 
 type KeylogmeZeroConfig struct {
-	Keylog   Config                `json:"keylog"`
-	Storage  storage.ConfigStorage `json:"storage"`
-	Security SecurityInput         `json:"security"`
+	Keylog  Config                `json:"keylog"`
+	Storage storage.ConfigStorage `json:"storage"`
 }
 
 type Config struct {
 	Devices        []DeviceInput        `json:"devices"`
 	ShortcutGroups []ShortcutGroupInput `json:"shortcut_groups"`
 	ShiftState     ShiftStateInput      `json:"shift_state"`
+	Security       SecurityInput        `json:"security"`
 }

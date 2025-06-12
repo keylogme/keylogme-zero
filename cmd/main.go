@@ -51,7 +51,7 @@ func main() {
 		devices = append(devices, *d)
 	}
 
-	security := k0.NewSecurity(config.Security)
+	security := k0.NewSecurity(config.Keylog.Security)
 
 	sd := k0.MustGetNewShortcutsDetector(config.Keylog.ShortcutGroups)
 
