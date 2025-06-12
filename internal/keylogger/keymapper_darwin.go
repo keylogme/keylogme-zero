@@ -1,5 +1,7 @@
 package keylogger
 
+// Source: Universal Serial Bus HID Usage Tables version 1.2 , 10 Keyboard/Keypad page (0x07)
+
 var numCodes = []uint16{30, 31, 32, 33, 34, 35, 36, 37, 38, 39}
 
 var letterCodes = []uint16{

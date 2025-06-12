@@ -12,7 +12,7 @@
             },
             {
                 "device_id": "2",
-                "name": "corne",
+                "name": "⌨️✋ crkbd",
                 "keylogger": {
                     "product_id": "0x0001",
                     "vendor_id": "0x4653"
@@ -38,8 +38,8 @@
                         "id": "1A",
                         "name": "Copy 📎",
                         "codes": [
-                            29,
-                            46
+                            224,
+                            6
                         ],
                         "type": "hold"
                     }
@@ -53,8 +53,8 @@
                         "id": "1B",
                         "name": "Save 💾",
                         "codes": [
-                            36,
-                            31
+                            51,
+                            22
                         ],
                         "type": "seq"
                     }

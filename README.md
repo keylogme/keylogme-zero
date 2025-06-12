@@ -147,7 +147,14 @@ check the stats in the output file. The ouput file is defined in config file -> 
             ```
     </details>
 
-    Important! Give permissions
+    Important! Give permissions to Input Monitoring
+
+    Why?
+    MacOS does not allow to read keypresses per each device. We have to grant 
+    a special permission called Input Monitoring located in Settings -> Privacy & security. 
+    We want to get stats per each device, f.e. your keyboard usage on your laptop's built-in keyboard
+    or an external keyboard can have a different impact.
+
     The installation will guide you on how to give permissions of Privacy & security > Input monitoring to binary.
 
     <img src="images/permissions_mac.gif" alt="Give permissions in MacOS" width="585" height="206">
