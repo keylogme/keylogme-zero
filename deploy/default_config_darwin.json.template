@@ -63,18 +63,18 @@
         ],
         "shift_state": {
             "threshold_auto": "5ms"
+        },
+        "security": {
+            "baggage_size": 10,
+            "ghosting_codes": [
+                45,
+                46,
+                47
+            ]
         }
     },
     "storage": {
         "file_output": "${KEYLOGME_OUTPUT_FILE}",
         "periodic_save": "20s"
-    },
-    "security": {
-        "baggage_size": 10,
-        "ghosting_codes": [
-            45,
-            46,
-            47
-        ]
     }
 }

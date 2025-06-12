@@ -14,11 +14,11 @@
 
   <p align="center">
     This is the zero trust logger for <a href="https://keylogme.com">keylogme.com</a>. This logger
-    records your keypresses stats and saves them locally. You can use those results to visualize in 
+    records your keypresses stats and saves them locally. You can visualize the stats in 
     <a href="https://keylogme.com/anonymous">keylogme.com/anonymous</a>.
     <br />
     <br />
-    <a href="https://keylogme.com/esoteloferry">View Demo</a>
+    <a href="https://keylogme.com/esoteloferry/my-crkbd">View Demo</a>
     ·
     <a href="https://github.com/keylogme/keylogme-zero/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
     ·
@@ -42,6 +42,7 @@
       <a href="#getting-started">Getting Started</a>
       <ul>
         <li><a href="#linux">Linux</a></li>
+        <li><a href="#mac">Mac</a></li>
       </ul>
     </li>
     <li><a href="#config">Config</a>
@@ -87,8 +88,8 @@ Of course, ergonomics is not just a nice keyboard and layout. It is also about p
 ### Security
 
 A keylogger is a tool that records the keystrokes on a computer. It can be used for good or bad purposes.
-Of course, our intention is to use it for good purposes. How can you trust that?, well the code is completely open source, 
-no dependencies and it stores your data locally in your computer, there is no connection to the internet.
+Of course, our intention is to use it for good purposes. How can you trust that?, well, the code is completely open source, 
+it does not have 3rd party dependencies and it stores your data locally in your computer (your data does not leave your computer).
 
 The online viewer does not need an account to use it. You can use it anonymously to visualize your stats. 
 
@@ -103,26 +104,60 @@ The online viewer does not need an account to use it. You can use it anonymously
    ```
 2. Go to deploy and install with sudo permissions. There is a default config file. 
    ```sh
-   cd deploy && sudo ./install.sh
+   cd deploy && sudo -E ./install.sh
    ```
     <details>
       <summary>With parameters</summary>
        If you want to install a specific version:
        ```sh
-       cd deploy && sudo ./install.sh v1.1.0
+       cd deploy && sudo -E ./install.sh v1.1.0
        ```
        If you want to install and use your own config (don't forget the version, in this case latest):
        ```sh
-       cd deploy && sudo ./install.sh latest /absolute/path/to/your/config.json
+       cd deploy && sudo -E ./install.sh latest /absolute/path/to/your/config.json
        ```
     </details>
 
-3. After some keypresses and 20 seconds, check the stats (output file) in `/output_keylogme_zero.json`
+3. Press some keypresses, the output file is periodically saved (default value every 20 seconds) so after some time 
+check the stats in the output file. The ouput file is defined in config file -> storage -> file_output 
+(default output_file is `~/.keylogme/output_keylogme_zero.json`)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+### Mac
 
+1. Clone the repo
+   ```sh
+   git clone https://github.com/keylogme/keylogme-zero.git
+   ```
+2. Go to deploy and install with sudo permissions. There is a default config file. 
+   ```sh
+   cd deploy && sudo -E ./install.sh
+   ```
+<details>
+    <summary>With parameters</summary>
+    If you want to install a specific version:
+    ```sh
+    cd deploy && sudo -E ./install.sh v1.1.0
+    ```
+    If you want to install and use your own config (don't forget the version, in this case latest):
+    ```sh
+    cd deploy && sudo -E ./install.sh latest /absolute/path/to/your/config.json
+        ```
+</details>
+
+Important! Give permissions
+The installation will guide you on how to give permissions of Privacy & security > Input monitoring to binary.
+
+<video src="images/permissions_mac.mp4" width="320" height="240" controls></video>
+
+
+3. Press some keypresses, the output file is periodically saved (default value every 20 seconds) so after some time 
+check the stats in the output file. The ouput file is defined in config file -> storage -> file_output 
+(default output_file is `~/.keylogme/output_keylogme_zero.json`)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- Config EXAMPLES -->
 ## Config

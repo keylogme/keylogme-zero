@@ -175,7 +175,7 @@ mkdir -p "$keylogme_folder"
 # (none)
 
 # Optional
-if [ "$keylogme_version" == "" ]; then
+if [[ "$keylogme_version" == "" || "$keylogme_version" == "latest" ]]; then
     latest_release_info=$(curl -s "https://api.github.com/repos/$github_repo/releases/latest")
 
     # Extract the tag name
