@@ -45,10 +45,8 @@ func main() {
 	ffs := storage.MustGetNewFileStorage(ctx, config.Storage)
 
 	chEvt := make(chan k0.DeviceEvent)
-	devices := []k0.Device{}
 	for _, dev := range config.Keylog.Devices {
-		d := k0.GetDevice(ctx, dev, chEvt)
-		devices = append(devices, *d)
+		k0.GetDevice(ctx, dev, chEvt)
 	}
 
 	security := k0.NewSecurity(config.Keylog.Security)
