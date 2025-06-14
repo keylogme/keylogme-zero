@@ -4,25 +4,20 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/keylogme/keylogme-zero/storage"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 func Start(
 	chEvt chan DeviceEvent,
-	devices *[]Device,
 	security *security,
 	sd *shortcutsDetector,
 	ss *shiftStateDetector,
 	ld *layersDetector,
-	store storage.Storage,
+	store types.Storage,
 ) {
 	slog.Info("Listening...")
 	go func() {
 		for i := range chEvt {
-			isAuthorized := security.isAuthorized(&i)
-			if !isAuthorized {
-				continue
-			}
 
 			sd := sd.handleKeyEvent(i)
 			if sd.IsDetected() {
@@ -102,6 +97,10 @@ func Start(
 				continue
 			}
 			if i.KeyRelease() {
+				isAuthorized := security.isAuthorized(&i)
+				if !isAuthorized {
+					continue
+				}
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
 						fmt.Sprintf(
