@@ -1,7 +1,7 @@
 run-linux:
 	go build -o ../bin/keylogme-zero ./main.go && sudo CONFIG_FILE=../deploy/default_config_linux.json ../bin/keylogme-zero
 run-darwin:
-	go build -o ../bin/keylogme-zero ./main.go && sudo CONFIG_FILE=../deploy/default_config_darwin.json ../bin/keylogme-zero
+	go build -o ../bin/keylogme-zero ./main.go && sudo CONFIG_FILE=../deploy/default_config_darwin.json.template ../bin/keylogme-zero
 
 test:
 	cd .. && go test  ./...
