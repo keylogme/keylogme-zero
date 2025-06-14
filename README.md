@@ -35,9 +35,12 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#security">Security</a></li>
+        <li><a href="#why?">Why?</a></li>
+        <li><a href="#how?">How?</a></li>
+        <li><a href="#what?">What?</a></li>
       </ul>
     </li>
+    <li><a href="#security">Security</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
       <ul>
@@ -47,8 +50,8 @@
     </li>
     <li><a href="#config">Config</a>
       <ul>
-        <li><a href="#usb-name">USB name</a></li>
-        <li><a href="#keycodes-hardware">Keycodes hardware</a></li>
+        <li><a href="#linux">Linux</a></li>
+        <li><a href="#mac">Mac</a></li>
       </ul>
     </li>
     <li><a href="#output">Output</a>
@@ -65,6 +68,8 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
+### Why?
+
 The end goal is to avoid or diminish the pain in your hands due to typing. Commonly known as RSI (Repetitive Strain Injury), 
 tennis elbow, carpal tunnel syndrome, etc.
 
@@ -74,24 +79,71 @@ that best suits you? that does not overload some fingers? that makes you more pr
 We all started with QWERTY, then heard of DVORAK, COLEMAK, Workman, Norman, Asset, Capewell-Dvorak, BEAKL, MTGAP, QGMLWB... ?
 Many layouts with a specific design criteria in mind but switching to one is not an easy task, you need a lot of practice and patience.
 
+### How?
 
 How can keylogme help?, here's how:
+
 * Monitor : See the finger usage on your current layout based on your real usage
 * Analyze : Compare your layout with others, find patterns to avoid or improve, remap shortcuts
-* Adapt : fine tune your layout based on the stats
+* Adapt : fine tune or change your layout based on the stats
 
 Of course, ergonomics is not just a nice keyboard and layout. It is also about posture, breaks, exercises.
+
+### What?
+
+So what is keylogme? well guessed, it is a keylogger!. You configure to track specific devices
+you want to track. And it runs 24/7 in your computer as a service, collecting your keystrokes. 
+
+There are 2 ways to use keylogme:
+
+1. <a href="https://github.com/keylogme/keylogme-zero">keylogme-zero</a>: zero dependecies open source project that saves your stats locally. 
+2. <a href="https://github.com/keylogme/keylogme-one">keylogme-one</a>: wrapper around keylogme-zero that saves your keystrokes in our server. 
+
+What the f***? This is not safe! people will know what I write!
+Our end goal is to have a heatmap of your keyboard usage, not to know what you write. See <a href="#security">Security section</a>
+for more information on how we mingle your content so it is undecipherable.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-### Security
+## Security
 
 A keylogger is a tool that records the keystrokes on a computer. It can be used for good or bad purposes.
-Of course, our intention is to use it for good purposes. How can you trust that?, well, the code is completely open source, 
-it does not have 3rd party dependencies and it stores your data locally in your computer (your data does not leave your computer).
+Of course, our intention is to use it for good purposes. How can you trust that?, well:
 
-The online viewer does not need an account to use it. You can use it anonymously to visualize your stats. 
+1. The code is completely open source. 
+2. It does not have 3rd party dependencies.
+3. It stores your data locally in your computer (your data does not leave your computer).
+
+The online viewer of your data does not need an account to use it. You can use it anonymously to visualize your stats. 
+
+On top, there are security features to avoid anyone decoding the content you type.
+
+Let's say you write : "hello world!"
+
+A normal keylogger will get h, e, l, l, o, \b, w, o, r, l, d . Easy to know what you write.
+
+There are 2 features in keylogme-zero that allows protection of the content. The content is the messages, passwords or anything that you type with meaning. The 
+content is not the shortcuts, shifted states or changes of layer. The features are:
+
+1. Baggage: when service starts, the keylogger will not save log until baggage is full. The baggage only lives in memory and is lost on service or computer restart.
+
+    For example, with a baggage of size 5 (small value just for this example):
+
+    A keylogger will not save anything until 'hello' (first 5 keystrokes) was typed. 
+    Then, when '\b' is typed, '\b' will go to baggage and one randomly selected from baggage will come out to be saved.
+
+    Then keylogger will get _, _, _, _, _, l, e, h, \b, o, l
+
+    If you start the service today, collect 1000 keystrokes as baggage and then you have a good amount of
+    randomness. The baggage will be used as long as the service runs, if you restart the service or turn off/on your
+    computer then the baggage has to be refilled again.
+
+2. Ghost codes: filter out alphanumeric keys you don't want to track.
+
+Both features work on non shifted states, meaning alphabet, numbers and some symbols that do not require shift.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -102,7 +154,7 @@ The online viewer does not need an account to use it. You can use it anonymously
    ```sh
    git clone https://github.com/keylogme/keylogme-zero.git
    ```
-2. Go to deploy and install with sudo permissions. There is a default config file. 
+2. Go to deploy and install with sudo permissions. There is a default config template (default_config_linux.json.template) 
    ```sh
    cd deploy && sudo -E ./install.sh
    ```
@@ -131,7 +183,7 @@ check the stats in the output file. The ouput file is defined in config file -> 
    ```sh
    git clone https://github.com/keylogme/keylogme-zero.git
    ```
-2. Go to deploy and install with sudo permissions. There is a default config file. 
+2. Go to deploy and install with sudo permissions. There is a default config template (default_config_darwin.json.template)
    ```sh
    cd deploy && sudo -E ./install.sh
    ```
@@ -169,58 +221,13 @@ check the stats in the output file. The ouput file is defined in config file -> 
 <!-- Config EXAMPLES -->
 ## Config
 
-The file `deploy/default_config.json` contains the default config. You can use it as a template to create your own config.:
+The file `deploy/default_config_darwin.json.template` and `deploy/default_config_linux.json.template` contains the default config for both OS. 
+You can use it as a template to create your own config.
 
-```json
-{
-    "keylog": {
-        "devices": [
-            {
-                "device_id": "1",
-                "name": "⌨️✋ crkbd",
-                "usb_name": "foostan Corne",
-                "layers":[....]
-            }
-        ],
-        "shortcut_groups": [
-            {
-                "id": "A",
-                "name": "Clipboard ✏️",
-                "shortcuts": [
-                    {
-                        "id": "1A",
-                        "name": "Copy 📎",
-                        "codes": [
-                            29,
-                            46
-                        ],
-                        "type": "hold"
-                    }
-                ]
-            },
-            {
-                "id": "B",
-                "name": "Nvim 🕶️",
-                "shortcuts": [
-                    {
-                        "id": "1B",
-                        "name": "Save 💾",
-                        "codes": [
-                            36,
-                            31
-                        ],
-                        "type": "seq"
-                    }
-                ]
-            }
-        ]
-    },
-    "storage": {
-        "file_output": "output_keylogme_zero.json",
-        "periodic_save_in_sec": 20
-    }
-}
-```
+The only difference between Linux and Mac is the device identification set in "keylogger" inside item of "devices" list.
+
+For Linux, we use a usb_name (<a href="#usb-name">how to get it?</a>)
+For Mac, we use a product id and vendor id (<a href="#product_and_vendor_id">how to get it?</a>)
 
 The config has two main sections:
 
@@ -228,8 +235,10 @@ The config has two main sections:
     - devices : list of devices to monitor
         - device_id : unique id (4 alphanumeric characters) for the device
         - name : name of the device, you named it as you want.
-        - usb_name : usb name of the device. Go to <a href="#usb-name">USB name</a> section to know how to get it.
-        - layers: list of layers to monitor
+        - keylogger: identification of device. It is different for Linux and Mac.
+            - usb_name (Linux): usb name of the device. Go to <a href="#usb-name">USB name</a> section to know how to get it.
+            - product_id & vendor_id (Mac): ids of the device. Go to System Information and find Product Id and Vendor Id of device in USB or Bluetooth.
+        - layers: (OPTIONAL) for some keyboards that have multiple layers. Others that only have one layer, like the built-in keyboard, there is no need to define this parameter.
             - layer_id : unique id (int) for the layer
             - name : name of the layer
             - codes : list of keycodes or shifted states (decimal format) for the layer. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
@@ -238,6 +247,12 @@ The config has two main sections:
         - codes : list of keycodes (decimal format) for the shortcut. Go to <a href="#keycodes-hardware">Keycodes hardware</a> section to know how to get it.
         - type : type of shortcut. There are two: `hold` for holding shortcuts like copy (CTRL+C)
             and `seq` for sequential shortcuts like used in (neo)vim for shortcuts.
+    - shift_state:
+        - threshold_auto: some firmware like QMK allows to define a shifted combo to one physical key. The firmware triggers the shift key hold and the letter/symbol 
+            automatically, this threshold is a time like "5ms" that will diferentiate human or software triggered shifted combos.
+    - security:
+        - baggage_size: on binary start, the keystrokes are not saved in order or complete. 
+        - ghosting_codes: keystrokes to not save
 - storage : config for storage
     - file_output : absolute filepath to store the stats
     - periodic_save_in_sec : periodic time to save the stats. In seconds.
@@ -245,10 +260,12 @@ The config has two main sections:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### USB name
+### Linux
 
-A usb device connected to computer has a unique name. 
-To get the name of the device, you can use the following command:
+A usb device connected to a Linux computer has a device file in /dev/input folder. One device 
+may have multiple device files associated, each file would have a purpose (called Device Page in HID Usage Tables for USB v1.6), a
+keyboard can have also volume controls or an embedded mouse.  The device file will register the events on the keyboard. 
+In keylogme-zero for Linux, you get the usb name of the device. To get it, you can use the following command:
 
 ```sh
 apt install input-utils
@@ -304,6 +321,17 @@ For example, the output of the command for my corne keyboard is below and the na
    bits ev : (null) (null) (null) (null) (null)
 ```
 </details>
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+### Mac
+
+MacOS does not expose a device file to read the events. The events on each keyboard must be read from 
+the IOKit framework MacOS offers, the IOHIDManager. To register a device, you must find its 
+product id and vendor id in System Information.
+
+<img src="images/identify_device_mac.png" alt="Identify device in MacOS" width="585" height="350">
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
