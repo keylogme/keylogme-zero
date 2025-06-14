@@ -36,13 +36,6 @@ func (c *ConfigStorage) Validate() error {
 	return nil
 }
 
-type Storage interface {
-	SaveKeylog(deviceId string, layerId int64, keycode uint16) error
-	SaveShortcut(deviceId string, shortcutId string) error
-	SaveShiftState(deviceId string, modifier uint16, keycode uint16, auto bool) error
-	SaveLayerChange(deviceId string, layerId int64) error
-}
-
 type FileStorage struct {
 	config   ConfigStorage
 	dataFile *DataFile
@@ -302,4 +295,17 @@ func (f *FileStorage) savingInBackground(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (f *FileStorage) CloneInMemoryDatafile() (*DataFile, error) {
+	copyDatafile := &DataFile{}
+	data, err := json.Marshal(f.dataFile)
+	if err != nil {
+		return copyDatafile, err
+	}
+	err = json.Unmarshal(data, copyDatafile)
+	if err != nil {
+		return copyDatafile, err
+	}
+	return copyDatafile, nil
 }
