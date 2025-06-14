@@ -50,8 +50,8 @@
     </li>
     <li><a href="#config">Config</a>
       <ul>
-        <li><a href="#linux">Linux</a></li>
-        <li><a href="#mac">Mac</a></li>
+        <li><a href="#config_linux">Linux</a></li>
+        <li><a href="#config_mac">Mac</a></li>
       </ul>
     </li>
     <li><a href="#output">Output</a>
@@ -226,8 +226,8 @@ You can use it as a template to create your own config.
 
 The only difference between Linux and Mac is the device identification set in "keylogger" inside item of "devices" list.
 
-For Linux, we use a usb_name (<a href="#usb-name">how to get it?</a>)
-For Mac, we use a product id and vendor id (<a href="#product_and_vendor_id">how to get it?</a>)
+For Linux, we use a usb_name (<a href="#config_linux">how to get it?</a>)
+For Mac, we use a product id and vendor id (<a href="#config_mac">how to get it?</a>)
 
 The config has two main sections:
 
@@ -260,7 +260,7 @@ The config has two main sections:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### Linux
+### Config Linux
 
 A usb device connected to a Linux computer has a device file in /dev/input folder. One device 
 may have multiple device files associated, each file would have a purpose (called Device Page in HID Usage Tables for USB v1.6), a
@@ -325,7 +325,7 @@ For example, the output of the command for my corne keyboard is below and the na
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-### Mac
+### Config Mac
 
 MacOS does not expose a device file to read the events. The events on each keyboard must be read from 
 the IOKit framework MacOS offers, the IOHIDManager. To register a device, you must find its 
