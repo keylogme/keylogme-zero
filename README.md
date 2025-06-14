@@ -50,8 +50,8 @@
     </li>
     <li><a href="#config">Config</a>
       <ul>
-        <li><a href="#config_linux">Linux</a></li>
-        <li><a href="#config_mac">Mac</a></li>
+        <li><a href="#config-linux">Linux</a></li>
+        <li><a href="#config-mac">Mac</a></li>
       </ul>
     </li>
     <li><a href="#output">Output</a>
@@ -226,8 +226,8 @@ You can use it as a template to create your own config.
 
 The only difference between Linux and Mac is the device identification set in "keylogger" inside item of "devices" list.
 
-For Linux, we use a usb_name (<a href="#config_linux">how to get it?</a>)
-For Mac, we use a product id and vendor id (<a href="#config_mac">how to get it?</a>)
+For Linux, we use a usb_name (<a href="#config-linux">how to get it?</a>)
+For Mac, we use a product id and vendor id (<a href="#config-mac">how to get it?</a>)
 
 The config has two main sections:
 
