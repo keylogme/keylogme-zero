@@ -35,14 +35,15 @@ type inputEvent struct {
 	Value int32
 }
 
-// findKeyboardDevice by going through each device registered on OS
+// findKeyboardDevicesById by going through each device registered on OS
 // Mostly it will contain keyword - keyboard
-// Returns the file path which contains events
-func findKeyboardDevice(name string) string {
+func findKeyboardDevicesById(input types.KeyloggerInput) []string {
 	path := "/sys/class/input/event%d/device/name"
 	resolved := "/dev/input/event%d"
 
-	nameToCompare := fmt.Sprintf("%s\n", name)
+	listDevicesPaths := []string{}
+	productIdToCompare := fmt.Sprintf("%s\n", input.ProductID)
+	vendorIdToCompare := fmt.Sprintf("%s\n", input.VendorID)
 	for i := 0; i < 255; i++ {
 		buff, err := os.ReadFile(fmt.Sprintf(path, i))
 		if err != nil {
@@ -51,7 +52,7 @@ func findKeyboardDevice(name string) string {
 
 		deviceName := string(buff)
 		// fmt.Printf("%#v\n", deviceName)
-		if deviceName == nameToCompare {
+		if deviceName == productIdToCompare {
 			return fmt.Sprintf(resolved, i)
 		}
 	}
@@ -59,20 +60,9 @@ func findKeyboardDevice(name string) string {
 	return ""
 }
 
-func getPathDevice(name string) string {
-	// INFO: for testing purposes, we can pass the abs path of a test file.
-	// So we check if the file exists, if not we try to find the device
-	_, err := os.Open(name)
-	if os.IsNotExist(err) {
-		slog.Debug(fmt.Sprintf("file %s does not exist", name))
-		return findKeyboardDevice(name)
-	}
-	return name
-}
-
-func getKeyLogger(name string) (*KeyLogger, error) {
-	pathDevice := getPathDevice(name)
-	if pathDevice == "" {
+func getKeyLogger(input types.KeyloggerInput) (*KeyLogger, error) {
+	pathDevice := findKeyboardDevicesById(input)
+	if len(pathDevice) == 0 {
 		return nil, fmt.Errorf("Device with name %s not found\n", name)
 	}
 	k := &KeyLogger{}
@@ -95,7 +85,7 @@ func openDeviceFile(devPath string) (*os.File, error) {
 
 // KeyLogger wrapper around file descriptior
 type KeyLogger struct {
-	FD *os.File
+	FD []*os.File
 }
 
 func wrapErrorRoot(err error) error {
@@ -109,7 +99,7 @@ func wrapErrorRoot(err error) error {
 
 // NewKeylogger creates a new keylogger for a device path
 func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
-	return getKeyLogger(kInput.UsbName)
+	return getKeyLogger(kInput)
 }
 
 // Read from file descriptor
