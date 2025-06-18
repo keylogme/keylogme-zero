@@ -45,7 +45,14 @@ func GetDevice(
 
 func (d *Device) start() bool {
 	defer d.Close()
-	slog.Info(fmt.Sprintf("🚀 Starting device %s \n", d.Name))
+	slog.Info(
+		fmt.Sprintf(
+			"🚀 Starting device %s | Vendor ID %s | Product ID %s\n",
+			d.Name,
+			d.KeyloggerInput.VendorId,
+			d.KeyloggerInput.ProductId,
+		),
+	)
 	if d.keylogger == nil {
 		return false
 	}

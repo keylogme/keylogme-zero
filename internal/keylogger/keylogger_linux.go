@@ -44,8 +44,8 @@ func findKeyboardDevicesById(input types.KeyloggerInput) []string {
 	resolved := "/dev/input/event%d"
 
 	listDevicesPaths := []string{}
-	productIdToCompare := fmt.Sprintf("%s\n", input.ProductID)
-	vendorIdToCompare := fmt.Sprintf("%s\n", input.VendorID)
+	productIdToCompare := fmt.Sprintf("%s\n", input.ProductId)
+	vendorIdToCompare := fmt.Sprintf("%s\n", input.VendorId)
 	for i := 0; i < 255; i++ {
 		buffProductId, err := os.ReadFile(fmt.Sprintf(pathProductId, i))
 		if err != nil {
@@ -73,8 +73,8 @@ func getKeyLogger(input types.KeyloggerInput) (*KeyLogger, error) {
 	if len(pathsDevice) == 0 {
 		return nil, fmt.Errorf(
 			"Device vendor id %s and product id %s not found\n",
-			input.VendorID,
-			input.ProductID,
+			input.VendorId,
+			input.ProductId,
 		)
 	}
 	k := &KeyLogger{}
