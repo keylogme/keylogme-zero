@@ -408,5 +408,3 @@ Helpful resources and would like to give credit to.
 * [Linux keylogger](https://github.com/MarinX/keylogger) helpful starting point
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
