@@ -67,7 +67,7 @@ func TestDisconnectionDevice(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(reconnect_wait + 100*time.Millisecond)
 	if !d.IsConnected() {
 		t.Fatal("device should be connected")
 	}

@@ -139,7 +139,7 @@ func TestDisconnectionKeylogger(t *testing.T) {
 		for i := range k.Read() {
 			fmt.Println(i)
 		}
-		fmt.Println("Out of loop")
+		t.Log("Out of loop")
 		closedSig <- 1
 	}()
 	time.Sleep(200 * time.Millisecond)
