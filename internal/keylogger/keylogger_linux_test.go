@@ -60,7 +60,7 @@ func TestWithPermission(t *testing.T) {
 
 	// try to create new keylogger with file descriptor which has no permission
 	setDevicePathFinder("/dev/tty0")
-	k, err = NewKeylogger(types.KeyloggerInput{})
+	_, err = NewKeylogger(types.KeyloggerInput{})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
