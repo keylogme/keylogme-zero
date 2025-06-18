@@ -22,10 +22,10 @@ type Device struct {
 }
 
 type DeviceInput struct {
-	DeviceId       string                    `json:"device_id"`
-	Name           string                    `json:"name"`
-	Layers         []LayerInput              `json:"layers"`
-	KeyloggerInput types.KeyloggerInputAllOS `json:"keylogger"`
+	DeviceId       string               `json:"device_id"`
+	Name           string               `json:"name"`
+	Layers         []LayerInput         `json:"layers"`
+	KeyloggerInput types.KeyloggerInput `json:"keylogger"`
 }
 
 type DeviceEvent struct {
@@ -84,7 +84,7 @@ func (d *Device) IsConnected() bool {
 func (d *Device) handleReconnects() {
 	for {
 		slog.Debug(fmt.Sprintf("Reconnecting device %s\n", d.Name))
-		newK, err := keylogger.NewKeylogger(d.KeyloggerInput.GetDeviceInput())
+		newK, err := keylogger.NewKeylogger(d.KeyloggerInput)
 		if err != nil {
 			slog.Debug(fmt.Sprintf("error getting keylogger : %s\n", err.Error()))
 			select {

@@ -10,6 +10,13 @@ import (
 	"github.com/keylogme/keylogme-zero/types"
 )
 
+func setDevicePathFinder(pathDevice string) {
+	// This is a mock function for testing purposes
+	PathFinder = func(input types.KeyloggerInput) []string {
+		return []string{pathDevice}
+	}
+}
+
 func TestFileDescriptor(t *testing.T) {
 	k := &KeyLogger{}
 
@@ -35,16 +42,6 @@ func TestBufferParser(t *testing.T) {
 		t.Error("Event should be empty because it is not an event key")
 		return
 	}
-
-	// if input.KeyString() != "3" {
-	// 	t.Errorf("wrong input key. got %v, expected %v", input.KeyString(), "3")
-	// 	return
-	// }
-
-	// if input.Type != evMsc {
-	// 	t.Errorf("wrong event type. expected key press but got %v", input.Type)
-	// 	return
-	// }
 }
 
 func TestWithPermission(t *testing.T) {
@@ -53,7 +50,8 @@ func TestWithPermission(t *testing.T) {
 		t.Fatal(err)
 	}
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := NewKeylogger(types.KeyloggerInput{UsbName: fd.Name()})
+	setDevicePathFinder(fd.Name())
+	k, err := NewKeylogger(types.KeyloggerInput{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +59,8 @@ func TestWithPermission(t *testing.T) {
 	fd.Close()
 
 	// try to create new keylogger with file descriptor which has no permission
-	_, err = NewKeylogger(types.KeyloggerInput{UsbName: "/dev/tty0"})
+	setDevicePathFinder("/dev/tty0")
+	k, err = NewKeylogger(types.KeyloggerInput{})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -81,7 +80,8 @@ func TestKeylog(t *testing.T) {
 	defer df.Close()
 	deviceFile := df.Name()
 
-	k, err := NewKeylogger(types.KeyloggerInput{UsbName: deviceFile})
+	setDevicePathFinder(deviceFile)
+	k, err := NewKeylogger(types.KeyloggerInput{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,8 @@ func TestDisconnectionKeylogger(t *testing.T) {
 	deviceFile := fd.Name()
 
 	// try to create new keylogger with file descriptor which has the permission
-	k, err := NewKeylogger(types.KeyloggerInput{UsbName: deviceFile})
+	setDevicePathFinder(deviceFile)
+	k, err := NewKeylogger(types.KeyloggerInput{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +144,7 @@ func TestDisconnectionKeylogger(t *testing.T) {
 	}()
 	time.Sleep(200 * time.Millisecond)
 	// disconnect
-	err = DisconnectDeviceFile(k.FD)
+	err = DisconnectDeviceFile(k.FD[0])
 	if err != nil {
 		t.Fatal(err)
 	}

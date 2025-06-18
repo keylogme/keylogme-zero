@@ -224,20 +224,14 @@ check the stats in the output file. The ouput file is defined in config file -> 
 The file `deploy/default_config_darwin.json.template` and `deploy/default_config_linux.json.template` contains the default config for both OS. 
 You can use it as a template to create your own config.
 
-The only difference between Linux and Mac is the device identification set in "keylogger" inside item of "devices" list.
-
-For Linux, we use a usb_name (<a href="#config-linux">how to get it?</a>)
-For Mac, we use a product id and vendor id (<a href="#config-mac">how to get it?</a>)
-
 The config has two main sections:
 
 - keylog : config for keylogger
     - devices : list of devices to monitor
         - device_id : unique id (4 alphanumeric characters) for the device
         - name : name of the device, you named it as you want.
-        - keylogger: identification of device. It is different for Linux and Mac.
-            - usb_name (Linux): usb name of the device. Go to <a href="#usb-name">USB name</a> section to know how to get it.
-            - product_id & vendor_id (Mac): ids of the device. Go to System Information and find Product Id and Vendor Id of device in USB or Bluetooth.
+        - keylogger: identification of device. 
+            - product_id & vendor_id: ids of the device. How to get them? <a href="#config-linux>Linux</a> <a href="#config-mac">Mac</a>
         - layers: (OPTIONAL) for some keyboards that have multiple layers. Others that only have one layer, like the built-in keyboard, there is no need to define this parameter.
             - layer_id : unique id (int) for the layer
             - name : name of the layer
@@ -264,17 +258,19 @@ The config has two main sections:
 
 A usb device connected to a Linux computer has a device file in /dev/input folder. One device 
 may have multiple device files associated, each file would have a purpose (called Device Page in HID Usage Tables for USB v1.6), a
-keyboard can have also volume controls or an embedded mouse.  The device file will register the events on the keyboard. 
-In keylogme-zero for Linux, you get the usb name of the device. To get it, you can use the following command:
+keyboard can have also volume controls or an embedded mouse.  The device file will register the events from the keyboard. 
+
+In keylogme-zero for Linux, you get the product and vendor id of the device by using following command:
 
 ```sh
 apt install input-utils
+
 sudo lsinput
 ```
 
-If your keyboard name appeared multiple times, try with all of them.
+Find your keyboard (it may appear once or multiple times) and use the product and vendor id.
 
-For example, the output of the command for my corne keyboard is below and the name that worked is `foostan Corne`
+For example, the output of the command for my corne keyboard is below. 
 
 <details>
   <summary>Output of command lsinput related to keyboard</summary>
@@ -289,36 +285,6 @@ For example, the output of the command for my corne keyboard is below and the na
    phys    : "usb-0000:00:14.0-4.3/input0"
    uniq    : ""
    bits ev : (null) (null) (null) (null) (null)
-
-/dev/input/event13
-   bustype : BUS_USB
-   vendor  : 0x4653
-   product : 0x1
-   version : 273
-   name    : "foostan Corne System Control"
-   phys    : "usb-0000:00:14.0-4.3/input2"
-   uniq    : ""
-   bits ev : (null) (null) (null) (null)
-
-/dev/input/event14
-   bustype : BUS_USB
-   vendor  : 0x4653
-   product : 0x1
-   version : 273
-   name    : "foostan Corne Consumer Control"
-   phys    : "usb-0000:00:14.0-4.3/input2"
-   uniq    : ""
-   bits ev : (null) (null) (null) (null) (null)
-
-/dev/input/event15
-   bustype : BUS_USB
-   vendor  : 0x4653
-   product : 0x1
-   version : 273
-   name    : "foostan Corne Keyboard"
-   phys    : "usb-0000:00:14.0-4.3/input2"
-   uniq    : ""
-   bits ev : (null) (null) (null) (null) (null)
 ```
 </details>
 
@@ -326,6 +292,11 @@ For example, the output of the command for my corne keyboard is below and the na
 
 
 ### Config Mac
+
+Go to System Information and find Product Id and Vendor Id of device in USB or Bluetooth.
+
+Your built-in keyboard of your laptop is in SPI. There is an issue getting events from
+the built-in trackpad therefore at the monent, keylogme-zero does not support the built-in trackpad.
 
 MacOS does not expose a device file to read the events. The events on each keyboard must be read from 
 the IOKit framework MacOS offers, the IOHIDManager. To register a device, you must find its 
