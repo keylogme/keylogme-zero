@@ -14,18 +14,18 @@ import (
 )
 
 // Linux keylogger
-// Use lsinput to see the usb_name to be used
+// Use lsinput to see the Product ID and Vendor ID to be used
 // apt install input-utils
 // sudo lsinput
-// If your keyboard name appeared multiple times,
-// try with all of them
+// If your keyboard name appeared multiple times, just take one of them and
+// get the product ID and vendor ID from it.
 // See readme
 
 // Mac keylogger
 // See System Information to get Product ID and Vendor ID of keyboard and mouse devices:
 // - USB
 // - Bluetooth
-// - SPI (Apple internal keyboard / trackpad)
+// - SPI (Apple internal keyboard / trackpad) trackpad is not supported yet
 
 func main() {
 	// Get config
