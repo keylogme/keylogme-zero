@@ -5,7 +5,8 @@
                 "device_id": "1",
                 "name": "⌨️✋ crkbd",
                 "keylogger": {
-                    "usb_name": "foostan Corne"
+                    "product_id": "0x0001",
+                    "vendor_id": "0x4653"
                 },
                 "layers": []
             }

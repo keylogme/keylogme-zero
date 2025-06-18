@@ -22,12 +22,16 @@ func TestDisconnectionDevice(t *testing.T) {
 	defer df.Close()
 	filepath := df.Name()
 
+	keylogger.PathFinder = func(input types.KeyloggerInput) []string {
+		return []string{filepath}
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	intputDevice := DeviceInput{
 		DeviceId:       "device1",
 		Name:           "device1",
-		KeyloggerInput: types.KeyloggerInputAllOS{UsbName: filepath},
+		KeyloggerInput: types.KeyloggerInput{},
 	}
 
 	chEvt := make(chan DeviceEvent, 10)
@@ -49,7 +53,7 @@ func TestDisconnectionDevice(t *testing.T) {
 	// disconnect device
 	slog.Info("Disconnecting device")
 	kl := d.keylogger
-	err = keylogger.DisconnectDeviceFile(kl.FD)
+	err = keylogger.DisconnectDeviceFile(kl.FD[0])
 	if err != nil {
 		t.Fatal(err)
 	}

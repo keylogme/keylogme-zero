@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -19,4 +20,8 @@ func (h *Hex) UnmarshalJSON(b []byte) error {
 	}
 	*h = Hex(val)
 	return nil
+}
+
+func (h Hex) String() string {
+	return fmt.Sprintf("%04x", int(h))
 }
