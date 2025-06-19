@@ -26,6 +26,10 @@ func getRandInt(max int) int {
 }
 
 func (b *baggage) isAuthorized(ke *DeviceEvent) bool {
+	if b.size <= 0 {
+		return true
+	}
+
 	if _, exists := b.devices[ke.DeviceId]; !exists {
 		b.devices[ke.DeviceId] = make([]uint16, 0, b.size)
 	}
