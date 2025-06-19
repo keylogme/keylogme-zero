@@ -85,12 +85,12 @@ type KeyLogger struct {
 
 func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 	// C.ListConnectedHIDDevices()
-	exists := C.checkDeviceIsConnected(C.int(kInput.VendorID), C.int(kInput.ProductID))
+	exists := C.checkDeviceIsConnected(C.int(kInput.VendorId), C.int(kInput.ProductId))
 	if !exists {
 		slog.Debug("Device not found")
 		return nil, fmt.Errorf("Device not available")
 	}
-	k := &KeyLogger{vendorID: int(kInput.VendorID), productID: int(kInput.ProductID)}
+	k := &KeyLogger{vendorID: int(kInput.VendorId), productID: int(kInput.ProductId)}
 
 	go func() {
 		// TODO: add mutex to prevent multiple calls
