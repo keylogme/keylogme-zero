@@ -154,7 +154,7 @@ Both features work on non shifted states, meaning alphabet, numbers and some sym
    ```sh
    git clone https://github.com/keylogme/keylogme-zero.git
    ```
-2. Go to deploy and install with sudo permissions. There is a default config template (default_config_linux.json.template) 
+2. Go to folder deploy and install with sudo permissions. There is a default config template (default_config_linux.json.template) 
    ```sh
    cd deploy && sudo -E ./install.sh
    ```
@@ -183,7 +183,7 @@ check the stats in the output file. The ouput file is defined in config file -> 
    ```sh
    git clone https://github.com/keylogme/keylogme-zero.git
    ```
-2. Go to deploy and install with sudo permissions. There is a default config template (default_config_darwin.json.template)
+2. Go to folder deploy and install with sudo permissions. There is a default config template (default_config_darwin.json.template)
    ```sh
    cd deploy && sudo -E ./install.sh
    ```
