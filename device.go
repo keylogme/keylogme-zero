@@ -30,7 +30,8 @@ type DeviceInput struct {
 
 type DeviceEvent struct {
 	keylogger.InputEvent
-	DeviceId string
+	DeviceId   string
+	DeviceName string
 }
 
 func GetDevice(
@@ -63,7 +64,7 @@ func (d *Device) start() bool {
 			return true
 		case i, ok := <-keylogChan:
 			if !ok {
-				slog.Info("exited channel keylogger")
+				slog.Info(fmt.Sprintf("🔚 Disconnected device %s \n", d.Name))
 				return false
 			}
 			if !i.IsValid() {
@@ -78,7 +79,7 @@ func (d *Device) start() bool {
 				i.Time.Format("2006-01-02 15:04:05.000000"),
 			))
 
-			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId}
+			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId, DeviceName: d.Name}
 			d.sendInput <- de
 		}
 	}

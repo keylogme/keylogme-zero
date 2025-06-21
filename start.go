@@ -104,17 +104,17 @@ func Start(
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
 						fmt.Sprintf(
-							"Key :%d %s not defined in any layer\n",
+							"\tDeviceId: %s \t| Key: %d \t| Layer: -\n",
+							i.DeviceName,
 							i.Code,
-							i.KeyString(),
 						),
 					)
 				} else {
 					slog.Info(
 						fmt.Sprintf(
-							"Key :%d %s in layer %d\n",
+							"\tDeviceId: %s \t| Key :%d \t| Layer: %d\n",
+							i.DeviceName,
 							i.Code,
-							i.KeyString(),
 							ld.GetCurrentLayerId(),
 						),
 					)
