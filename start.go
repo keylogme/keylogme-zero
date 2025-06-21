@@ -105,7 +105,7 @@ func Start(
 					slog.Info(
 						fmt.Sprintf(
 							"\tDeviceId: %s \t| Key: %d \t| Layer: -\n",
-							i.DeviceId,
+							i.DeviceName,
 							i.Code,
 						),
 					)
@@ -113,7 +113,7 @@ func Start(
 					slog.Info(
 						fmt.Sprintf(
 							"\tDeviceId: %s \t| Key :%d \t| Layer: %d\n",
-							i.DeviceId,
+							i.DeviceName,
 							i.Code,
 							ld.GetCurrentLayerId(),
 						),

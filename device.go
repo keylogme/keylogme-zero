@@ -30,7 +30,8 @@ type DeviceInput struct {
 
 type DeviceEvent struct {
 	keylogger.InputEvent
-	DeviceId string
+	DeviceId   string
+	DeviceName string
 }
 
 func GetDevice(
@@ -71,7 +72,7 @@ func (d *Device) start() bool {
 				i.Time.Format("2006-01-02 15:04:05.000000"),
 			))
 
-			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId}
+			de := DeviceEvent{InputEvent: i, DeviceId: d.DeviceId, DeviceName: d.Name}
 			d.sendInput <- de
 		}
 	}
