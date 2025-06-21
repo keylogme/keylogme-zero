@@ -56,7 +56,7 @@ func (d *Device) start() bool {
 			return true
 		case i, ok := <-keylogChan:
 			if !ok {
-				slog.Info("exited channel keylogger")
+				slog.Info(fmt.Sprintf("🔚 Disconnected device %s \n", d.Name))
 				return false
 			}
 			if !i.IsValid() {

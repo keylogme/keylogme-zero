@@ -58,9 +58,10 @@ void HIDCallback(void *context, IOReturn result, void *sender,
 
 void DeviceRemovalCallback(void *context, IOReturn result, void *sender) {
   HIDDeviceContext *ctx = (HIDDeviceContext *)context;
-  printf("Device removal callback\n");
   if (!ctx)
     return;
+  // printf("Device removal callback vendor %d | product %d\n", ctx->vendorID,
+  //        ctx->productID);
 
   IOHIDDeviceUnscheduleFromRunLoop(ctx->device, ctx->runLoop,
                                    kCFRunLoopDefaultMode);
@@ -277,11 +278,11 @@ void Stop() {
     IOHIDManagerClose(hidManager, kIOHIDOptionsTypeNone);
     CFRelease(hidManager);
     hidManager = NULL;
-    printf("Run loop unscheduled and HID manager released.\n");
+    // printf("Run loop unscheduled and HID manager released.\n");
     CFRunLoopStop(runLoop);
     runLoop = NULL;
     runLoopStarted = false;
-    printf("Run loop stopped.\n");
+    // printf("Run loop stopped.\n");
   }
 }
 
