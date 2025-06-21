@@ -218,7 +218,7 @@ CreateMatchingDictByProductName(const char *productName) {
 void Start() {
   // printf("%d\n", runLoopStarted);
   if (hidManager) {
-    printf("Run loop already started, not setting up device again.\n");
+    // printf("Run loop already started, not setting up device again.\n");
     return;
   }
   // printf("setup device .... CFRunLoopGetCurrent() = %p\n",
@@ -257,7 +257,7 @@ void Start() {
   runLoopStarted = true;
 
   // Blocking call
-  printf("Starting run loop...\n");
+  // printf("Starting run loop...\n");
   CFRunLoopRun();
 
   // cleanup

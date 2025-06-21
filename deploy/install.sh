@@ -207,9 +207,9 @@ if [ "$file_config_abs_path" == "" ]; then
     echo "Config file will be saved to ${file_config_abs_path}"
     echo ""
     echo ""
-    echo "##############################################################################"
 fi
 
+echo "##############################################################################"
 echo ""
 echo "START OF INSTALLATION"
 echo ""
@@ -294,6 +294,7 @@ sudo cp ./keylogme/keylogme-zero "${binary_full_path}" || {
     echo "🟡 Failed to copy to ${binary_full_path}"
     exit 1
 }
+echo " Binary copied to ${binary_full_path}"
 
 
 echo "##############################################################################"
@@ -322,6 +323,9 @@ elif [ "$os" == "Darwin" ]; then
     if [[ "$response_open_settings" =~ ^[Yy]$ ]]; then
         open_privacy_settings
         open_folder_in_finder "${binary_folder}"
+    else
+        echo "🟡 keylogme requires permissions to keylog correctly the input device. Cancelling install."
+        exit 1
     fi
     press_enter_to_continue
 fi
