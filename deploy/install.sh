@@ -288,6 +288,7 @@ fi
 keylogme_version_fmt="${keylogme_version//./_}"
 binary_name="keylogme-zero_${keylogme_version_fmt}"
 binary_full_path="${binary_folder}/${binary_name}"
+echo " From keylogme/keylogme-zero to ${binary_full_path}"
 
 sudo cp ./keylogme/keylogme-zero "${binary_full_path}" || {
     echo "🟡 Failed to copy to ${binary_full_path}"
