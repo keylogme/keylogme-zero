@@ -22,6 +22,11 @@ builds:
     goarch:
       - amd64
       - arm64
+    # Override CGO_ENABLED for linux builds
+    overrides:
+      - goos: linux
+        env:
+          - CGO_ENABLED=0
 
 archives:
   - format: tar.gz
