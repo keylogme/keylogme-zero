@@ -5,14 +5,15 @@ import (
 	"time"
 
 	"github.com/keylogme/keylogme-zero/internal/keylogger"
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 var (
-	ALL_CODES          = keylogger.GetAllCodes()
-	CTRL_CODES         = keylogger.GetCtrlCodes()
-	ALT_CODES          = keylogger.GetAltCodes()
-	SHIFT_CODES        = keylogger.GetShiftCodes()
-	ALL_MODIFIER_CODES = keylogger.GetAllModifierCodes()
+	ALL_CODES          = types.GetAllCodes()
+	CTRL_CODES         = types.GetCtrlCodes()
+	ALT_CODES          = types.GetAltCodes()
+	SHIFT_CODES        = types.GetShiftCodes()
+	ALL_MODIFIER_CODES = types.GetAllModifierCodes()
 )
 
 func getFakeEvent(deviceId string, code uint16, keyevent keylogger.KeyEvent) DeviceEvent {

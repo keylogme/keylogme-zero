@@ -51,7 +51,7 @@ func TestStart(t *testing.T) {
 		Codes: []uint16{4, 5},
 		Type:  SequentialShortcutType,
 	}
-	shiftKey := keylogger.GetShiftCodes()[0]
+	shiftKey := types.GetShiftCodes()[0]
 	holdShortcutCode := uint16(11)
 	holdShortcut := ShortcutCodes{
 		Id:    "2",

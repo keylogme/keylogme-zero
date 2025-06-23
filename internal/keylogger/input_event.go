@@ -2,6 +2,8 @@ package keylogger
 
 import (
 	"time"
+
+	"github.com/keylogme/keylogme-zero/types"
 )
 
 // InputEvent is the keyboard event structure itself
@@ -14,7 +16,7 @@ type InputEvent struct {
 // KeyString returns representation of pressed key as string
 // eg enter, space, a, b, c...
 func (i *InputEvent) KeyString() string {
-	return keyCodeMap[i.Code]
+	return types.KeyCodeMap[i.Code]
 }
 
 // KeyPress is the value when we press the key on keyboard

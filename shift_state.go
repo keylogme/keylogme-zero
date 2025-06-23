@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/keylogme/keylogme-zero/internal/keylogger"
 	"github.com/keylogme/keylogme-zero/types"
 )
 
@@ -55,7 +54,7 @@ func NewShiftStateDetector(config ShiftStateInput) *shiftStateDetector {
 	scs := getShortcutCodesForShiftState()
 	mapId := getMapIdToCodes()
 	return &shiftStateDetector{
-		holdDetector:  NewHoldShortcutDetector(scs, keylogger.GetShiftCodes()),
+		holdDetector:  NewHoldShortcutDetector(scs, types.GetShiftCodes()),
 		thresholdAuto: config.ThresholdAuto.Duration,
 		mapIdToCodes:  mapId,
 	}
@@ -164,8 +163,8 @@ func getShiftCodeKey(shiftCode, code uint16) string {
 
 func getShortcutCodesForShiftState() []ShortcutCodes {
 	listSS := []ShortcutCodes{}
-	shiftCodes := keylogger.GetShiftCodes()
-	allCodes := keylogger.GetAllCodes()
+	shiftCodes := types.GetShiftCodes()
+	allCodes := types.GetAllCodes()
 	for _, sc := range shiftCodes {
 		for _, c := range allCodes {
 			scKey := getShiftCodeKey(sc, c)
@@ -182,8 +181,8 @@ func getShortcutCodesForShiftState() []ShortcutCodes {
 
 func getMapIdToCodes() map[string]Key {
 	mapIdToCodes := make(map[string]Key)
-	shiftCodes := keylogger.GetShiftCodes()
-	allCodes := keylogger.GetAllCodes()
+	shiftCodes := types.GetShiftCodes()
+	allCodes := types.GetAllCodes()
 	for _, sc := range shiftCodes {
 		for _, c := range allCodes {
 			scKey := getShiftCodeKey(sc, c)
