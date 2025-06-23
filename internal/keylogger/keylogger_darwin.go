@@ -75,7 +75,6 @@ func (h *hidManager) closeChannel(vendorID, productID int) {
 	if len(h.mapVendorProductChan) == 0 {
 		C.Stop()
 	}
-	return
 }
 
 type KeyLogger struct {
@@ -88,7 +87,7 @@ func NewKeylogger(kInput types.KeyloggerInput) (*KeyLogger, error) {
 	exists := C.checkDeviceIsConnected(C.int(kInput.VendorId), C.int(kInput.ProductId))
 	if !exists {
 		slog.Debug("Device not found")
-		return nil, fmt.Errorf("Device not available")
+		return nil, fmt.Errorf("device not available")
 	}
 	k := &KeyLogger{vendorID: int(kInput.VendorId), productID: int(kInput.ProductId)}
 
