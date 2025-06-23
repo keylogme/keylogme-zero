@@ -108,8 +108,9 @@ func (s *security) isAuthorized(ke *DeviceEventInLayer) bool {
 	if !auth {
 		slog.Info(
 			fmt.Sprintf(
-				"Baggage of device %s not filled yet, not authorized to keylog",
+				"Baggage of device %s not filled yet (%d), not authorized to keylog",
 				ke.DeviceId,
+				len(s.baggage.devices[ke.DeviceId]),
 			),
 		)
 		return false
