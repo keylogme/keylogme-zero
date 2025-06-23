@@ -360,7 +360,7 @@ var (
 	}
 )
 
-func inverseMapCodeMap(in map[uint16]string) map[string]uint16 {
+func InverseCodeMap(in map[uint16]string) map[string]uint16 {
 	out := map[string]uint16{}
 	for key, val := range in {
 		out[val] = key
@@ -368,7 +368,7 @@ func inverseMapCodeMap(in map[uint16]string) map[string]uint16 {
 	return out
 }
 
-var inversedMap = inverseMapCodeMap(KeyCodeMap)
+var inversedMap = InverseCodeMap(KeyCodeMap)
 
 func GetAllCodes() []uint16 {
 	codes := []uint16{}
