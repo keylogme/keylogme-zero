@@ -360,15 +360,15 @@ var (
 	}
 )
 
-func inverseMapCodeMap() map[string]uint16 {
+func inverseMapCodeMap(in map[uint16]string) map[string]uint16 {
 	out := map[string]uint16{}
-	for key, val := range KeyCodeMap {
+	for key, val := range in {
 		out[val] = key
 	}
 	return out
 }
 
-var inversedMap = inverseMapCodeMap()
+var inversedMap = inverseMapCodeMap(KeyCodeMap)
 
 func GetAllCodes() []uint16 {
 	codes := []uint16{}
