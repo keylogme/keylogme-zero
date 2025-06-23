@@ -11,13 +11,13 @@ import (
 // allowing for a minimum number of keypresses to start keylogging
 type baggage struct {
 	size    int
-	devices map[string][]uint16
+	devices map[string][]DeviceEventInLayer
 }
 
 func newBaggage(size int) *baggage {
 	return &baggage{
 		size:    size,
-		devices: map[string][]uint16{},
+		devices: map[string][]DeviceEventInLayer{},
 	}
 }
 
@@ -25,27 +25,29 @@ func getRandInt(max int) int {
 	return rand.Intn(max)
 }
 
-func (b *baggage) isAuthorized(ke *DeviceEvent) bool {
+func (b *baggage) isAuthorized(ke *DeviceEventInLayer) bool {
 	if b.size <= 0 {
 		return true
 	}
 
 	if _, exists := b.devices[ke.DeviceId]; !exists {
-		b.devices[ke.DeviceId] = make([]uint16, 0, b.size)
+		b.devices[ke.DeviceId] = make([]DeviceEventInLayer, 0, b.size)
 	}
 
 	sizeBaggageDevice := len(b.devices[ke.DeviceId])
 	if sizeBaggageDevice < b.size {
-		b.devices[ke.DeviceId] = append(b.devices[ke.DeviceId], ke.Code)
+		b.devices[ke.DeviceId] = append(b.devices[ke.DeviceId], *ke)
 		// INFO: baggage has to fill up first before authorization
 		return false
 	}
 	randomIndex := getRandInt(b.size)
 
 	// INFO: swap codes
-	currentCode := ke.Code
-	ke.Code = b.devices[ke.DeviceId][randomIndex]
-	b.devices[ke.DeviceId][randomIndex] = currentCode
+	copyInput := *ke
+	bufferedDeviceEvent := b.devices[ke.DeviceId][randomIndex]
+	ke.Code = bufferedDeviceEvent.Code
+	ke.LayerId = bufferedDeviceEvent.LayerId
+	b.devices[ke.DeviceId][randomIndex] = copyInput
 	return true
 }
 
@@ -60,7 +62,7 @@ func newGhostingCodes(c []uint16) *ghostingCodes {
 	}
 }
 
-func (gh *ghostingCodes) isAuthorized(ke *DeviceEvent) bool {
+func (gh *ghostingCodes) isAuthorized(ke *DeviceEventInLayer) bool {
 	if slices.Contains(gh.ghostCodes, ke.Code) {
 		// INFO: not authorized if code is in ghost codes
 		return false
@@ -78,6 +80,11 @@ type SecurityInput struct {
 	GhostingCodes []uint16 `json:"ghosting_codes"`
 }
 
+type DeviceEventInLayer struct {
+	DeviceEvent
+	LayerId int64
+}
+
 func NewSecurity(secInput SecurityInput) *security {
 	return &security{
 		baggage:       newBaggage(secInput.BaggageSize),
@@ -85,7 +92,7 @@ func NewSecurity(secInput SecurityInput) *security {
 	}
 }
 
-func (s *security) isAuthorized(ke *DeviceEvent) bool {
+func (s *security) isAuthorized(ke *DeviceEventInLayer) bool {
 	auth := s.ghostingCodes.isAuthorized(ke)
 	if !auth {
 		slog.Info(

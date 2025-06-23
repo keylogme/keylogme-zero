@@ -23,7 +23,7 @@ func Start(
 			if sd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
-						"Shortcut %s found in device %s\n",
+						"Shortcut %s detected in device %s\n",
 						sd.ShortcutId,
 						sd.DeviceId,
 					),
@@ -37,7 +37,15 @@ func Start(
 			if ssd.IsDetected() {
 				slog.Info(
 					fmt.Sprintf(
-						"Shift state of %d found in device %s - auto %t | diff time : press %d μs release %d μs\n",
+						"Shift state of %d detected in device %s - auto %t",
+						ssd.Code,
+						ssd.DeviceId,
+						ssd.Auto,
+					),
+				)
+				slog.Debug(
+					fmt.Sprintf(
+						"Shift state of %d detected in device %s - auto %t | diff time : press %d μs release %d μs\n",
 						ssd.Code,
 						ssd.DeviceId,
 						ssd.Auto,
@@ -67,9 +75,6 @@ func Start(
 					slog.Error(fmt.Sprintf("Error storing layer change : %s\n", err.Error()))
 				}
 			}
-			// slog.Info(
-			// 	fmt.Sprintf("Key :%d %s (release ? %t)\n", i.Code, i.KeyString(), i.KeyRelease()),
-			// )
 			// INFO: print info of shifted code and layer
 			if ssd.IsDetected() && ssd.Auto {
 				if ld.GetCurrentLayerId() == 0 {
@@ -97,29 +102,32 @@ func Start(
 				continue
 			}
 			if i.KeyRelease() {
-				isAuthorized := security.isAuthorized(&i)
+				il := DeviceEventInLayer{DeviceEvent: i, LayerId: ld.GetCurrentLayerId()}
+				isAuthorized := security.isAuthorized(&il)
 				if !isAuthorized {
 					continue
 				}
 				if ld.GetCurrentLayerId() == 0 {
 					slog.Info(
 						fmt.Sprintf(
-							"\tDeviceId: %s \t| Key: %d \t| Layer: -\n",
-							i.DeviceName,
-							i.Code,
+							"\tDeviceId: %s \t| Key: %d (%s) \t| Layer: -\n",
+							il.DeviceName,
+							il.Code,
+							il.KeyString(),
 						),
 					)
 				} else {
 					slog.Info(
 						fmt.Sprintf(
-							"\tDeviceId: %s \t| Key :%d \t| Layer: %d\n",
-							i.DeviceName,
-							i.Code,
-							ld.GetCurrentLayerId(),
+							"\tDeviceId: %s \t| Key :%d (%s) \t| Layer: %d\n",
+							il.DeviceName,
+							il.Code,
+							il.KeyString(),
+							il.LayerId,
 						),
 					)
 				}
-				err := store.SaveKeylog(i.DeviceId, ld.GetCurrentLayerId(), i.Code)
+				err := store.SaveKeylog(il.DeviceId, il.LayerId, il.Code)
 				if err != nil {
 					slog.Error(fmt.Sprintf("Error storing keylog : %s\n", err.Error()))
 				}

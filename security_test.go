@@ -38,12 +38,15 @@ func TestNewBaggage(t *testing.T) {
 	b := newBaggage(bagggageSize)
 
 	deviceId := "1"
-	de := DeviceEvent{
-		DeviceId: deviceId,
-		InputEvent: keylogger.InputEvent{
-			Code: uint16(0),
-			Type: keylogger.KeyPress,
+	de := DeviceEventInLayer{
+		DeviceEvent: DeviceEvent{
+			DeviceId: deviceId,
+			InputEvent: keylogger.InputEvent{
+				Code: uint16(0),
+				Type: keylogger.KeyPress,
+			},
 		},
+		LayerId: 1,
 	}
 	for i := range bagggageSize {
 		de.Code = uint16(i)
@@ -53,7 +56,12 @@ func TestNewBaggage(t *testing.T) {
 		}
 	}
 
-	if slices.Compare(b.devices[deviceId], []uint16{0, 1, 2}) != 0 {
+	resultValues := []uint16{}
+	for _, b := range b.devices[deviceId] {
+		resultValues = append(resultValues, b.Code)
+	}
+
+	if slices.Compare(resultValues, []uint16{0, 1, 2}) != 0 {
 		t.Fatalf("Expected baggage to contain codes [0, 1, 2], but got %v", b.devices[deviceId])
 	}
 
@@ -73,12 +81,15 @@ func TestGhostingKeys(t *testing.T) {
 	g := newGhostingCodes([]uint16{1, 2})
 
 	deviceId := "1"
-	de := DeviceEvent{
-		DeviceId: deviceId,
-		InputEvent: keylogger.InputEvent{
-			Code: uint16(0),
-			Type: keylogger.KeyPress,
+	de := DeviceEventInLayer{
+		DeviceEvent: DeviceEvent{
+			DeviceId: deviceId,
+			InputEvent: keylogger.InputEvent{
+				Code: uint16(0),
+				Type: keylogger.KeyPress,
+			},
 		},
+		LayerId: 1,
 	}
 	isAuth := g.isAuthorized(&de)
 	if !isAuth {
@@ -100,12 +111,15 @@ func TestSecurity(t *testing.T) {
 	}
 	s := NewSecurity(si)
 
-	de := DeviceEvent{
-		DeviceId: deviceId,
-		InputEvent: keylogger.InputEvent{
-			Code: uint16(0),
-			Type: keylogger.KeyPress,
+	de := DeviceEventInLayer{
+		DeviceEvent: DeviceEvent{
+			DeviceId: deviceId,
+			InputEvent: keylogger.InputEvent{
+				Code: uint16(0),
+				Type: keylogger.KeyPress,
+			},
 		},
+		LayerId: 1,
 	}
 
 	// fill baggage to size - 1
